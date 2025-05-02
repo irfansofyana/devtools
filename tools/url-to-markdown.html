@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Scrape URL content and convert to Markdown format">
+    <title>URL to Markdown | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>URL to Markdown</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Extract content from a URL and convert it to Markdown format using Jina AI Reader. This tool transforms webpages into clean, well-formatted markdown for easy copying.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="input-group">
+                        <label for="url-input">URL to Scrape:</label>
+                        <input type="url" id="url-input" placeholder="https://example.com/article" aria-label="URL to scrape">
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-input">Clear</button>
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                        </div>
+                    </div>
+                    
+                    <div class="options-group mt-2 mb-2">
+                        <label>API Options:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="checkbox" id="use-jina-api" checked>
+                                Use Jina AI Reader API (Recommended)
+                            </label>
+                            <label>
+                                <input type="checkbox" id="include-images" checked>
+                                Include Images
+                            </label>
+                            <label>
+                                <input type="checkbox" id="include-links" checked>
+                                Include Links
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="scrape-btn">Scrape URL</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Markdown Result:</h3>
+                        <div class="input-group">
+                            <textarea id="result-text" readonly aria-label="Result"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="copy-result">Copy Markdown</button>
+                            </div>
+                        </div>
+                        
+                        <div class="preview-container mt-2">
+                            <h3>Preview:</h3>
+                            <div id="markdown-preview" class="markdown-preview"></div>
+                        </div>
+                        
+                        <style>
+                            .markdown-preview img {
+                                max-width: 100%;
+                                height: auto;
+                            }
+                            .markdown-preview pre {
+                                background-color: #f5f5f5;
+                                padding: 1em;
+                                border-radius: 4px;
+                                overflow-x: auto;
+                            }
+                            .markdown-preview code {
+                                font-family: monospace;
+                                background-color: #f5f5f5;
+                                padding: 0.2em 0.4em;
+                                border-radius: 3px;
+                            }
+                            .markdown-preview pre code {
+                                padding: 0;
+                                background-color: transparent;
+                            }
+                        </style>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <!-- Include Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.0.0/marked.min.js"></script>
+    <!-- Include Turndown.js for HTML to Markdown conversion -->
+    <script src="https://unpkg.com/turndown@7.1.1/dist/turndown.js"></script>
+    <!-- Include Prism.js for code syntax highlighting in preview -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlInput = document.getElementById('url-input');
+            const resultText = document.getElementById('result-text');
+            const scrapeBtn = document.getElementById('scrape-btn');
+            const clearInputBtn = document.getElementById('clear-input');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const resultContainer = document.getElementById('result-container');
+            const errorMessage = document.getElementById('error-message');
+            const copyResultBtn = document.getElementById('copy-result');
+            const markdownPreview = document.getElementById('markdown-preview');
+            
+            // Options
+            const includeImages = document.getElementById('include-images');
+            const includeLinks = document.getElementById('include-links');
+            const includeTitle = document.getElementById('include-title');
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Configure TurndownService
+            function configureTurndown() {
+                const turndownService = new TurndownService({
+                    headingStyle: 'atx',
+                    codeBlockStyle: 'fenced',
+                    emDelimiter: '_',
+                    bulletListMarker: '-',
+                    strongDelimiter: '**'
+                });
+                
+                // Custom rules for better Markdown conversion
+                turndownService.addRule('removeScripts', {
+                    filter: ['script', 'style', 'iframe', 'noscript'],
+                    replacement: function() {
+                        return '';
+                    }
+                });
+                
+                // Enhanced image handling
+                turndownService.addRule('images', {
+                    filter: 'img',
+                    replacement: function(content, node) {
+                        if (!includeImages.checked) return '';
+                        
+                        const alt = node.alt || '';
+                        let src = node.getAttribute('src') || '';
+                        
+                        // Handle relative URLs by making them absolute
+                        if (src && !src.startsWith('http') && !src.startsWith('data:')) {
+                            const urlObj = new URL(urlInput.value);
+                            if (src.startsWith('/')) {
+                                // Absolute path
+                                src = `${urlObj.protocol}//${urlObj.host}${src}`;
+                            } else {
+                                // Relative path
+                                const basePath = urlObj.pathname.substring(0, urlObj.pathname.lastIndexOf('/') + 1);
+                                src = `${urlObj.protocol}//${urlObj.host}${basePath}${src}`;
+                            }
+                        }
+                        
+                        const title = node.title ? ` "${node.title}"` : '';
+                        return src ? `![${alt}](${src}${title})` : '';
+                    }
+                });
+                
+                // Handle links based on user preference
+                if (!includeLinks.checked) {
+                    turndownService.addRule('plainText', {
+                        filter: 'a',
+                        replacement: function(content) {
+                            return content;
+                        }
+                    });
+                } else {
+                    // Enhanced link handling for absolute URLs
+                    turndownService.addRule('links', {
+                        filter: 'a',
+                        replacement: function(content, node) {
+                            let href = node.getAttribute('href') || '';
+                            
+                            // Handle relative URLs by making them absolute
+                            if (href && !href.startsWith('http') && !href.startsWith('#') && !href.startsWith('mailto:')) {
+                                const urlObj = new URL(urlInput.value);
+                                if (href.startsWith('/')) {
+                                    // Absolute path
+                                    href = `${urlObj.protocol}//${urlObj.host}${href}`;
+                                } else {
+                                    // Relative path
+                                    const basePath = urlObj.pathname.substring(0, urlObj.pathname.lastIndexOf('/') + 1);
+                                    href = `${urlObj.protocol}//${urlObj.host}${basePath}${href}`;
+                                }
+                            }
+                            
+                            const title = node.title ? ` "${node.title}"` : '';
+                            return href ? `[${content}](${href}${title})` : content;
+                        }
+                    });
+                }
+                
+                // Preserve code blocks and inline code
+                turndownService.addRule('codeBlocks', {
+                    filter: ['pre', 'code'],
+                    replacement: function(content, node) {
+                        // Check if it's a code block (pre) or inline code
+                        if (node.nodeName === 'PRE') {
+                            // Try to get the language from class
+                            let language = '';
+                            const codeElement = node.querySelector('code');
+                            
+                            if (codeElement) {
+                                // Extract language from class like 'language-javascript'
+                                const classes = codeElement.className.split(' ');
+                                const langClass = classes.find(c => c.startsWith('language-'));
+                                if (langClass) {
+                                    language = langClass.replace('language-', '');
+                                }
+                                content = codeElement.textContent;
+                            } else {
+                                content = node.textContent;
+                            }
+                            
+                            return '\n```' + language + '\n' + content.trim() + '\n```\n';
+                        } else if (node.nodeName === 'CODE' && node.parentNode.nodeName !== 'PRE') {
+                            // Inline code
+                            return '`' + node.textContent + '`';
+                        }
+                        return content;
+                    }
+                });
+                
+                return turndownService;
+            }
+            
+            // Scrape URL and convert to Markdown
+            async function scrapeUrl() {
+                const url = urlInput.value.trim();
+                const useJinaApi = document.getElementById('use-jina-api').checked;
+                
+                if (!url) {
+                    showError('Please enter a valid URL');
+                    return;
+                }
+                
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    showError('URL must start with http:// or https://');
+                    return;
+                }
+                
+                try {
+                    scrapeBtn.textContent = 'Scraping...';
+                    scrapeBtn.disabled = true;
+                    
+                    let markdown = '';
+                    
+                    if (useJinaApi) {
+                        // Use Jina AI Reader API
+                        const jinaUrl = `https://r.jina.ai/${url}`;
+                        
+                        try {
+                            const response = await fetch(jinaUrl);
+                            
+                            if (!response.ok) {
+                                throw new Error(`Jina API returned status ${response.status}`);
+                            }
+                            
+                            markdown = await response.text();
+                            
+                            // If we don't want images, remove image markdown
+                            if (!includeImages.checked) {
+                                markdown = markdown.replace(/!\[.*?\]\(.*?\)/g, '');
+                            }
+                            
+                            // If we don't want links, convert links to plain text
+                            if (!includeLinks.checked) {
+                                markdown = markdown.replace(/\[(.*?)\]\(.*?\)/g, '$1');
+                            }
+                            
+                        } catch (jinaError) {
+                            console.error('Jina API error:', jinaError);
+                            showError(`Jina API error: ${jinaError.message}. Falling back to local conversion.`);
+                            useJinaApi = false; // Fall back to local conversion
+                        }
+                    }
+                    
+                    // If Jina API failed or wasn't selected, use local conversion
+                    if (!useJinaApi) {
+                        // Use a CORS proxy to fetch the content
+                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        
+                        const response = await fetch(proxyUrl);
+                        const data = await response.json();
+                        
+                        if (!data.contents) {
+                            throw new Error('Failed to fetch content from URL');
+                        }
+                        
+                        // Create a temporary DOM element to parse the HTML
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(data.contents, 'text/html');
+                        
+                        // Get the page title
+                        if (doc.title) {
+                            markdown = `# ${doc.title.trim()}\n\n`;
+                        }
+                        
+                        // Remove unnecessary elements
+                        const elementsToRemove = [
+                            'header', 'footer', 'nav', 'aside', 'script', 'style', 
+                            'noscript', 'iframe', 'svg', 'form', 'button', 'meta'
+                        ];
+                        
+                        elementsToRemove.forEach(tag => {
+                            doc.querySelectorAll(tag).forEach(el => el.remove());
+                        });
+                        
+                        // Try to find the main content
+                        let mainContent = doc.querySelector('main') || 
+                                         doc.querySelector('article') || 
+                                         doc.querySelector('.content') || 
+                                         doc.querySelector('#content') ||
+                                         doc.querySelector('.post') ||
+                                         doc.querySelector('.article') ||
+                                         doc.querySelector('.entry-content') ||
+                                         doc.querySelector('.post-content') ||
+                                         doc.querySelector('.markdown-body') ||
+                                         doc.body;
+                        
+                        // Preserve code blocks by adding appropriate classes
+                        mainContent.querySelectorAll('pre code').forEach(codeBlock => {
+                            // Try to detect language from class
+                            if (!codeBlock.className) {
+                                // Check for common code patterns to guess language
+                                const content = codeBlock.textContent;
+                                if (content.includes('function') || content.includes('var ') || content.includes('const ') || content.includes('let ')) {
+                                    codeBlock.className = 'language-javascript';
+                                } else if (content.includes('def ') || content.includes('import ') && content.includes(':')) {
+                                    codeBlock.className = 'language-python';
+                                } else if (content.includes('<div') || content.includes('<span') || content.includes('</')) {
+                                    codeBlock.className = 'language-html';
+                                } else if (content.includes('{') && content.includes('}') && (content.includes(':') || content.includes(';'))) {
+                                    codeBlock.className = 'language-css';
+                                }
+                            }
+                        });
+                        
+                        // Configure and use Turndown
+                        const turndownService = configureTurndown();
+                        markdown += turndownService.turndown(mainContent.innerHTML);
+                        
+                        // Clean up the markdown
+                        markdown = markdown
+                            .replace(/\n{3,}/g, '\n\n')  // Remove excessive line breaks
+                            .replace(/\[(\s*)\]/g, '')   // Remove empty links
+                            .replace(/`\s*`/g, '')      // Remove empty code blocks
+                            .replace(/!\[\]\(\)/g, '')  // Remove empty images
+                            .trim();
+                            
+                        // Fix code blocks that might have been broken
+                        markdown = markdown.replace(/```(\w*)\n\s*```/g, '');
+                    }
+                    
+                    // Display the result
+                    resultText.value = markdown;
+                    
+                    // Configure marked for better code highlighting
+                    marked.setOptions({
+                        highlight: function(code, lang) {
+                            if (Prism.languages[lang]) {
+                                return Prism.highlight(code, Prism.languages[lang], lang);
+                            } else {
+                                return code;
+                            }
+                        },
+                        breaks: true,
+                        gfm: true
+                    });
+                    
+                    markdownPreview.innerHTML = marked.parse(markdown);
+                    resultContainer.classList.remove('hidden');
+                    
+                    // Apply Prism highlighting to any code blocks in the preview
+                    Prism.highlightAllUnder(markdownPreview);
+                    
+                } catch (error) {
+                    showError(`Error: ${error.message}`);
+                } finally {
+                    scrapeBtn.textContent = 'Scrape URL';
+                    scrapeBtn.disabled = false;
+                }
+            }
+            
+            // Load sample URL
+            function loadSample() {
+                // Use a sample URL that has code examples and images
+                urlInput.value = 'https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet';
+                document.getElementById('use-jina-api').checked = true;
+            }
+            
+            // Copy result to clipboard
+            function copyResult() {
+                resultText.select();
+                document.execCommand('copy');
+                
+                // Show temporary success message
+                const originalText = copyResultBtn.textContent;
+                copyResultBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyResultBtn.textContent = originalText;
+                }, 2000);
+            }
+            
+            // Clear input
+            function clearInput() {
+                urlInput.value = '';
+                resultContainer.classList.add('hidden');
+            }
+            
+            // Event listeners
+            scrapeBtn.addEventListener('click', scrapeUrl);
+            clearInputBtn.addEventListener('click', clearInput);
+            loadSampleBtn.addEventListener('click', loadSample);
+            copyResultBtn.addEventListener('click', copyResult);
+            
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+        });
+    </script>
+</body>
+</html>
