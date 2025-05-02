@@ -29,8 +29,9 @@ A comprehensive collection of web-based tools for developers. This project provi
 23. **Text Diff Utility** - Compare two text blocks and highlight differences
 24. **Timestamp Converter** - Convert between various timestamp formats and human-readable dates
 25. **URL Encoder/Decoder** - Encode and decode URLs and URL components
-26. **URL to Markdown** - Scrape URL content and convert to Markdown format
-27. **UUID Generator** - Generate random UUIDs in version 4 format
+26. **URL Parser** - Parse and extract components from URLs
+27. **URL to Markdown** - Scrape URL content and convert to Markdown format
+28. **UUID Generator** - Generate random UUIDs in version 4 format
 
 ## Features
 

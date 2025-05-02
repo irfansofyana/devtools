@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Parse and extract components from URLs">
+    <title>URL Parser | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>URL Parser</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Parse and extract components from URLs. Analyze URL structure and view individual parts like protocol, domain, path, query parameters, and more.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="input-group">
+                        <label for="input-url">URL to Parse:</label>
+                        <textarea id="input-url" placeholder="Enter a URL to parse..." aria-label="Input URL"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-input">Clear</button>
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="parse-btn">Parse URL</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>URL Components:</h3>
+                        <div class="url-components">
+                            <div class="component-group">
+                                <div class="component-label">Protocol:</div>
+                                <div class="component-value" id="protocol"></div>
+                                <button class="copy-btn" data-target="protocol" aria-label="Copy protocol">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="component-group">
+                                <div class="component-label">Username:</div>
+                                <div class="component-value" id="username"></div>
+                                <button class="copy-btn" data-target="username" aria-label="Copy username">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="component-group">
+                                <div class="component-label">Password:</div>
+                                <div class="component-value" id="password"></div>
+                                <button class="copy-btn" data-target="password" aria-label="Copy password">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="component-group">
+                                <div class="component-label">Host:</div>
+                                <div class="component-value" id="host"></div>
+                                <button class="copy-btn" data-target="host" aria-label="Copy host">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="component-group">
+                                <div class="component-label">Port:</div>
+                                <div class="component-value" id="port"></div>
+                                <button class="copy-btn" data-target="port" aria-label="Copy port">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="component-group">
+                                <div class="component-label">Path:</div>
+                                <div class="component-value" id="path"></div>
+                                <button class="copy-btn" data-target="path" aria-label="Copy path">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="component-group">
+                                <div class="component-label">Query String:</div>
+                                <div class="component-value" id="query"></div>
+                                <button class="copy-btn" data-target="query" aria-label="Copy query string">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="component-group">
+                                <div class="component-label">Fragment:</div>
+                                <div class="component-value" id="fragment"></div>
+                                <button class="copy-btn" data-target="fragment" aria-label="Copy fragment">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h3 class="mt-4">Query Parameters:</h3>
+                        <div class="query-params" id="query-params">
+                            <div class="no-params hidden" id="no-params">No query parameters found.</div>
+                            <table class="params-table hidden" id="params-table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Value</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="params-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputUrl = document.getElementById('input-url');
+            const parseBtn = document.getElementById('parse-btn');
+            const clearInputBtn = document.getElementById('clear-input');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const resultContainer = document.getElementById('result-container');
+            const errorMessage = document.getElementById('error-message');
+            const noParams = document.getElementById('no-params');
+            const paramsTable = document.getElementById('params-table');
+            const paramsBody = document.getElementById('params-body');
+            
+            // URL component elements
+            const protocol = document.getElementById('protocol');
+            const username = document.getElementById('username');
+            const password = document.getElementById('password');
+            const host = document.getElementById('host');
+            const port = document.getElementById('port');
+            const path = document.getElementById('path');
+            const query = document.getElementById('query');
+            const fragment = document.getElementById('fragment');
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Parse URL
+            function parseUrl() {
+                const urlString = inputUrl.value.trim();
+                
+                if (!urlString) {
+                    showError('Please enter a URL to parse');
+                    return;
+                }
+                
+                try {
+                    // Try to parse the URL
+                    let url;
+                    try {
+                        url = new URL(urlString);
+                    } catch (e) {
+                        // If parsing fails, try adding https:// prefix and parse again
+                        try {
+                            url = new URL('https://' + urlString);
+                        } catch (e2) {
+                            showError('Invalid URL format. Please check your input and try again.');
+                            return;
+                        }
+                    }
+                    
+                    // Extract URL components
+                    protocol.textContent = url.protocol;
+                    username.textContent = url.username || 'None';
+                    password.textContent = url.password ? '••••••••' : 'None';
+                    host.textContent = url.hostname;
+                    port.textContent = url.port || 'Default';
+                    path.textContent = url.pathname;
+                    query.textContent = url.search || 'None';
+                    fragment.textContent = url.hash || 'None';
+                    
+                    // Parse query parameters
+                    const params = new URLSearchParams(url.search);
+                    paramsBody.innerHTML = '';
+                    
+                    if (params.toString()) {
+                        paramsTable.classList.remove('hidden');
+                        noParams.classList.add('hidden');
+                        
+                        params.forEach((value, key) => {
+                            const row = document.createElement('tr');
+                            
+                            const keyCell = document.createElement('td');
+                            keyCell.textContent = key;
+                            row.appendChild(keyCell);
+                            
+                            const valueCell = document.createElement('td');
+                            valueCell.textContent = value;
+                            row.appendChild(valueCell);
+                            
+                            const actionsCell = document.createElement('td');
+                            const copyBtn = document.createElement('button');
+                            copyBtn.className = 'copy-param';
+                            copyBtn.setAttribute('data-value', value);
+                            copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+                            copyBtn.setAttribute('aria-label', `Copy ${key} value`);
+                            actionsCell.appendChild(copyBtn);
+                            row.appendChild(actionsCell);
+                            
+                            paramsBody.appendChild(row);
+                        });
+                    } else {
+                        paramsTable.classList.add('hidden');
+                        noParams.classList.remove('hidden');
+                    }
+                    
+                    // Show results
+                    resultContainer.classList.remove('hidden');
+                    
+                    // Add event listeners for copy buttons
+                    document.querySelectorAll('.copy-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const targetId = btn.getAttribute('data-target');
+                            const text = document.getElementById(targetId).textContent;
+                            if (text && text !== 'None') {
+                                navigator.clipboard.writeText(text)
+                                    .then(() => {
+                                        showCopySuccess();
+                                    })
+                                    .catch(err => {
+                                        showError('Failed to copy: ' + err);
+                                    });
+                            }
+                        });
+                    });
+                    
+                    document.querySelectorAll('.copy-param').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const value = btn.getAttribute('data-value');
+                            navigator.clipboard.writeText(value)
+                                .then(() => {
+                                    showCopySuccess();
+                                })
+                                .catch(err => {
+                                    showError('Failed to copy: ' + err);
+                                });
+                        });
+                    });
+                } catch (error) {
+                    showError(`Error: ${error.message}`);
+                }
+            }
+            
+            // Show copy success message
+            function showCopySuccess() {
+                const successMsg = document.createElement('div');
+                successMsg.className = 'copy-success';
+                successMsg.textContent = 'Copied!';
+                document.body.appendChild(successMsg);
+                
+                setTimeout(() => {
+                    successMsg.classList.add('fade-out');
+                    setTimeout(() => {
+                        document.body.removeChild(successMsg);
+                    }, 500);
+                }, 1500);
+            }
+            
+            // Load sample URL
+            function loadSample() {
+                inputUrl.value = 'https://username:password@example.com:8080/path/to/page?param1=value1&param2=value2#section';
+            }
+            
+            // Clear input
+            function clearInput() {
+                inputUrl.value = '';
+                resultContainer.classList.add('hidden');
+            }
+            
+            // Event listeners
+            parseBtn.addEventListener('click', parseUrl);
+            clearInputBtn.addEventListener('click', clearInput);
+            loadSampleBtn.addEventListener('click', loadSample);
+            
+            // Add event listener for Enter key on input
+            inputUrl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    parseUrl();
+                }
+            });
+            
+            // Update current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+        });
+    </script>
+    
+    <style>
+        .url-components {
+            margin-bottom: 20px;
+        }
+        
+        .component-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            background-color: var(--bg-secondary);
+        }
+        
+        .component-label {
+            font-weight: bold;
+            width: 120px;
+            flex-shrink: 0;
+        }
+        
+        .component-value {
+            flex-grow: 1;
+            word-break: break-all;
+            padding: 0 10px;
+        }
+        
+        .copy-btn, .copy-param {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .copy-btn:hover, .copy-param:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .params-table th, .params-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .params-table th {
+            background-color: var(--bg-secondary);
+            font-weight: bold;
+        }
+        
+        .copy-success {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--success-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+        }
+        
+        .copy-success.fade-out {
+            animation: fadeOut 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(10px); }
+        }
+        
+        .no-params {
+            padding: 10px;
+            background-color: var(--bg-secondary);
+            border-radius: 4px;
+        }
+    </style>
+</body>
+</html>
