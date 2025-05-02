@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Construct CURL commands for terminal execution">
+    <title>CURL Constructor | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>CURL Constructor</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Build CURL commands for terminal execution with customizable options. Easily configure HTTP methods, headers, query parameters, and request body.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="input-group">
+                        <label for="url-input">URL:</label>
+                        <input type="text" id="url-input" placeholder="https://api.example.com/endpoint" aria-label="URL">
+                    </div>
+
+                    <div class="options-group mt-2">
+                        <label>HTTP Method:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="radio" name="http-method" value="GET" checked>
+                                GET
+                            </label>
+                            <label>
+                                <input type="radio" name="http-method" value="POST">
+                                POST
+                            </label>
+                            <label>
+                                <input type="radio" name="http-method" value="PUT">
+                                PUT
+                            </label>
+                            <label>
+                                <input type="radio" name="http-method" value="DELETE">
+                                DELETE
+                            </label>
+                            <label>
+                                <input type="radio" name="http-method" value="PATCH">
+                                PATCH
+                            </label>
+                            <label>
+                                <input type="radio" name="http-method" value="HEAD">
+                                HEAD
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="accordion mt-2">
+                        <div class="accordion-item">
+                            <button class="accordion-header" id="headers-toggle">
+                                <span>Headers</span>
+                                <span class="accordion-icon">+</span>
+                            </button>
+                            <div class="accordion-content hidden" id="headers-content">
+                                <div id="headers-container">
+                                    <!-- Header pairs will be added here -->
+                                </div>
+                                <button class="secondary mt-1" id="add-header-btn">Add Header</button>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item mt-2">
+                            <button class="accordion-header" id="params-toggle">
+                                <span>Query Parameters</span>
+                                <span class="accordion-icon">+</span>
+                            </button>
+                            <div class="accordion-content hidden" id="params-content">
+                                <div id="params-container">
+                                    <!-- Parameter pairs will be added here -->
+                                </div>
+                                <button class="secondary mt-1" id="add-param-btn">Add Parameter</button>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item mt-2">
+                            <button class="accordion-header" id="body-toggle">
+                                <span>Request Body</span>
+                                <span class="accordion-icon">+</span>
+                            </button>
+                            <div class="accordion-content hidden" id="body-content">
+                                <div class="options-group mb-2">
+                                    <label>Body Type:</label>
+                                    <div class="options-controls">
+                                        <label>
+                                            <input type="radio" name="body-type" value="json" checked>
+                                            JSON
+                                        </label>
+                                        <label>
+                                            <input type="radio" name="body-type" value="form">
+                                            Form Data
+                                        </label>
+                                        <label>
+                                            <input type="radio" name="body-type" value="raw">
+                                            Raw
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div id="json-body-container">
+                                    <textarea id="json-body" placeholder='{"key": "value"}' aria-label="JSON Body"></textarea>
+                                </div>
+                                
+                                <div id="form-body-container" class="hidden">
+                                    <div id="form-fields-container">
+                                        <!-- Form fields will be added here -->
+                                    </div>
+                                    <button class="secondary mt-1" id="add-form-field-btn">Add Field</button>
+                                </div>
+                                
+                                <div id="raw-body-container" class="hidden">
+                                    <textarea id="raw-body" placeholder="Raw request body" aria-label="Raw Body"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item mt-2">
+                            <button class="accordion-header" id="options-toggle">
+                                <span>Additional Options</span>
+                                <span class="accordion-icon">+</span>
+                            </button>
+                            <div class="accordion-content hidden" id="options-content">
+                                <div class="checkbox-group">
+                                    <label>
+                                        <input type="checkbox" id="verbose-option">
+                                        Verbose (-v)
+                                    </label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <label>
+                                        <input type="checkbox" id="include-option">
+                                        Include Response Headers (-i)
+                                    </label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <label>
+                                        <input type="checkbox" id="silent-option">
+                                        Silent (-s)
+                                    </label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <label>
+                                        <input type="checkbox" id="insecure-option">
+                                        Insecure (-k)
+                                    </label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <label>
+                                        <input type="checkbox" id="location-option">
+                                        Follow Redirects (-L)
+                                    </label>
+                                </div>
+                                <div class="input-group mt-2">
+                                    <label for="timeout-option">Timeout (seconds):</label>
+                                    <input type="number" id="timeout-option" min="0" placeholder="30" aria-label="Timeout">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <button class="primary" id="generate-btn">Generate CURL Command</button>
+                    </div>
+
+                    <div class="result-container hidden mt-3" id="result-container">
+                        <h3>CURL Command:</h3>
+                        <div class="code-container">
+                            <pre id="curl-result"></pre>
+                            <button class="secondary" id="copy-result">Copy to Clipboard</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const urlInput = document.getElementById('url-input');
+            const generateBtn = document.getElementById('generate-btn');
+            const curlResult = document.getElementById('curl-result');
+            const resultContainer = document.getElementById('result-container');
+            const copyResultBtn = document.getElementById('copy-result');
+            const errorMessage = document.getElementById('error-message');
+            
+            // Accordion elements
+            const accordionHeaders = document.querySelectorAll('.accordion-header');
+            
+            // Headers elements
+            const headersToggle = document.getElementById('headers-toggle');
+            const headersContent = document.getElementById('headers-content');
+            const headersContainer = document.getElementById('headers-container');
+            const addHeaderBtn = document.getElementById('add-header-btn');
+            
+            // Params elements
+            const paramsToggle = document.getElementById('params-toggle');
+            const paramsContent = document.getElementById('params-content');
+            const paramsContainer = document.getElementById('params-container');
+            const addParamBtn = document.getElementById('add-param-btn');
+            
+            // Body elements
+            const bodyToggle = document.getElementById('body-toggle');
+            const bodyContent = document.getElementById('body-content');
+            const bodyTypeRadios = document.getElementsByName('body-type');
+            const jsonBodyContainer = document.getElementById('json-body-container');
+            const formBodyContainer = document.getElementById('form-body-container');
+            const rawBodyContainer = document.getElementById('raw-body-container');
+            const jsonBody = document.getElementById('json-body');
+            const rawBody = document.getElementById('raw-body');
+            const formFieldsContainer = document.getElementById('form-fields-container');
+            const addFormFieldBtn = document.getElementById('add-form-field-btn');
+            
+            // Options elements
+            const optionsToggle = document.getElementById('options-toggle');
+            const optionsContent = document.getElementById('options-content');
+            
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Toggle accordion sections
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const content = header.nextElementSibling;
+                    const icon = header.querySelector('.accordion-icon');
+                    
+                    content.classList.toggle('hidden');
+                    icon.textContent = content.classList.contains('hidden') ? '+' : '-';
+                });
+            });
+            
+            // Add header pair
+            function addHeaderPair(key = '', value = '') {
+                const headerPair = document.createElement('div');
+                headerPair.className = 'key-value-pair';
+                headerPair.innerHTML = `
+                    <input type="text" class="header-key" placeholder="Header Name" value="${key}" aria-label="Header Name">
+                    <input type="text" class="header-value" placeholder="Header Value" value="${value}" aria-label="Header Value">
+                    <button class="remove-btn" aria-label="Remove Header">×</button>
+                `;
+                
+                headerPair.querySelector('.remove-btn').addEventListener('click', () => {
+                    headerPair.remove();
+                });
+                
+                headersContainer.appendChild(headerPair);
+            }
+            
+            // Add parameter pair
+            function addParamPair(key = '', value = '') {
+                const paramPair = document.createElement('div');
+                paramPair.className = 'key-value-pair';
+                paramPair.innerHTML = `
+                    <input type="text" class="param-key" placeholder="Parameter Name" value="${key}" aria-label="Parameter Name">
+                    <input type="text" class="param-value" placeholder="Parameter Value" value="${value}" aria-label="Parameter Value">
+                    <button class="remove-btn" aria-label="Remove Parameter">×</button>
+                `;
+                
+                paramPair.querySelector('.remove-btn').addEventListener('click', () => {
+                    paramPair.remove();
+                });
+                
+                paramsContainer.appendChild(paramPair);
+            }
+            
+            // Add form field
+            function addFormField(key = '', value = '') {
+                const formField = document.createElement('div');
+                formField.className = 'key-value-pair';
+                formField.innerHTML = `
+                    <input type="text" class="form-key" placeholder="Field Name" value="${key}" aria-label="Field Name">
+                    <input type="text" class="form-value" placeholder="Field Value" value="${value}" aria-label="Field Value">
+                    <button class="remove-btn" aria-label="Remove Field">×</button>
+                `;
+                
+                formField.querySelector('.remove-btn').addEventListener('click', () => {
+                    formField.remove();
+                });
+                
+                formFieldsContainer.appendChild(formField);
+            }
+            
+            // Toggle body type containers
+            function toggleBodyContainers() {
+                const selectedBodyType = document.querySelector('input[name="body-type"]:checked').value;
+                
+                jsonBodyContainer.classList.add('hidden');
+                formBodyContainer.classList.add('hidden');
+                rawBodyContainer.classList.add('hidden');
+                
+                if (selectedBodyType === 'json') {
+                    jsonBodyContainer.classList.remove('hidden');
+                } else if (selectedBodyType === 'form') {
+                    formBodyContainer.classList.remove('hidden');
+                } else if (selectedBodyType === 'raw') {
+                    rawBodyContainer.classList.remove('hidden');
+                }
+            }
+            
+            // Generate CURL command
+            function generateCurlCommand() {
+                const url = urlInput.value.trim();
+                
+                if (!url) {
+                    showError('Please enter a URL');
+                    return;
+                }
+                
+                // Start building the curl command
+                let curlCmd = 'curl';
+                
+                // Add HTTP method
+                const httpMethod = document.querySelector('input[name="http-method"]:checked').value;
+                if (httpMethod !== 'GET') {
+                    curlCmd += ` -X ${httpMethod}`;
+                }
+                
+                // Add headers
+                const headerPairs = headersContainer.querySelectorAll('.key-value-pair');
+                headerPairs.forEach(pair => {
+                    const key = pair.querySelector('.header-key').value.trim();
+                    const value = pair.querySelector('.header-value').value.trim();
+                    
+                    if (key && value) {
+                        curlCmd += ` \\\n  -H "${key}: ${value}"`;
+                    }
+                });
+                
+                // Add request body if method is not GET or HEAD
+                if (httpMethod !== 'GET' && httpMethod !== 'HEAD') {
+                    const bodyType = document.querySelector('input[name="body-type"]:checked').value;
+                    
+                    if (bodyType === 'json') {
+                        const jsonData = jsonBody.value.trim();
+                        if (jsonData) {
+                            // Add content-type header if not already added
+                            let hasContentType = false;
+                            headerPairs.forEach(pair => {
+                                const key = pair.querySelector('.header-key').value.trim().toLowerCase();
+                                if (key === 'content-type') {
+                                    hasContentType = true;
+                                }
+                            });
+                            
+                            if (!hasContentType) {
+                                curlCmd += ` \\\n  -H "Content-Type: application/json"`;
+                            }
+                            
+                            // Escape double quotes in JSON
+                            const escapedJson = jsonData.replace(/"/g, '\\"');
+                            curlCmd += ` \\\n  -d "${escapedJson}"`;
+                        }
+                    } else if (bodyType === 'form') {
+                        const formFields = formFieldsContainer.querySelectorAll('.key-value-pair');
+                        formFields.forEach(field => {
+                            const key = field.querySelector('.form-key').value.trim();
+                            const value = field.querySelector('.form-value').value.trim();
+                            
+                            if (key && value) {
+                                curlCmd += ` \\\n  -F "${key}=${value}"`;
+                            }
+                        });
+                    } else if (bodyType === 'raw') {
+                        const rawData = rawBody.value.trim();
+                        if (rawData) {
+                            // Escape double quotes
+                            const escapedData = rawData.replace(/"/g, '\\"');
+                            curlCmd += ` \\\n  -d "${escapedData}"`;
+                        }
+                    }
+                }
+                
+                // Add query parameters to the URL
+                let finalUrl = url;
+                const paramPairs = paramsContainer.querySelectorAll('.key-value-pair');
+                if (paramPairs.length > 0) {
+                    const params = [];
+                    
+                    paramPairs.forEach(pair => {
+                        const key = pair.querySelector('.param-key').value.trim();
+                        const value = pair.querySelector('.param-value').value.trim();
+                        
+                        if (key && value) {
+                            params.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+                        }
+                    });
+                    
+                    if (params.length > 0) {
+                        const separator = finalUrl.includes('?') ? '&' : '?';
+                        finalUrl += separator + params.join('&');
+                    }
+                }
+                
+                // Add additional options
+                if (document.getElementById('verbose-option').checked) {
+                    curlCmd += ' \\\n  -v';
+                }
+                
+                if (document.getElementById('include-option').checked) {
+                    curlCmd += ' \\\n  -i';
+                }
+                
+                if (document.getElementById('silent-option').checked) {
+                    curlCmd += ' \\\n  -s';
+                }
+                
+                if (document.getElementById('insecure-option').checked) {
+                    curlCmd += ' \\\n  -k';
+                }
+                
+                if (document.getElementById('location-option').checked) {
+                    curlCmd += ' \\\n  -L';
+                }
+                
+                const timeout = document.getElementById('timeout-option').value.trim();
+                if (timeout) {
+                    curlCmd += ` \\\n  --connect-timeout ${timeout}`;
+                }
+                
+                // Add URL (must be the last part)
+                curlCmd += ` \\\n  "${finalUrl}"`;
+                
+                // Display the result
+                curlResult.textContent = curlCmd;
+                resultContainer.classList.remove('hidden');
+            }
+            
+            // Copy result to clipboard
+            function copyResult() {
+                const range = document.createRange();
+                range.selectNode(curlResult);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+                document.execCommand('copy');
+                window.getSelection().removeAllRanges();
+                
+                // Show temporary success message
+                const originalText = copyResultBtn.textContent;
+                copyResultBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyResultBtn.textContent = originalText;
+                }, 2000);
+            }
+            
+            // Event listeners
+            generateBtn.addEventListener('click', generateCurlCommand);
+            copyResultBtn.addEventListener('click', copyResult);
+            addHeaderBtn.addEventListener('click', () => addHeaderPair());
+            addParamBtn.addEventListener('click', () => addParamPair());
+            addFormFieldBtn.addEventListener('click', () => addFormField());
+            
+            // Body type change event
+            bodyTypeRadios.forEach(radio => {
+                radio.addEventListener('change', toggleBodyContainers);
+            });
+            
+            // Add initial empty pairs
+            addHeaderPair('Accept', 'application/json');
+            addParamPair();
+            addFormField();
+            
+            // Load sample data
+            function loadSampleData() {
+                // Set sample URL
+                urlInput.value = 'https://api.example.com/users';
+                
+                // Set POST method
+                document.querySelector('input[name="http-method"][value="POST"]').checked = true;
+                
+                // Add sample headers
+                headersContainer.innerHTML = '';
+                addHeaderPair('Content-Type', 'application/json');
+                addHeaderPair('Authorization', 'Bearer YOUR_TOKEN_HERE');
+                addHeaderPair('Accept', 'application/json');
+                
+                // Add sample query parameters
+                paramsContainer.innerHTML = '';
+                addParamPair('page', '1');
+                addParamPair('limit', '10');
+                
+                // Set JSON body
+                document.querySelector('input[name="body-type"][value="json"]').checked = true;
+                toggleBodyContainers();
+                jsonBody.value = `{\n  "name": "John Doe",\n  "email": "john@example.com",\n  "age": 30\n}`;
+                
+                // Open all accordion sections
+                accordionHeaders.forEach(header => {
+                    const content = header.nextElementSibling;
+                    const icon = header.querySelector('.accordion-icon');
+                    
+                    content.classList.remove('hidden');
+                    icon.textContent = '-';
+                });
+                
+                // Generate the curl command
+                generateCurlCommand();
+            }
+            
+            // Add load sample button
+            const toolContent = document.querySelector('.tool-content');
+            const loadSampleBtn = document.createElement('button');
+            loadSampleBtn.className = 'secondary mt-2';
+            loadSampleBtn.id = 'load-sample-btn';
+            loadSampleBtn.textContent = 'Load Sample';
+            loadSampleBtn.addEventListener('click', loadSampleData);
+            
+            // Insert before the generate button
+            toolContent.insertBefore(loadSampleBtn, generateBtn.parentElement);
+            
+            // Add CSS for key-value pairs
+            const style = document.createElement('style');
+            style.textContent = `
+                .key-value-pair {
+                    display: flex;
+                    margin-bottom: 8px;
+                    gap: 8px;
+                }
+                .key-value-pair input {
+                    flex: 1;
+                }
+                .remove-btn {
+                    background: #ff5555;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    width: 24px;
+                    height: 24px;
+                    font-size: 16px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .code-container {
+                    position: relative;
+                }
+                .code-container pre {
+                    background: #f5f5f5;
+                    padding: 15px;
+                    border-radius: 4px;
+                    overflow-x: auto;
+                    white-space: pre-wrap;
+                    word-break: break-all;
+                }
+                .dark-theme .code-container pre {
+                    background: #2d2d2d;
+                }
+                .accordion-item {
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    overflow: hidden;
+                }
+                .dark-theme .accordion-item {
+                    border-color: #444;
+                }
+                .accordion-header {
+                    width: 100%;
+                    text-align: left;
+                    padding: 10px 15px;
+                    background: #f5f5f5;
+                    border: none;
+                    cursor: pointer;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .dark-theme .accordion-header {
+                    background: #2d2d2d;
+                }
+                .accordion-content {
+                    padding: 15px;
+                }
+                .accordion-icon {
+                    font-weight: bold;
+                }
+                .checkbox-group {
+                    margin-bottom: 8px;
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+</body>
+</html>

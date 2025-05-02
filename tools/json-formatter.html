@@ -68,6 +68,16 @@
                                 <input type="checkbox" id="sort-keys" checked>
                                 Sort Keys
                             </label>
+                            <div id="sort-direction" class="sort-direction-options" style="margin-left: 20px; display: none;">
+                                <label>
+                                    <input type="radio" name="sort-direction" id="sort-asc" value="asc" checked>
+                                    Ascending
+                                </label>
+                                <label>
+                                    <input type="radio" name="sort-direction" id="sort-desc" value="desc">
+                                    Descending
+                                </label>
+                            </div>
                         </div>
                     </div>
 
@@ -116,6 +126,9 @@
             const errorMessage = document.getElementById('error-message');
             const indentSize = document.getElementById('indent-size');
             const sortKeys = document.getElementById('sort-keys');
+            const sortDirection = document.getElementById('sort-direction');
+            const sortAsc = document.getElementById('sort-asc');
+            const sortDesc = document.getElementById('sort-desc');
             
             // Beautify JSON
             function beautifyJSON() {
@@ -131,7 +144,8 @@
                     
                     // Sort keys if option is checked
                     if (sortKeys.checked) {
-                        jsonObj = sortObjectKeys(jsonObj);
+                        const direction = sortAsc.checked ? 'asc' : 'desc';
+                        jsonObj = sortObjectKeys(jsonObj, direction);
                     }
                     
                     // Stringify with indentation
@@ -184,7 +198,7 @@
             }
             
             // Sort object keys recursively
-            function sortObjectKeys(obj) {
+            function sortObjectKeys(obj, direction = 'asc') {
                 // If not an object or is null, return as is
                 if (typeof obj !== 'object' || obj === null) {
                     return obj;
@@ -192,14 +206,20 @@
                 
                 // If array, sort each element
                 if (Array.isArray(obj)) {
-                    return obj.map(sortObjectKeys);
+                    return obj.map(item => sortObjectKeys(item, direction));
                 }
                 
                 // Create a new object with sorted keys
                 return Object.keys(obj)
-                    .sort()
+                    .sort((a, b) => {
+                        if (direction === 'asc') {
+                            return a.localeCompare(b);
+                        } else {
+                            return b.localeCompare(a);
+                        }
+                    })
                     .reduce((result, key) => {
-                        result[key] = sortObjectKeys(obj[key]);
+                        result[key] = sortObjectKeys(obj[key], direction);
                         return result;
                     }, {});
             }
@@ -214,6 +234,20 @@
             // Event listeners
             beautifyBtn.addEventListener('click', beautifyJSON);
             minifyBtn.addEventListener('click', minifyJSON);
+            
+            // Toggle sort direction options visibility
+            sortKeys.addEventListener('change', () => {
+                if (sortKeys.checked) {
+                    sortDirection.style.display = 'block';
+                } else {
+                    sortDirection.style.display = 'none';
+                }
+            });
+            
+            // Initialize sort direction visibility
+            if (sortKeys.checked) {
+                sortDirection.style.display = 'block';
+            }
             
             clearBtn.addEventListener('click', () => {
                 jsonInput.value = '';

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Convert strings between different case formats: camelCase, snake_case, kebab-case, PascalCase and more">
+    <title>String Case Converter | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>String Case Converter</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Convert strings between different case formats including camelCase, snake_case, kebab-case, PascalCase, and more. Useful for developers working across different programming languages and coding standards.</p>
+                    <p>Enter multiple strings (one per line) to convert them all at once.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="input-group">
+                        <label for="input-text">Input String(s):</label>
+                        <textarea id="input-text" placeholder="Enter text to convert (one string per line)..." aria-label="Input text" rows="6"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-input">Clear</button>
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                        </div>
+                    </div>
+                    
+                    <div class="options-group mt-2 mb-2">
+                        <label>Convert to:</label>
+                        <div class="options-controls">
+                            <select id="case-type" aria-label="Select case type">
+                                <option value="camelCase">camelCase</option>
+                                <option value="snake_case">snake_case</option>
+                                <option value="kebab-case">kebab-case</option>
+                                <option value="PascalCase">PascalCase</option>
+                                <option value="CONSTANT_CASE">CONSTANT_CASE</option>
+                                <option value="Title Case">Title Case</option>
+                                <option value="lowercase">lowercase</option>
+                                <option value="UPPERCASE">UPPERCASE</option>
+                                <option value="dot.case">dot.case</option>
+                                <option value="path/case">path/case</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="options-group mt-2 mb-2">
+                        <label>Additional Options:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="checkbox" id="detect-input-type" checked>
+                                Auto-detect input format
+                            </label>
+                            <label>
+                                <input type="checkbox" id="preserve-acronyms">
+                                Preserve acronyms (e.g., API, URL)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="convert-btn">Convert</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Result:</h3>
+                        <div class="input-group">
+                            <textarea id="result-text" readonly aria-label="Result"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="copy-result">Copy Result</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputText = document.getElementById('input-text');
+            const resultText = document.getElementById('result-text');
+            const convertBtn = document.getElementById('convert-btn');
+            const clearInputBtn = document.getElementById('clear-input');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const resultContainer = document.getElementById('result-container');
+            const errorMessage = document.getElementById('error-message');
+            const copyResultBtn = document.getElementById('copy-result');
+            const caseTypeSelect = document.getElementById('case-type');
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Helper functions for case conversions
+            function detectCaseType(str) {
+                if (/^[a-z][a-zA-Z0-9]*$/.test(str) && /[A-Z]/.test(str)) return 'camelCase';
+                if (/^[A-Z][a-zA-Z0-9]*$/.test(str)) return 'PascalCase';
+                if (/_/.test(str) && str === str.toLowerCase()) return 'snake_case';
+                if (/_/.test(str) && str === str.toUpperCase()) return 'CONSTANT_CASE';
+                if (/-/.test(str) && str === str.toLowerCase()) return 'kebab-case';
+                if (/\./.test(str) && str === str.toLowerCase()) return 'dot.case';
+                if (/\//.test(str) && str === str.toLowerCase()) return 'path/case';
+                if (str === str.toLowerCase()) return 'lowercase';
+                if (str === str.toUpperCase()) return 'UPPERCASE';
+                if (/\s/.test(str) && str.split(' ').every(word => word[0] === word[0].toUpperCase())) return 'Title Case';
+                return 'unknown';
+            }
+            
+            function splitString(str) {
+                // Detect the case type to better handle the splitting
+                const caseType = detectCaseType(str);
+                
+                // Handle different case types
+                switch (caseType) {
+                    case 'camelCase':
+                        return str.replace(/([a-z])([A-Z])/g, '$1 $2').split(' ');
+                    case 'PascalCase':
+                        return str.replace(/([a-z])([A-Z])/g, '$1 $2').split(' ');
+                    case 'snake_case':
+                    case 'CONSTANT_CASE':
+                        return str.split('_');
+                    case 'kebab-case':
+                        return str.split('-');
+                    case 'dot.case':
+                        return str.split('.');
+                    case 'path/case':
+                        return str.split('/');
+                    case 'Title Case':
+                    case 'lowercase':
+                    case 'UPPERCASE':
+                        return str.split(' ');
+                    default:
+                        // Fallback to the generic approach
+                        return str
+                            .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase to words
+                            .replace(/[_\-\.\/]/g, ' ') // Replace common delimiters with spaces
+                            .replace(/\s+/g, ' ') // Normalize spaces
+                            .trim()
+                            .split(' ');
+                }
+            }
+            
+            function preserveAcronyms(words, acronyms = ['API', 'URL', 'ID', 'UUID', 'JSON', 'XML', 'HTML', 'CSS', 'HTTP', 'HTTPS']) {
+                return words.map(word => {
+                    const upperWord = word.toUpperCase();
+                    if (acronyms.includes(upperWord)) {
+                        return upperWord;
+                    }
+                    return word;
+                });
+            }
+            
+            function toCamelCase(str, preserveAcronymsFlag = false) {
+                let words = splitString(str);
+                
+                if (preserveAcronymsFlag) {
+                    words = preserveAcronyms(words);
+                }
+                
+                return words.map((word, index) => {
+                    if (index === 0) {
+                        return word.toLowerCase();
+                    }
+                    
+                    if (preserveAcronymsFlag && word === word.toUpperCase() && word.length > 1) {
+                        return word;
+                    }
+                    
+                    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                }).join('');
+            }
+            
+            function toSnakeCase(str, preserveAcronymsFlag = false) {
+                let words = splitString(str);
+                
+                if (preserveAcronymsFlag) {
+                    words = preserveAcronyms(words);
+                    return words.map(word => 
+                        word === word.toUpperCase() && word.length > 1 ? word : word.toLowerCase()
+                    ).join('_');
+                }
+                
+                return words.map(word => word.toLowerCase()).join('_');
+            }
+            
+            function toKebabCase(str, preserveAcronymsFlag = false) {
+                let words = splitString(str);
+                
+                if (preserveAcronymsFlag) {
+                    words = preserveAcronyms(words);
+                    return words.map(word => 
+                        word === word.toUpperCase() && word.length > 1 ? word : word.toLowerCase()
+                    ).join('-');
+                }
+                
+                return words.map(word => word.toLowerCase()).join('-');
+            }
+            
+            function toPascalCase(str, preserveAcronymsFlag = false) {
+                let words = splitString(str);
+                
+                if (preserveAcronymsFlag) {
+                    words = preserveAcronyms(words);
+                    return words.map(word => 
+                        word === word.toUpperCase() && word.length > 1 ? 
+                            word : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                    ).join('');
+                }
+                
+                return words.map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                ).join('');
+            }
+            
+            function toConstantCase(str, preserveAcronymsFlag = false) {
+                const words = splitString(str);
+                return words.map(word => word.toUpperCase()).join('_');
+            }
+            
+            function toTitleCase(str, preserveAcronymsFlag = false) {
+                let words = splitString(str);
+                
+                if (preserveAcronymsFlag) {
+                    words = preserveAcronyms(words);
+                    return words.map(word => 
+                        word === word.toUpperCase() && word.length > 1 ? 
+                            word : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                    ).join(' ');
+                }
+                
+                return words.map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                ).join(' ');
+            }
+            
+            function toLowerCase(str) {
+                return str.toLowerCase();
+            }
+            
+            function toUpperCase(str) {
+                return str.toUpperCase();
+            }
+            
+            function toDotCase(str, preserveAcronymsFlag = false) {
+                let words = splitString(str);
+                
+                if (preserveAcronymsFlag) {
+                    words = preserveAcronyms(words);
+                    return words.map(word => 
+                        word === word.toUpperCase() && word.length > 1 ? word : word.toLowerCase()
+                    ).join('.');
+                }
+                
+                return words.map(word => word.toLowerCase()).join('.');
+            }
+            
+            function toPathCase(str, preserveAcronymsFlag = false) {
+                let words = splitString(str);
+                
+                if (preserveAcronymsFlag) {
+                    words = preserveAcronyms(words);
+                    return words.map(word => 
+                        word === word.toUpperCase() && word.length > 1 ? word : word.toLowerCase()
+                    ).join('/');
+                }
+                
+                return words.map(word => word.toLowerCase()).join('/');
+            }
+            
+            // Convert text based on selected case type
+            function convertText() {
+                const input = inputText.value.trim();
+                
+                if (!input) {
+                    showError('Please enter text to convert');
+                    return;
+                }
+                
+                try {
+                    const caseType = caseTypeSelect.value;
+                    const preserveAcronymsFlag = document.getElementById('preserve-acronyms').checked;
+                    const detectInputType = document.getElementById('detect-input-type').checked;
+                    
+                    // Split input by lines to process multiple strings
+                    const inputLines = input.split('\n').filter(line => line.trim() !== '');
+                    const resultLines = [];
+                    
+                    for (const line of inputLines) {
+                        let result;
+                        
+                        switch (caseType) {
+                            case 'camelCase':
+                                result = toCamelCase(line, preserveAcronymsFlag);
+                                break;
+                            case 'snake_case':
+                                result = toSnakeCase(line, preserveAcronymsFlag);
+                                break;
+                            case 'kebab-case':
+                                result = toKebabCase(line, preserveAcronymsFlag);
+                                break;
+                            case 'PascalCase':
+                                result = toPascalCase(line, preserveAcronymsFlag);
+                                break;
+                            case 'CONSTANT_CASE':
+                                result = toConstantCase(line, preserveAcronymsFlag);
+                                break;
+                            case 'Title Case':
+                                result = toTitleCase(line, preserveAcronymsFlag);
+                                break;
+                            case 'lowercase':
+                                result = toLowerCase(line);
+                                break;
+                            case 'UPPERCASE':
+                                result = toUpperCase(line);
+                                break;
+                            case 'dot.case':
+                                result = toDotCase(line, preserveAcronymsFlag);
+                                break;
+                            case 'path/case':
+                                result = toPathCase(line, preserveAcronymsFlag);
+                                break;
+                            default:
+                                result = line;
+                        }
+                        
+                        resultLines.push(result);
+                    }
+                    
+                    resultText.value = resultLines.join('\n');
+                    resultContainer.classList.remove('hidden');
+                } catch (error) {
+                    showError(`Error: ${error.message}`);
+                }
+            }
+            
+            // Load sample data
+            function loadSample() {
+                // Provide different samples based on the selected case type
+                const samples = {
+                    'camelCase': 'snake_case_example\nkebab-case-example\nPascalCaseExample\nAPI_KEY_VALUE',
+                    'snake_case': 'camelCaseExample\nkebab-case-example\nPascalCaseExample\nAPI_KEY_VALUE',
+                    'kebab-case': 'camel_case_example\nsnake_case_example\nPascalCaseExample\nAPI_KEY_VALUE',
+                    'PascalCase': 'kebab-case-example\ncamelCaseExample\nsnake_case_example\nAPI_KEY_VALUE',
+                    'CONSTANT_CASE': 'PascalCaseExample\ncamelCaseExample\nsnake_case_example\nAPI_KEY_VALUE',
+                    'Title Case': 'constant_case_example\ncamelCaseExample\nsnake_case_example\nAPI_KEY_VALUE',
+                    'lowercase': 'UPPERCASE EXAMPLE\nPascalCaseExample\ncamelCaseExample\nAPI_KEY_VALUE',
+                    'UPPERCASE': 'lowercase example\ncamelCaseExample\nsnake_case_example\nAPI_KEY_VALUE',
+                    'dot.case': 'path/case/example\ncamelCaseExample\nsnake_case_example\nAPI_KEY_VALUE',
+                    'path/case': 'dot.case.example\ncamelCaseExample\nsnake_case_example\nAPI_KEY_VALUE'
+                };
+                
+                inputText.value = samples[caseTypeSelect.value] || 'string_case_conversion_example\ncamelCaseExample\nkebab-case-example\nAPI_KEY_VALUE';
+            }
+            
+            // Copy result to clipboard
+            function copyResult() {
+                resultText.select();
+                document.execCommand('copy');
+                
+                // Show temporary success message
+                const originalText = copyResultBtn.textContent;
+                copyResultBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyResultBtn.textContent = originalText;
+                }, 2000);
+            }
+            
+            // Clear input
+            function clearInput() {
+                inputText.value = '';
+                resultContainer.classList.add('hidden');
+            }
+            
+            // Event listeners
+            convertBtn.addEventListener('click', convertText);
+            clearInputBtn.addEventListener('click', clearInput);
+            loadSampleBtn.addEventListener('click', loadSample);
+            copyResultBtn.addEventListener('click', copyResult);
+            
+            // Update sample when case type changes
+            caseTypeSelect.addEventListener('change', () => {
+                if (inputText.value.trim() === '') {
+                    loadSample();
+                }
+            });
+            
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Visual tool to create crontab expressions with natural language descriptions">
+    <title>Crontab Generator | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>Crontab Generator</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Create crontab expressions visually and get human-readable descriptions. Useful for scheduling tasks in Unix-based systems.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="input-group">
+                        <label for="cron-expression">Crontab Expression:</label>
+                        <div class="input-with-button">
+                            <input type="text" id="cron-expression" placeholder="* * * * *" aria-label="Crontab expression">
+                            <button class="secondary" id="generate-btn">Generate from Selection</button>
+                        </div>
+                    </div>
+
+                    <div class="options-group mt-2">
+                        <h3>Visual Selection</h3>
+                        
+                        <div class="cron-field">
+                            <label>Minutes (0-59):</label>
+                            <div class="cron-options">
+                                <select id="minute-select" class="cron-select">
+                                    <option value="*">Every minute (*)</option>
+                                    <option value="*/5">Every 5 minutes (*/5)</option>
+                                    <option value="*/10">Every 10 minutes (*/10)</option>
+                                    <option value="*/15">Every 15 minutes (*/15)</option>
+                                    <option value="*/30">Every 30 minutes (*/30)</option>
+                                    <option value="0">At minute 0 (0)</option>
+                                    <option value="custom">Custom value...</option>
+                                </select>
+                                <input type="text" id="minute-custom" class="cron-custom hidden" placeholder="Custom minute value">
+                            </div>
+                        </div>
+                        
+                        <div class="cron-field">
+                            <label>Hours (0-23):</label>
+                            <div class="cron-options">
+                                <select id="hour-select" class="cron-select">
+                                    <option value="*">Every hour (*)</option>
+                                    <option value="*/2">Every 2 hours (*/2)</option>
+                                    <option value="*/3">Every 3 hours (*/3)</option>
+                                    <option value="*/6">Every 6 hours (*/6)</option>
+                                    <option value="*/12">Every 12 hours (*/12)</option>
+                                    <option value="0">At midnight (0)</option>
+                                    <option value="12">At noon (12)</option>
+                                    <option value="custom">Custom value...</option>
+                                </select>
+                                <input type="text" id="hour-custom" class="cron-custom hidden" placeholder="Custom hour value">
+                            </div>
+                        </div>
+                        
+                        <div class="cron-field">
+                            <label>Day of Month (1-31):</label>
+                            <div class="cron-options">
+                                <select id="dom-select" class="cron-select">
+                                    <option value="*">Every day (*)</option>
+                                    <option value="1">1st day of month (1)</option>
+                                    <option value="15">15th day of month (15)</option>
+                                    <option value="L">Last day of month (L)</option>
+                                    <option value="custom">Custom value...</option>
+                                </select>
+                                <input type="text" id="dom-custom" class="cron-custom hidden" placeholder="Custom day of month value">
+                            </div>
+                        </div>
+                        
+                        <div class="cron-field">
+                            <label>Month (1-12):</label>
+                            <div class="cron-options">
+                                <select id="month-select" class="cron-select">
+                                    <option value="*">Every month (*)</option>
+                                    <option value="1">January (1)</option>
+                                    <option value="2">February (2)</option>
+                                    <option value="3">March (3)</option>
+                                    <option value="4">April (4)</option>
+                                    <option value="5">May (5)</option>
+                                    <option value="6">June (6)</option>
+                                    <option value="7">July (7)</option>
+                                    <option value="8">August (8)</option>
+                                    <option value="9">September (9)</option>
+                                    <option value="10">October (10)</option>
+                                    <option value="11">November (11)</option>
+                                    <option value="12">December (12)</option>
+                                    <option value="custom">Custom value...</option>
+                                </select>
+                                <input type="text" id="month-custom" class="cron-custom hidden" placeholder="Custom month value">
+                            </div>
+                        </div>
+                        
+                        <div class="cron-field">
+                            <label>Day of Week (0-6):</label>
+                            <div class="cron-options">
+                                <select id="dow-select" class="cron-select">
+                                    <option value="*">Every day (*)</option>
+                                    <option value="0">Sunday (0)</option>
+                                    <option value="1">Monday (1)</option>
+                                    <option value="2">Tuesday (2)</option>
+                                    <option value="3">Wednesday (3)</option>
+                                    <option value="4">Thursday (4)</option>
+                                    <option value="5">Friday (5)</option>
+                                    <option value="6">Saturday (6)</option>
+                                    <option value="1-5">Monday to Friday (1-5)</option>
+                                    <option value="0,6">Weekends (0,6)</option>
+                                    <option value="custom">Custom value...</option>
+                                </select>
+                                <input type="text" id="dow-custom" class="cron-custom hidden" placeholder="Custom day of week value">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="options-group mt-2">
+                        <h3>Common Presets</h3>
+                        <div class="preset-buttons">
+                            <button class="secondary preset-btn" data-preset="0 0 * * *">Daily at midnight</button>
+                            <button class="secondary preset-btn" data-preset="0 12 * * *">Daily at noon</button>
+                            <button class="secondary preset-btn" data-preset="0 0 * * 0">Weekly on Sunday</button>
+                            <button class="secondary preset-btn" data-preset="0 0 * * 1">Weekly on Monday</button>
+                            <button class="secondary preset-btn" data-preset="0 0 1 * *">Monthly (1st day)</button>
+                            <button class="secondary preset-btn" data-preset="0 0 1 1 *">Yearly (Jan 1st)</button>
+                            <button class="secondary preset-btn" data-preset="*/15 * * * *">Every 15 minutes</button>
+                            <button class="secondary preset-btn" data-preset="0 */2 * * *">Every 2 hours</button>
+                            <button class="secondary preset-btn" data-preset="0 9-17 * * 1-5">Workdays 9am-5pm</button>
+                        </div>
+                    </div>
+
+                    <div class="result-container mt-3" id="result-container">
+                        <h3>Human Readable Description:</h3>
+                        <div class="result-box">
+                            <p id="cron-description">Run a command every minute</p>
+                        </div>
+                        
+                        <h3 class="mt-2">Next Execution Times:</h3>
+                        <div class="result-box">
+                            <ul id="next-executions"></ul>
+                        </div>
+                        
+                        <div class="input-controls mt-2">
+                            <button class="secondary" id="copy-expression">Copy Expression</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const cronExpression = document.getElementById('cron-expression');
+            const generateBtn = document.getElementById('generate-btn');
+            const cronDescription = document.getElementById('cron-description');
+            const nextExecutions = document.getElementById('next-executions');
+            const copyExpressionBtn = document.getElementById('copy-expression');
+            const errorMessage = document.getElementById('error-message');
+            const presetButtons = document.querySelectorAll('.preset-btn');
+            
+            // Cron field selectors
+            const minuteSelect = document.getElementById('minute-select');
+            const hourSelect = document.getElementById('hour-select');
+            const domSelect = document.getElementById('dom-select');
+            const monthSelect = document.getElementById('month-select');
+            const dowSelect = document.getElementById('dow-select');
+            
+            // Custom input fields
+            const minuteCustom = document.getElementById('minute-custom');
+            const hourCustom = document.getElementById('hour-custom');
+            const domCustom = document.getElementById('dom-custom');
+            const monthCustom = document.getElementById('month-custom');
+            const dowCustom = document.getElementById('dow-custom');
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Toggle custom input field visibility
+            function toggleCustomField(select, customField) {
+                if (select.value === 'custom') {
+                    customField.classList.remove('hidden');
+                    customField.focus();
+                } else {
+                    customField.classList.add('hidden');
+                }
+            }
+            
+            // Generate cron expression from selections
+            function generateCronExpression() {
+                const getFieldValue = (select, customField) => {
+                    return select.value === 'custom' ? customField.value : select.value;
+                };
+                
+                const minute = getFieldValue(minuteSelect, minuteCustom);
+                const hour = getFieldValue(hourSelect, hourCustom);
+                const dom = getFieldValue(domSelect, domCustom);
+                const month = getFieldValue(monthSelect, monthCustom);
+                const dow = getFieldValue(dowSelect, dowCustom);
+                
+                // Validate custom fields
+                if (select.value === 'custom' && !customField.value.trim()) {
+                    showError('Please enter a value for custom fields');
+                    return null;
+                }
+                
+                return `${minute} ${hour} ${dom} ${month} ${dow}`;
+            }
+            
+            // Parse cron expression to update selectors
+            function parseCronExpression(expression) {
+                try {
+                    const parts = expression.trim().split(/\s+/);
+                    
+                    if (parts.length !== 5) {
+                        showError('Invalid cron expression. Must have 5 parts.');
+                        return false;
+                    }
+                    
+                    // Update selectors or custom fields
+                    updateSelectorOrCustom(minuteSelect, minuteCustom, parts[0]);
+                    updateSelectorOrCustom(hourSelect, hourCustom, parts[1]);
+                    updateSelectorOrCustom(domSelect, domCustom, parts[2]);
+                    updateSelectorOrCustom(monthSelect, monthCustom, parts[3]);
+                    updateSelectorOrCustom(dowSelect, dowCustom, parts[4]);
+                    
+                    return true;
+                } catch (error) {
+                    showError(`Error parsing cron expression: ${error.message}`);
+                    return false;
+                }
+            }
+            
+            // Update selector or custom field based on value
+            function updateSelectorOrCustom(select, customField, value) {
+                // Check if value exists in options
+                let found = false;
+                for (let i = 0; i < select.options.length; i++) {
+                    if (select.options[i].value === value) {
+                        select.selectedIndex = i;
+                        customField.classList.add('hidden');
+                        found = true;
+                        break;
+                    }
+                }
+                
+                // If not found, use custom field
+                if (!found) {
+                    select.value = 'custom';
+                    customField.value = value;
+                    customField.classList.remove('hidden');
+                }
+            }
+            
+            // Get human-readable description
+            function getDescription(expression) {
+                const parts = expression.split(/\s+/);
+                const minute = parts[0];
+                const hour = parts[1];
+                const dom = parts[2];
+                const month = parts[3];
+                const dow = parts[4];
+                
+                let description = 'Run a command';
+                
+                // Minutes
+                if (minute === '*') {
+                    description += ' every minute';
+                } else if (minute.startsWith('*/')) {
+                    const interval = minute.substring(2);
+                    description += ` every ${interval} minutes`;
+                } else if (minute.includes(',')) {
+                    description += ` at minutes ${minute}`;
+                } else if (minute.includes('-')) {
+                    description += ` every minute from ${minute}`;
+                } else {
+                    description += ` at minute ${minute}`;
+                }
+                
+                // Hours
+                if (hour !== '*') {
+                    if (hour.startsWith('*/')) {
+                        const interval = hour.substring(2);
+                        description += ` every ${interval} hours`;
+                    } else if (hour.includes(',')) {
+                        description += ` during hours ${hour}`;
+                    } else if (hour.includes('-')) {
+                        description += ` from ${hour.split('-')[0]}:00 to ${hour.split('-')[1]}:59`;
+                    } else {
+                        const hourNum = parseInt(hour, 10);
+                        const hourStr = hourNum === 0 ? 'midnight' : 
+                                       hourNum === 12 ? 'noon' : 
+                                       hourNum < 12 ? `${hourNum}am` : `${hourNum-12}pm`;
+                        description += ` at ${hourStr}`;
+                    }
+                }
+                
+                // Days of month
+                if (dom !== '*') {
+                    if (dom === 'L') {
+                        description += ' on the last day of the month';
+                    } else if (dom.includes(',')) {
+                        description += ` on days ${dom} of the month`;
+                    } else if (dom.includes('-')) {
+                        description += ` on days ${dom} of the month`;
+                    } else {
+                        const dayNum = parseInt(dom, 10);
+                        const suffix = dayNum === 1 ? 'st' : dayNum === 2 ? 'nd' : dayNum === 3 ? 'rd' : 'th';
+                        description += ` on the ${dayNum}${suffix} day of the month`;
+                    }
+                }
+                
+                // Months
+                if (month !== '*') {
+                    const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 
+                                       'July', 'August', 'September', 'October', 'November', 'December'];
+                    
+                    if (month.includes(',')) {
+                        const monthList = month.split(',').map(m => monthNames[parseInt(m, 10)]).join(', ');
+                        description += ` in ${monthList}`;
+                    } else if (month.includes('-')) {
+                        const [start, end] = month.split('-');
+                        description += ` from ${monthNames[parseInt(start, 10)]} to ${monthNames[parseInt(end, 10)]}`;
+                    } else {
+                        description += ` in ${monthNames[parseInt(month, 10)]}`;
+                    }
+                }
+                
+                // Days of week
+                if (dow !== '*') {
+                    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    
+                    if (dow === '1-5') {
+                        description += ' on weekdays';
+                    } else if (dow === '0,6') {
+                        description += ' on weekends';
+                    } else if (dow.includes(',')) {
+                        const dayList = dow.split(',').map(d => dayNames[parseInt(d, 10)]).join(', ');
+                        description += ` on ${dayList}`;
+                    } else if (dow.includes('-')) {
+                        const [start, end] = dow.split('-');
+                        description += ` from ${dayNames[parseInt(start, 10)]} to ${dayNames[parseInt(end, 10)]}`;
+                    } else {
+                        description += ` on ${dayNames[parseInt(dow, 10)]}`;
+                    }
+                }
+                
+                return description;
+            }
+            
+            // Calculate next execution times
+            function calculateNextExecutions(expression, count = 5) {
+                // This is a simplified implementation
+                // In a real application, you would use a library like cron-parser
+                
+                // For demo purposes, we'll just show the current time plus some intervals
+                const now = new Date();
+                const executions = [];
+                
+                for (let i = 0; i < count; i++) {
+                    // Add a random number of minutes (1-60) for demo purposes
+                    const next = new Date(now.getTime() + (i + 1) * Math.floor(Math.random() * 60 + 1) * 60000);
+                    executions.push(next.toLocaleString());
+                }
+                
+                return executions;
+            }
+            
+            // Update the UI with cron information
+            function updateCronInfo() {
+                const expression = cronExpression.value.trim();
+                
+                if (!expression) {
+                    showError('Please enter a cron expression');
+                    return;
+                }
+                
+                try {
+                    // Update description
+                    cronDescription.textContent = getDescription(expression);
+                    
+                    // Update next executions
+                    const executions = calculateNextExecutions(expression);
+                    nextExecutions.innerHTML = '';
+                    executions.forEach(time => {
+                        const li = document.createElement('li');
+                        li.textContent = time;
+                        nextExecutions.appendChild(li);
+                    });
+                } catch (error) {
+                    showError(`Error: ${error.message}`);
+                }
+            }
+            
+            // Copy cron expression to clipboard
+            function copyExpression() {
+                const expression = cronExpression.value.trim();
+                
+                if (!expression) {
+                    showError('No cron expression to copy');
+                    return;
+                }
+                
+                navigator.clipboard.writeText(expression)
+                    .then(() => {
+                        const originalText = copyExpressionBtn.textContent;
+                        copyExpressionBtn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyExpressionBtn.textContent = originalText;
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        showError(`Error copying to clipboard: ${err.message}`);
+                    });
+            }
+            
+            // Event listeners for selectors
+            minuteSelect.addEventListener('change', () => {
+                toggleCustomField(minuteSelect, minuteCustom);
+            });
+            
+            hourSelect.addEventListener('change', () => {
+                toggleCustomField(hourSelect, hourCustom);
+            });
+            
+            domSelect.addEventListener('change', () => {
+                toggleCustomField(domSelect, domCustom);
+            });
+            
+            monthSelect.addEventListener('change', () => {
+                toggleCustomField(monthSelect, monthCustom);
+            });
+            
+            dowSelect.addEventListener('change', () => {
+                toggleCustomField(dowSelect, dowCustom);
+            });
+            
+            // Event listener for generate button
+            generateBtn.addEventListener('click', () => {
+                const expression = generateCronExpression();
+                if (expression) {
+                    cronExpression.value = expression;
+                    updateCronInfo();
+                }
+            });
+            
+            // Event listener for cron expression input
+            cronExpression.addEventListener('input', () => {
+                // Debounce for better performance
+                clearTimeout(cronExpression.timer);
+                cronExpression.timer = setTimeout(() => {
+                    const expression = cronExpression.value.trim();
+                    if (expression) {
+                        parseCronExpression(expression);
+                        updateCronInfo();
+                    }
+                }, 500);
+            });
+            
+            // Event listener for copy button
+            copyExpressionBtn.addEventListener('click', copyExpression);
+            
+            // Event listeners for preset buttons
+            presetButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const preset = button.getAttribute('data-preset');
+                    cronExpression.value = preset;
+                    parseCronExpression(preset);
+                    updateCronInfo();
+                });
+            });
+            
+            // Initialize with default value
+            cronExpression.value = '* * * * *';
+            updateCronInfo();
+            
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Generate Protocol Buffer definitions from JSON examples">
+    <title>JSON to Protobuf Generator | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>JSON to Protocol Buffer Generator</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Generate Protocol Buffer (protobuf) definitions from JSON examples. This tool analyzes your JSON structure and creates corresponding .proto file definitions.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="options-group mt-2 mb-2">
+                        <label>Options:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="checkbox" id="use-proto3" checked>
+                                Use Proto3 Syntax
+                            </label>
+                            <label>
+                                <input type="checkbox" id="include-comments" checked>
+                                Include Type Comments
+                            </label>
+                            <label>
+                                <input type="checkbox" id="camel-to-snake">
+                                Convert camelCase to snake_case
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="package-name">Package Name:</label>
+                        <input type="text" id="package-name" placeholder="e.g., myapp.models" value="myapp">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="message-name">Root Message Name:</label>
+                        <input type="text" id="message-name" placeholder="e.g., User, Product, etc." value="Root">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="input-json">JSON Input:</label>
+                        <textarea id="input-json" placeholder="Paste your JSON example here..." aria-label="JSON input" rows="10"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-input">Clear</button>
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                            <button class="secondary" id="format-json">Format JSON</button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="generate-btn">Generate Protobuf</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Protocol Buffer Definition:</h3>
+                        <div class="input-group">
+                            <textarea id="result-proto" readonly aria-label="Result" rows="15"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="copy-result">Copy Result</button>
+                                <button class="secondary" id="download-proto">Download .proto</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputJson = document.getElementById('input-json');
+            const resultProto = document.getElementById('result-proto');
+            const generateBtn = document.getElementById('generate-btn');
+            const clearInputBtn = document.getElementById('clear-input');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const formatJsonBtn = document.getElementById('format-json');
+            const resultContainer = document.getElementById('result-container');
+            const errorMessage = document.getElementById('error-message');
+            const copyResultBtn = document.getElementById('copy-result');
+            const downloadProtoBtn = document.getElementById('download-proto');
+            const packageNameInput = document.getElementById('package-name');
+            const messageNameInput = document.getElementById('message-name');
+            const useProto3Checkbox = document.getElementById('use-proto3');
+            const includeCommentsCheckbox = document.getElementById('include-comments');
+            const camelToSnakeCheckbox = document.getElementById('camel-to-snake');
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Format JSON input
+            function formatJson() {
+                try {
+                    const json = JSON.parse(inputJson.value);
+                    inputJson.value = JSON.stringify(json, null, 2);
+                } catch (error) {
+                    showError(`Invalid JSON: ${error.message}`);
+                }
+            }
+            
+            // Convert camelCase to snake_case
+            function camelToSnakeCase(str) {
+                return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+            }
+            
+            // Generate a unique message name based on field name and parent
+            function generateMessageName(fieldName, parentName) {
+                // Capitalize first letter
+                const capitalizedField = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+                return `${parentName}${capitalizedField}`;
+            }
+            
+            // Determine protobuf type from JavaScript value
+            function getProtoType(value, fieldName, parentMessageName, result, fieldPath = '') {
+                if (value === null || value === undefined) {
+                    return 'google.protobuf.Any';
+                }
+                
+                const type = typeof value;
+                
+                if (type === 'string') {
+                    return 'string';
+                } else if (type === 'number') {
+                    // Check if it's an integer
+                    return Number.isInteger(value) ? 'int32' : 'double';
+                } else if (type === 'boolean') {
+                    return 'bool';
+                } else if (Array.isArray(value)) {
+                    if (value.length === 0) {
+                        return 'repeated google.protobuf.Any';
+                    }
+                    
+                    // Use the first element to determine the type
+                    const elementType = getProtoType(
+                        value[0], 
+                        fieldName, 
+                        parentMessageName, 
+                        result,
+                        `${fieldPath}.${fieldName}`
+                    );
+                    
+                    return `repeated ${elementType}`;
+                } else if (type === 'object') {
+                    // Generate a new message for this object
+                    const messageName = generateMessageName(fieldName, parentMessageName);
+                    
+                    // Check if we've already processed this path to avoid circular references
+                    const currentPath = `${fieldPath}.${fieldName}`;
+                    if (!result.processedPaths.includes(currentPath)) {
+                        result.processedPaths.push(currentPath);
+                        
+                        // Create a new message definition
+                        const messageDefinition = generateMessageDefinition(
+                            value, 
+                            messageName, 
+                            result,
+                            currentPath
+                        );
+                        
+                        // Add the message definition to our results
+                        result.messages.push(messageDefinition);
+                    }
+                    
+                    return messageName;
+                }
+                
+                return 'google.protobuf.Any';
+            }
+            
+            // Generate a message definition from an object
+            function generateMessageDefinition(obj, messageName, result, fieldPath = '') {
+                let messageContent = `message ${messageName} {\n`;
+                let fieldNumber = 1;
+                
+                for (const [key, value] of Object.entries(obj)) {
+                    // Handle field name conversion if needed
+                    let fieldName = key;
+                    if (camelToSnakeCheckbox.checked && /[A-Z]/.test(key)) {
+                        fieldName = camelToSnakeCase(key);
+                    }
+                    
+                    // Get the protobuf type for this field
+                    const protoType = getProtoType(
+                        value, 
+                        key, 
+                        messageName, 
+                        result,
+                        fieldPath
+                    );
+                    
+                    // Add comments if requested
+                    if (includeCommentsCheckbox.checked) {
+                        const jsType = Array.isArray(value) ? 'array' : typeof value;
+                        messageContent += `  // JavaScript type: ${jsType}\n`;
+                    }
+                    
+                    // Add the field definition
+                    messageContent += `  ${protoType} ${fieldName} = ${fieldNumber};\n`;
+                    fieldNumber++;
+                }
+                
+                messageContent += '}\n';
+                return messageContent;
+            }
+            
+            // Generate protobuf definition from JSON
+            function generateProtobuf() {
+                const jsonInput = inputJson.value.trim();
+                
+                if (!jsonInput) {
+                    showError('Please enter JSON to convert');
+                    return;
+                }
+                
+                try {
+                    const json = JSON.parse(jsonInput);
+                    const packageName = packageNameInput.value.trim() || 'myapp';
+                    const rootMessageName = messageNameInput.value.trim() || 'Root';
+                    
+                    // Initialize result object
+                    const result = {
+                        messages: [],
+                        processedPaths: []
+                    };
+                    
+                    // Generate the root message
+                    const rootMessage = generateMessageDefinition(
+                        json, 
+                        rootMessageName, 
+                        result
+                    );
+                    
+                    // Build the complete proto file
+                    let protoContent = '';
+                    
+                    // Add syntax version
+                    protoContent += useProto3Checkbox.checked 
+                        ? 'syntax = "proto3";\n\n' 
+                        : 'syntax = "proto2";\n\n';
+                    
+                    // Add package name
+                    protoContent += `package ${packageName};\n\n`;
+                    
+                    // Add import for Any type if needed
+                    if (protoContent.includes('google.protobuf.Any')) {
+                        protoContent += 'import "google/protobuf/any.proto";\n\n';
+                    }
+                    
+                    // Add the root message first
+                    protoContent += rootMessage + '\n';
+                    
+                    // Add all other messages
+                    for (const message of result.messages) {
+                        protoContent += message + '\n';
+                    }
+                    
+                    resultProto.value = protoContent;
+                    resultContainer.classList.remove('hidden');
+                } catch (error) {
+                    showError(`Error: ${error.message}`);
+                }
+            }
+            
+            // Load sample data
+            function loadSample() {
+                inputJson.value = `{
+  "user": {
+    "id": 123,
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "isActive": true,
+    "createdAt": "2023-01-15T08:30:00Z",
+    "score": 85.5,
+    "tags": ["premium", "verified"],
+    "address": {
+      "street": "123 Main St",
+      "city": "San Francisco",
+      "zipCode": "94105",
+      "coordinates": {
+        "latitude": 37.7749,
+        "longitude": -122.4194
+      }
+    },
+    "orders": [
+      {
+        "orderId": "ORD-001",
+        "amount": 99.99,
+        "items": 3
+      },
+      {
+        "orderId": "ORD-002",
+        "amount": 45.5,
+        "items": 1
+      }
+    ]
+  },
+  "metadata": {
+    "version": "1.0",
+    "generated": true
+  }
+}`;
+                packageNameInput.value = "example.user";
+                messageNameInput.value = "UserData";
+            }
+            
+            // Clear input
+            function clearInput() {
+                inputJson.value = '';
+                resultContainer.classList.add('hidden');
+            }
+            
+            // Copy result to clipboard
+            function copyResult() {
+                resultProto.select();
+                document.execCommand('copy');
+                
+                // Show temporary success message
+                const originalText = copyResultBtn.textContent;
+                copyResultBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyResultBtn.textContent = originalText;
+                }, 2000);
+            }
+            
+            // Download proto file
+            function downloadProto() {
+                const protoContent = resultProto.value;
+                const rootMessageName = messageNameInput.value.trim() || 'Root';
+                const fileName = `${rootMessageName.toLowerCase()}.proto`;
+                
+                const blob = new Blob([protoContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Clean up
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 0);
+            }
+            
+            // Event listeners
+            generateBtn.addEventListener('click', generateProtobuf);
+            clearInputBtn.addEventListener('click', clearInput);
+            loadSampleBtn.addEventListener('click', loadSample);
+            formatJsonBtn.addEventListener('click', formatJson);
+            copyResultBtn.addEventListener('click', copyResult);
+            downloadProtoBtn.addEventListener('click', downloadProto);
+            
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+        });
+    </script>
+</body>
+</html>
