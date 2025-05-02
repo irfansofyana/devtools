@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Convert between JSON and YAML formats with validation">
+    <title>JSON <-> YAML Converter | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>JSON <-> YAML Converter</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Convert between JSON and YAML formats with validation. Paste your JSON or YAML content in the input area and click the convert button.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="input-group">
+                        <label for="input-format">Input Format:</label>
+                        <select id="input-format" aria-label="Select input format">
+                            <option value="json">JSON</option>
+                            <option value="yaml">YAML</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="input-content">Input:</label>
+                        <textarea id="input-content" placeholder="Paste your JSON or YAML here..." aria-label="Input content"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-input">Clear</button>
+                            <button class="secondary" id="format-input">Format</button>
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button class="primary" id="convert-btn">Convert</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <div class="input-group">
+                            <label for="output-content">Result:</label>
+                            <textarea id="output-content" readonly aria-label="Output content"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" data-copy="output-content">Copy to Clipboard</button>
+                                <button class="secondary" id="download-btn">Download</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputFormatSelect = document.getElementById('input-format');
+            const inputContent = document.getElementById('input-content');
+            const outputContent = document.getElementById('output-content');
+            const convertBtn = document.getElementById('convert-btn');
+            const clearInputBtn = document.getElementById('clear-input');
+            const formatInputBtn = document.getElementById('format-input');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const downloadBtn = document.getElementById('download-btn');
+            const resultContainer = document.getElementById('result-container');
+            const errorMessage = document.getElementById('error-message');
+
+            // Convert button click handler
+            convertBtn.addEventListener('click', () => {
+                const input = inputContent.value.trim();
+                if (!input) {
+                    showError('Please enter some content to convert', 'error-message');
+                    return;
+                }
+
+                try {
+                    const inputFormat = inputFormatSelect.value;
+                    let result = '';
+                    let outputFormat = '';
+
+                    if (inputFormat === 'json') {
+                        // Convert JSON to YAML
+                        const jsonObj = JSON.parse(input);
+                        result = jsyaml.dump(jsonObj);
+                        outputFormat = 'yaml';
+                    } else {
+                        // Convert YAML to JSON
+                        const yamlObj = jsyaml.load(input);
+                        result = JSON.stringify(yamlObj, null, 2);
+                        outputFormat = 'json';
+                    }
+
+                    outputContent.value = result;
+                    resultContainer.classList.remove('hidden');
+                    
+                    // Update download button
+                    downloadBtn.onclick = () => {
+                        const extension = outputFormat === 'json' ? 'json' : 'yaml';
+                        downloadTextFile(result, `converted.${extension}`, 
+                            outputFormat === 'json' ? 'application/json' : 'text/yaml');
+                    };
+                } catch (error) {
+                    showError(`Error: ${error.message}`, 'error-message');
+                }
+            });
+
+            // Clear input button
+            clearInputBtn.addEventListener('click', () => {
+                inputContent.value = '';
+                resultContainer.classList.add('hidden');
+            });
+
+            // Format input button
+            formatInputBtn.addEventListener('click', () => {
+                const input = inputContent.value.trim();
+                if (!input) return;
+
+                try {
+                    const inputFormat = inputFormatSelect.value;
+                    
+                    if (inputFormat === 'json') {
+                        const jsonObj = JSON.parse(input);
+                        inputContent.value = JSON.stringify(jsonObj, null, 2);
+                    } else {
+                        const yamlObj = jsyaml.load(input);
+                        inputContent.value = jsyaml.dump(yamlObj);
+                    }
+                } catch (error) {
+                    showError(`Format error: ${error.message}`, 'error-message');
+                }
+            });
+
+            // Load sample button
+            loadSampleBtn.addEventListener('click', () => {
+                const inputFormat = inputFormatSelect.value;
+                
+                if (inputFormat === 'json') {
+                    inputContent.value = JSON.stringify({
+                        name: "Devtools",
+                        version: "1.0.0",
+                        description: "A collection of developer tools",
+                        features: ["JSON/YAML Converter", "Cron Parser", "Timestamp Converter"],
+                        settings: {
+                            theme: "dark",
+                            autoSave: true,
+                            notifications: {
+                                enabled: true,
+                                frequency: "daily"
+                            }
+                        },
+                        lastUpdated: "2025-05-02T10:16:11+07:00"
+                    }, null, 2);
+                } else {
+                    inputContent.value = 
+`name: Devtools
+version: 1.0.0
+description: A collection of developer tools
+features:
+  - JSON/YAML Converter
+  - Cron Parser
+  - Timestamp Converter
+settings:
+  theme: dark
+  autoSave: true
+  notifications:
+    enabled: true
+    frequency: daily
+lastUpdated: 2025-05-02T10:16:11+07:00`;
+                }
+            });
+
+            // Input format change handler
+            inputFormatSelect.addEventListener('change', () => {
+                resultContainer.classList.add('hidden');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interpret cron expressions and show next execution times">
+    <title>Cron Expression Parser | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>Cron Expression Parser</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Interpret cron expressions and show next execution times. Enter a cron expression to see when it will run next.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="input-group">
+                        <label for="cron-expression">Cron Expression:</label>
+                        <input type="text" id="cron-expression" placeholder="e.g., 0 0 * * *" aria-label="Cron expression">
+                        <div class="input-controls">
+                            <button class="secondary" id="parse-btn">Parse</button>
+                            <button class="secondary" id="clear-btn">Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 mb-3">
+                        <h3>Common Cron Expressions:</h3>
+                        <div class="cron-examples">
+                            <button class="secondary mt-1 mr-1" data-cron="0 0 * * *">Daily at midnight (0 0 * * *)</button>
+                            <button class="secondary mt-1 mr-1" data-cron="0 */12 * * *">Every 12 hours (0 */12 * * *)</button>
+                            <button class="secondary mt-1 mr-1" data-cron="0 0 * * 1">Weekly on Monday (0 0 * * 1)</button>
+                            <button class="secondary mt-1 mr-1" data-cron="0 0 1 * *">Monthly on the 1st (0 0 1 * *)</button>
+                            <button class="secondary mt-1 mr-1" data-cron="*/15 * * * *">Every 15 minutes (*/15 * * * *)</button>
+                        </div>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Cron Expression Breakdown:</h3>
+                        <table class="cron-breakdown mt-2">
+                            <thead>
+                                <tr>
+                                    <th>Minute</th>
+                                    <th>Hour</th>
+                                    <th>Day of Month</th>
+                                    <th>Month</th>
+                                    <th>Day of Week</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td id="minute-value"></td>
+                                    <td id="hour-value"></td>
+                                    <td id="day-value"></td>
+                                    <td id="month-value"></td>
+                                    <td id="weekday-value"></td>
+                                </tr>
+                                <tr>
+                                    <td id="minute-desc"></td>
+                                    <td id="hour-desc"></td>
+                                    <td id="day-desc"></td>
+                                    <td id="month-desc"></td>
+                                    <td id="weekday-desc"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h3 class="mt-3">Next Execution Times:</h3>
+                        <div id="next-executions" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cronExpressionInput = document.getElementById('cron-expression');
+            const parseBtn = document.getElementById('parse-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const resultContainer = document.getElementById('result-container');
+            const errorMessage = document.getElementById('error-message');
+            const cronExamples = document.querySelectorAll('.cron-examples button');
+            
+            // Parse cron expression
+            function parseCronExpression() {
+                const cronExpression = cronExpressionInput.value.trim();
+                if (!cronExpression) {
+                    showError('Please enter a cron expression', 'error-message');
+                    return;
+                }
+
+                try {
+                    // Validate cron expression format
+                    const parts = cronExpression.split(' ');
+                    if (parts.length !== 5) {
+                        throw new Error('Cron expression must have 5 parts: minute, hour, day of month, month, day of week');
+                    }
+
+                    // Parse each part
+                    const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+                    
+                    // Display breakdown
+                    document.getElementById('minute-value').textContent = minute;
+                    document.getElementById('hour-value').textContent = hour;
+                    document.getElementById('day-value').textContent = dayOfMonth;
+                    document.getElementById('month-value').textContent = month;
+                    document.getElementById('weekday-value').textContent = dayOfWeek;
+                    
+                    // Set descriptions
+                    document.getElementById('minute-desc').textContent = getDescription(minute, 'minute', 0, 59);
+                    document.getElementById('hour-desc').textContent = getDescription(hour, 'hour', 0, 23);
+                    document.getElementById('day-desc').textContent = getDescription(dayOfMonth, 'day', 1, 31);
+                    document.getElementById('month-desc').textContent = getDescription(month, 'month', 1, 12);
+                    document.getElementById('weekday-desc').textContent = getDescription(dayOfWeek, 'weekday', 0, 6);
+                    
+                    // Calculate next execution times
+                    const nextExecutions = calculateNextExecutions(cronExpression, 5);
+                    displayNextExecutions(nextExecutions);
+                    
+                    // Show results
+                    resultContainer.classList.remove('hidden');
+                    errorMessage.classList.add('hidden');
+                } catch (error) {
+                    showError(`Error: ${error.message}`, 'error-message');
+                    resultContainer.classList.add('hidden');
+                }
+            }
+            
+            // Get description for cron part
+            function getDescription(part, type, min, max) {
+                if (part === '*') {
+                    return `Every ${type}`;
+                } else if (part.includes('/')) {
+                    const [_, step] = part.split('/');
+                    return `Every ${step} ${type}s`;
+                } else if (part.includes('-')) {
+                    const [start, end] = part.split('-');
+                    return `From ${start} to ${end}`;
+                } else if (part.includes(',')) {
+                    return `At specific ${type}s: ${part}`;
+                } else {
+                    return `At ${type} ${part}`;
+                }
+            }
+            
+            // Calculate next execution times
+            function calculateNextExecutions(cronExpression, count) {
+                const executions = [];
+                const now = new Date();
+                let nextDate = new Date(now);
+                
+                // Parse cron parts
+                const [minuteExp, hourExp, dayExp, monthExp, weekdayExp] = cronExpression.split(' ');
+                
+                // Helper function to check if a value matches a cron expression part
+                function matches(value, expression, min, max) {
+                    if (expression === '*') return true;
+                    
+                    if (expression.includes('/')) {
+                        const [_, step] = expression.split('/');
+                        return (value - min) % parseInt(step) === 0;
+                    }
+                    
+                    if (expression.includes('-')) {
+                        const [start, end] = expression.split('-').map(Number);
+                        return value >= start && value <= end;
+                    }
+                    
+                    if (expression.includes(',')) {
+                        return expression.split(',').map(Number).includes(value);
+                    }
+                    
+                    return value === parseInt(expression);
+                }
+                
+                // Simple implementation - not handling all cron features
+                // For a complete implementation, a dedicated cron library would be better
+                for (let i = 0; i < count * 10 && executions.length < count; i++) {
+                    // Move to next minute
+                    nextDate.setMinutes(nextDate.getMinutes() + 1);
+                    nextDate.setSeconds(0);
+                    nextDate.setMilliseconds(0);
+                    
+                    const minute = nextDate.getMinutes();
+                    const hour = nextDate.getHours();
+                    const day = nextDate.getDate();
+                    const month = nextDate.getMonth() + 1; // JavaScript months are 0-based
+                    const weekday = nextDate.getDay(); // 0 = Sunday, 6 = Saturday
+                    
+                    if (matches(minute, minuteExp, 0, 59) &&
+                        matches(hour, hourExp, 0, 23) &&
+                        matches(day, dayExp, 1, 31) &&
+                        matches(month, monthExp, 1, 12) &&
+                        matches(weekday, weekdayExp, 0, 6)) {
+                        executions.push(new Date(nextDate));
+                    }
+                }
+                
+                return executions;
+            }
+            
+            // Display next execution times
+            function displayNextExecutions(executions) {
+                const container = document.getElementById('next-executions');
+                container.innerHTML = '';
+                
+                if (executions.length === 0) {
+                    container.innerHTML = '<p>No upcoming executions found</p>';
+                    return;
+                }
+                
+                const list = document.createElement('ul');
+                executions.forEach(date => {
+                    const item = document.createElement('li');
+                    item.textContent = date.toLocaleString();
+                    list.appendChild(item);
+                });
+                
+                container.appendChild(list);
+            }
+            
+            // Event listeners
+            parseBtn.addEventListener('click', parseCronExpression);
+            
+            clearBtn.addEventListener('click', () => {
+                cronExpressionInput.value = '';
+                resultContainer.classList.add('hidden');
+                errorMessage.classList.add('hidden');
+            });
+            
+            cronExpressionInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    parseCronExpression();
+                }
+            });
+            
+            // Example cron expressions
+            cronExamples.forEach(button => {
+                button.addEventListener('click', () => {
+                    cronExpressionInput.value = button.dataset.cron;
+                    parseCronExpression();
+                });
+            });
+        });
+    </script>
+    
+    <style>
+        .cron-examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .cron-breakdown {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .cron-breakdown th, .cron-breakdown td {
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            text-align: center;
+        }
+        
+        .cron-breakdown th {
+            background-color: var(--bg-secondary);
+        }
+        
+        #next-executions ul {
+            list-style: disc;
+            padding-left: 1.5rem;
+        }
+        
+        #next-executions li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .mr-1 {
+            margin-right: 0.5rem;
+        }
+    </style>
+</body>
+</html>

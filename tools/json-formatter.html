@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Format and compress JSON with syntax highlighting">
+    <title>JSON Beautifier/Minifier | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+    <!-- Prism.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-dark.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>JSON Beautifier/Minifier</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Format and compress JSON with syntax highlighting. Paste your JSON to beautify or minify it.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="input-group">
+                        <label for="json-input">JSON Input:</label>
+                        <textarea id="json-input" placeholder="Paste your JSON here..." aria-label="JSON input"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="beautify-btn">Beautify</button>
+                            <button class="secondary" id="minify-btn">Minify</button>
+                            <button class="secondary" id="clear-btn">Clear</button>
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                        </div>
+                    </div>
+
+                    <div class="options-group mt-2 mb-2">
+                        <label>Beautify Options:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="number" id="indent-size" value="2" min="1" max="8">
+                                Indent Size
+                            </label>
+                            <label>
+                                <input type="checkbox" id="sort-keys" checked>
+                                Sort Keys
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <div class="input-group">
+                            <label for="json-output">Result:</label>
+                            <div class="output-wrapper">
+                                <pre id="json-output-wrapper"><code id="json-output" class="language-json"></code></pre>
+                            </div>
+                            <div class="input-controls">
+                                <button class="secondary" id="copy-btn" data-copy="json-output">Copy to Clipboard</button>
+                                <button class="secondary" id="download-btn">Download</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-json.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const jsonInput = document.getElementById('json-input');
+            const jsonOutput = document.getElementById('json-output');
+            const beautifyBtn = document.getElementById('beautify-btn');
+            const minifyBtn = document.getElementById('minify-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const copyBtn = document.getElementById('copy-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const resultContainer = document.getElementById('result-container');
+            const errorMessage = document.getElementById('error-message');
+            const indentSize = document.getElementById('indent-size');
+            const sortKeys = document.getElementById('sort-keys');
+            
+            // Beautify JSON
+            function beautifyJSON() {
+                const input = jsonInput.value.trim();
+                if (!input) {
+                    showError('Please enter JSON to beautify', 'error-message');
+                    return;
+                }
+                
+                try {
+                    // Parse JSON to validate
+                    let jsonObj = JSON.parse(input);
+                    
+                    // Sort keys if option is checked
+                    if (sortKeys.checked) {
+                        jsonObj = sortObjectKeys(jsonObj);
+                    }
+                    
+                    // Stringify with indentation
+                    const spaces = parseInt(indentSize.value) || 2;
+                    const beautified = JSON.stringify(jsonObj, null, spaces);
+                    
+                    // Display result with syntax highlighting
+                    jsonOutput.textContent = beautified;
+                    Prism.highlightElement(jsonOutput);
+                    
+                    // Show result container
+                    resultContainer.classList.remove('hidden');
+                    errorMessage.classList.add('hidden');
+                    
+                    // Update download button
+                    updateDownloadButton(beautified, 'beautified.json');
+                } catch (error) {
+                    showError(`Error: ${error.message}`, 'error-message');
+                }
+            }
+            
+            // Minify JSON
+            function minifyJSON() {
+                const input = jsonInput.value.trim();
+                if (!input) {
+                    showError('Please enter JSON to minify', 'error-message');
+                    return;
+                }
+                
+                try {
+                    // Parse JSON to validate
+                    let jsonObj = JSON.parse(input);
+                    
+                    // Stringify without indentation
+                    const minified = JSON.stringify(jsonObj);
+                    
+                    // Display result with syntax highlighting
+                    jsonOutput.textContent = minified;
+                    Prism.highlightElement(jsonOutput);
+                    
+                    // Show result container
+                    resultContainer.classList.remove('hidden');
+                    errorMessage.classList.add('hidden');
+                    
+                    // Update download button
+                    updateDownloadButton(minified, 'minified.json');
+                } catch (error) {
+                    showError(`Error: ${error.message}`, 'error-message');
+                }
+            }
+            
+            // Sort object keys recursively
+            function sortObjectKeys(obj) {
+                // If not an object or is null, return as is
+                if (typeof obj !== 'object' || obj === null) {
+                    return obj;
+                }
+                
+                // If array, sort each element
+                if (Array.isArray(obj)) {
+                    return obj.map(sortObjectKeys);
+                }
+                
+                // Create a new object with sorted keys
+                return Object.keys(obj)
+                    .sort()
+                    .reduce((result, key) => {
+                        result[key] = sortObjectKeys(obj[key]);
+                        return result;
+                    }, {});
+            }
+            
+            // Update download button
+            function updateDownloadButton(content, filename) {
+                downloadBtn.onclick = () => {
+                    downloadTextFile(content, filename, 'application/json');
+                };
+            }
+            
+            // Event listeners
+            beautifyBtn.addEventListener('click', beautifyJSON);
+            minifyBtn.addEventListener('click', minifyJSON);
+            
+            clearBtn.addEventListener('click', () => {
+                jsonInput.value = '';
+                resultContainer.classList.add('hidden');
+                errorMessage.classList.add('hidden');
+            });
+            
+            loadSampleBtn.addEventListener('click', () => {
+                jsonInput.value = JSON.stringify({
+                    "name": "Devtools",
+                    "version": "1.0.0",
+                    "description": "A collection of developer tools",
+                    "features": [
+                        "JSON/YAML Converter",
+                        "Cron Parser",
+                        "Timestamp Converter",
+                        "JSON Beautifier/Minifier",
+                        "Text Diff Utility"
+                    ],
+                    "settings": {
+                        "theme": "dark",
+                        "autoSave": true,
+                        "notifications": {
+                            "enabled": true,
+                            "frequency": "daily"
+                        }
+                    },
+                    "stats": {
+                        "users": 1000,
+                        "tools": 5,
+                        "rating": 4.9
+                    },
+                    "lastUpdated": "2025-05-02T10:16:11+07:00"
+                });
+                beautifyJSON();
+            });
+            
+            // Custom copy function for syntax highlighted code
+            copyBtn.addEventListener('click', () => {
+                const textToCopy = jsonOutput.textContent;
+                
+                navigator.clipboard.writeText(textToCopy)
+                    .then(() => {
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = 'Copied!';
+                        
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy text: ', err);
+                    });
+            });
+            
+            // Update theme for Prism.js when theme changes
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.attributeName === 'data-theme') {
+                        const theme = document.documentElement.getAttribute('data-theme');
+                        const prismTheme = theme === 'dark' ? 'prism-dark' : 'prism';
+                        
+                        // Re-highlight code with new theme
+                        if (jsonOutput.textContent) {
+                            Prism.highlightElement(jsonOutput);
+                        }
+                    }
+                });
+            });
+            
+            observer.observe(document.documentElement, { attributes: true });
+        });
+    </script>
+    
+    <style>
+        .output-wrapper {
+            max-height: 500px;
+            overflow: auto;
+            background-color: var(--code-bg);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+        
+        #json-output-wrapper {
+            margin: 0;
+            padding: 1rem;
+        }
+        
+        .options-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .options-controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .options-controls label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        #indent-size {
+            width: 3rem;
+            padding: 0.25rem;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        /* Prism theme overrides for dark mode */
+        [data-theme="dark"] .token.punctuation {
+            color: #e1e4e8;
+        }
+        
+        [data-theme="dark"] .token.property,
+        [data-theme="dark"] .token.string {
+            color: #85e89d;
+        }
+        
+        [data-theme="dark"] .token.number,
+        [data-theme="dark"] .token.boolean {
+            color: #79b8ff;
+        }
+        
+        [data-theme="dark"] .token.operator,
+        [data-theme="dark"] .token.keyword {
+            color: #f97583;
+        }
+    </style>
+</body>
+</html>

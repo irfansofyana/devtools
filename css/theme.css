@@ -1,0 +1,171 @@
+/* Theme Variables */
+:root {
+    /* Light Theme (Default) */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f7fa;
+    --bg-tertiary: #e9ecef;
+    --text-primary: #333333;
+    --text-secondary: #6c757d;
+    --accent-primary: #4361ee;
+    --accent-secondary: #3a0ca3;
+    --border-color: #dee2e6;
+    --card-bg: #ffffff;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --error-bg: #f8d7da;
+    --error-text: #721c24;
+    --success-bg: #d4edda;
+    --success-text: #155724;
+    --code-bg: #f8f9fa;
+    --header-bg: rgba(255, 255, 255, 0.95);
+    --button-bg: #4361ee;
+    --button-text: #ffffff;
+    --button-hover: #3a0ca3;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+    --bg-tertiary: #2d2d2d;
+    --text-primary: #f8f9fa;
+    --text-secondary: #adb5bd;
+    --accent-primary: #4cc9f0;
+    --accent-secondary: #4895ef;
+    --border-color: #343a40;
+    --card-bg: #2d2d2d;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --error-bg: #2c0b0e;
+    --error-text: #f8d7da;
+    --success-bg: #0f401b;
+    --success-text: #d4edda;
+    --code-bg: #2d2d2d;
+    --header-bg: rgba(18, 18, 18, 0.95);
+    --button-bg: #4895ef;
+    --button-text: #ffffff;
+    --button-hover: #4cc9f0;
+}
+
+/* Theme Application */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+header {
+    background-color: var(--header-bg);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo a {
+    color: var(--accent-primary);
+}
+
+nav a {
+    color: var(--text-primary);
+}
+
+nav a:hover, nav a.active {
+    color: var(--accent-primary);
+}
+
+.theme-toggle button {
+    color: var(--text-primary);
+}
+
+.theme-toggle .light-icon {
+    display: none;
+}
+
+.theme-toggle .dark-icon {
+    display: block;
+}
+
+[data-theme="dark"] .theme-toggle .light-icon {
+    display: block;
+}
+
+[data-theme="dark"] .theme-toggle .dark-icon {
+    display: none;
+}
+
+.tool-card, .feature-card {
+    background-color: var(--card-bg);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+}
+
+.tool-card:hover {
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .tool-card:hover {
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+}
+
+.tool-card h3, .feature-card h3 {
+    color: var(--accent-primary);
+}
+
+footer {
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+}
+
+footer a {
+    color: var(--accent-primary);
+}
+
+footer a:hover {
+    color: var(--accent-secondary);
+}
+
+textarea, input[type="text"] {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+textarea:focus, input[type="text"]:focus {
+    border-color: var(--accent-primary);
+    outline: none;
+}
+
+button.primary {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+}
+
+button.primary:hover {
+    background-color: var(--button-hover);
+}
+
+button.secondary {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+button.secondary:hover {
+    background-color: var(--bg-secondary);
+}
+
+.error-message {
+    background-color: var(--error-bg);
+    color: var(--error-text);
+    border: 1px solid var(--error-text);
+}
+
+.success-message {
+    background-color: var(--success-bg);
+    color: var(--success-text);
+    border: 1px solid var(--success-text);
+}
+
+pre, code {
+    background-color: var(--code-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-xs);
+    font-family: var(--font-mono);
+}
