@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sort lines alphabetically and remove duplicates">
+    <title>Line Sort/Dedupe | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>Line Sort/Dedupe</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Sort lines alphabetically and remove duplicates. Paste your text with multiple lines to sort and deduplicate.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="input-group">
+                        <label for="text-input">Input Text:</label>
+                        <textarea id="text-input" placeholder="Paste your text here..." aria-label="Text input"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="sort-btn">Sort Lines</button>
+                            <button class="secondary" id="dedupe-btn">Remove Duplicates</button>
+                            <button class="secondary" id="sort-dedupe-btn">Sort & Dedupe</button>
+                            <button class="secondary" id="clear-btn">Clear</button>
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                        </div>
+                        <div class="auto-update-notice">
+                            <small>Results update automatically as you type or change options</small>
+                        </div>
+                    </div>
+
+                    <div class="options-group mt-2 mb-2">
+                        <label>Options:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="checkbox" id="case-insensitive" checked>
+                                Case Insensitive
+                            </label>
+                            <label>
+                                <input type="checkbox" id="trim-lines" checked>
+                                Trim Whitespace
+                            </label>
+                            <label>
+                                <input type="checkbox" id="ignore-empty" checked>
+                                Ignore Empty Lines
+                            </label>
+                            <label>
+                                <input type="checkbox" id="reverse-sort">
+                                Reverse Sort (Z-A)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <div class="input-group">
+                            <label for="result-output">Result:</label>
+                            <textarea id="result-output" readonly aria-label="Result output"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="copy-btn">Copy to Clipboard</button>
+                                <button class="secondary" id="download-btn">Download</button>
+                            </div>
+                            <div class="stats" id="stats">
+                                <span id="line-count">0</span> lines, <span id="char-count">0</span> characters
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const textInput = document.getElementById('text-input');
+            const resultOutput = document.getElementById('result-output');
+            const sortBtn = document.getElementById('sort-btn');
+            const dedupeBtn = document.getElementById('dedupe-btn');
+            const sortDedupeBtn = document.getElementById('sort-dedupe-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const copyBtn = document.getElementById('copy-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const resultContainer = document.getElementById('result-container');
+            const errorMessage = document.getElementById('error-message');
+            const caseInsensitive = document.getElementById('case-insensitive');
+            const trimLines = document.getElementById('trim-lines');
+            const ignoreEmpty = document.getElementById('ignore-empty');
+            const reverseSort = document.getElementById('reverse-sort');
+            const lineCount = document.getElementById('line-count');
+            const charCount = document.getElementById('char-count');
+            
+            // Process lines based on options
+            function processLines(text) {
+                // Split text into lines
+                let lines = text.split('\n');
+                
+                // Apply trimming if option is checked
+                if (trimLines.checked) {
+                    lines = lines.map(line => line.trim());
+                }
+                
+                // Remove empty lines if option is checked
+                if (ignoreEmpty.checked) {
+                    lines = lines.filter(line => line.length > 0);
+                }
+                
+                return lines;
+            }
+            
+            // Sort lines
+            function sortLines() {
+                const input = textInput.value;
+                if (!input) {
+                    showError('Please enter text to sort', 'error-message');
+                    return;
+                }
+                
+                try {
+                    let lines = processLines(input);
+                    
+                    // Sort lines
+                    if (caseInsensitive.checked) {
+                        lines.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+                    } else {
+                        lines.sort();
+                    }
+                    
+                    // Reverse sort if option is checked
+                    if (reverseSort.checked) {
+                        lines.reverse();
+                    }
+                    
+                    // Join lines and display result
+                    const result = lines.join('\n');
+                    displayResult(result);
+                } catch (error) {
+                    showError(`Error: ${error.message}`, 'error-message');
+                }
+            }
+            
+            // Remove duplicate lines
+            function dedupeLines() {
+                const input = textInput.value;
+                if (!input) {
+                    showError('Please enter text to deduplicate', 'error-message');
+                    return;
+                }
+                
+                try {
+                    let lines = processLines(input);
+                    
+                    // Remove duplicates
+                    if (caseInsensitive.checked) {
+                        // Case insensitive deduplication
+                        const uniqueLines = [];
+                        const lowerCaseMap = new Map();
+                        
+                        for (const line of lines) {
+                            const lowerCase = line.toLowerCase();
+                            if (!lowerCaseMap.has(lowerCase)) {
+                                lowerCaseMap.set(lowerCase, true);
+                                uniqueLines.push(line);
+                            }
+                        }
+                        
+                        lines = uniqueLines;
+                    } else {
+                        // Case sensitive deduplication
+                        lines = [...new Set(lines)];
+                    }
+                    
+                    // Join lines and display result
+                    const result = lines.join('\n');
+                    displayResult(result);
+                } catch (error) {
+                    showError(`Error: ${error.message}`, 'error-message');
+                }
+            }
+            
+            // Sort and deduplicate lines
+            function sortAndDedupeLines() {
+                const input = textInput.value;
+                if (!input) {
+                    showError('Please enter text to sort and deduplicate', 'error-message');
+                    return;
+                }
+                
+                try {
+                    let lines = processLines(input);
+                    
+                    // Remove duplicates first
+                    if (caseInsensitive.checked) {
+                        // Case insensitive deduplication
+                        const uniqueLines = [];
+                        const lowerCaseMap = new Map();
+                        
+                        for (const line of lines) {
+                            const lowerCase = line.toLowerCase();
+                            if (!lowerCaseMap.has(lowerCase)) {
+                                lowerCaseMap.set(lowerCase, true);
+                                uniqueLines.push(line);
+                            }
+                        }
+                        
+                        lines = uniqueLines;
+                        
+                        // Sort lines case insensitive
+                        lines.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+                    } else {
+                        // Case sensitive deduplication
+                        lines = [...new Set(lines)];
+                        
+                        // Sort lines case sensitive
+                        lines.sort();
+                    }
+                    
+                    // Reverse sort if option is checked
+                    if (reverseSort.checked) {
+                        lines.reverse();
+                    }
+                    
+                    // Join lines and display result
+                    const result = lines.join('\n');
+                    displayResult(result);
+                } catch (error) {
+                    showError(`Error: ${error.message}`, 'error-message');
+                }
+            }
+            
+            // Display result
+            function displayResult(result) {
+                resultOutput.value = result;
+                resultContainer.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+                
+                // Update stats
+                const lines = result.split('\n');
+                lineCount.textContent = lines.length;
+                charCount.textContent = result.length;
+                
+                // Update download button
+                updateDownloadButton(result, 'sorted_lines.txt');
+            }
+            
+            // Show error message
+            function showError(message, elementId) {
+                const element = document.getElementById(elementId);
+                element.textContent = message;
+                element.classList.remove('hidden');
+                resultContainer.classList.add('hidden');
+            }
+            
+            // Update download button
+            function updateDownloadButton(content, filename) {
+                downloadBtn.onclick = () => {
+                    const blob = new Blob([content], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                };
+            }
+            
+            // Load sample data
+            function loadSample() {
+                const sampleData = `apple
+Banana
+cherry
+Apple
+banana
+Dragon Fruit
+cherry
+Elderberry
+Fig
+fig
+Grape
+grape
+  apple  
+Banana
+
+
+kiwi
+Lemon
+Mango
+`;
+                textInput.value = sampleData;
+            }
+            
+            // Copy result to clipboard
+            function copyToClipboard() {
+                resultOutput.select();
+                document.execCommand('copy');
+                
+                // Show copied notification
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 1500);
+            }
+            
+            // Clear input and result
+            function clearAll() {
+                textInput.value = '';
+                resultOutput.value = '';
+                resultContainer.classList.add('hidden');
+                errorMessage.classList.add('hidden');
+            }
+            
+            // Auto-update function that processes text based on current options
+            function autoUpdate() {
+                const input = textInput.value;
+                if (!input) {
+                    resultContainer.classList.add('hidden');
+                    errorMessage.classList.add('hidden');
+                    return;
+                }
+                
+                try {
+                    // Default to sort and dedupe (most comprehensive option)
+                    sortAndDedupeLines();
+                } catch (error) {
+                    showError(`Error: ${error.message}`, 'error-message');
+                }
+            }
+            
+            // Event listeners
+            sortBtn.addEventListener('click', sortLines);
+            dedupeBtn.addEventListener('click', dedupeLines);
+            sortDedupeBtn.addEventListener('click', sortAndDedupeLines);
+            clearBtn.addEventListener('click', clearAll);
+            loadSampleBtn.addEventListener('click', () => {
+                loadSample();
+                autoUpdate(); // Process automatically after loading sample
+            });
+            copyBtn.addEventListener('click', copyToClipboard);
+            
+            // Add event listeners for auto-updating
+            textInput.addEventListener('input', autoUpdate);
+            caseInsensitive.addEventListener('change', autoUpdate);
+            trimLines.addEventListener('change', autoUpdate);
+            ignoreEmpty.addEventListener('change', autoUpdate);
+            reverseSort.addEventListener('change', autoUpdate);
+            
+            // Update current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+        });
+    </script>
+    <style>
+        .stats {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: var(--text-muted);
+        }
+        .auto-update-notice {
+            margin-top: 5px;
+            font-size: 0.85em;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+    </style>
+</body>
+</html>
