@@ -99,23 +99,40 @@ nav ul {
     margin: 0 auto;
 }
 
+.credits {
+    margin-top: var(--spacing-md);
+    font-size: 0.9rem;
+}
+
+.credits p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.credits a {
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+
 /* Tools Grid */
-.tools, .features {
+.tools {
     padding: var(--spacing-xxl) 0;
 }
 
-.tools h2, .features h2 {
+.tools h2 {
     text-align: center;
     margin-bottom: var(--spacing-xl);
 }
 
-.tools-grid, .features-grid {
+.tools-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: var(--spacing-lg);
 }
 
-.tool-card, .feature-card {
+.tool-card {
     padding: var(--spacing-lg);
     border-radius: var(--border-radius);
     text-align: center;
@@ -126,13 +143,18 @@ nav ul {
     transform: translateY(-5px);
 }
 
-.tool-icon, .feature-icon {
+.tool-icon {
     font-size: 2.5rem;
     margin-bottom: var(--spacing-md);
 }
 
-.tool-card h3, .feature-card h3 {
+.tool-card h3 {
     margin-bottom: var(--spacing-sm);
+}
+
+.tool-card p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
 }
 
 /* Footer */

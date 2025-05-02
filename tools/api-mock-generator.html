@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Generate mock data for API testing and development">
+    <title>API Mock Data Generator | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+    <style>
+        .template-container {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .template-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .template-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .template-item {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-sm) var(--spacing-md);
+            cursor: pointer;
+            transition: background-color var(--transition-speed);
+        }
+        
+        .template-item:hover {
+            background-color: var(--bg-tertiary);
+        }
+        
+        .template-item.active {
+            background-color: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+        
+        .schema-editor {
+            font-family: var(--font-mono);
+            font-size: 14px;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+        }
+        
+        @media (min-width: 768px) {
+            .options-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>API Mock Data Generator</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Generate realistic mock data for API development, testing, and prototyping. Define your schema and generate JSON data with various data types.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    <div class="success-message hidden" id="success-message"></div>
+                    
+                    <div class="template-container">
+                        <div class="template-header">
+                            <h3>Templates:</h3>
+                        </div>
+                        <div class="template-list" id="template-list">
+                            <div class="template-item" data-template="users">Users</div>
+                            <div class="template-item" data-template="products">Products</div>
+                            <div class="template-item" data-template="posts">Blog Posts</div>
+                            <div class="template-item" data-template="comments">Comments</div>
+                            <div class="template-item" data-template="transactions">Transactions</div>
+                            <div class="template-item" data-template="weather">Weather</div>
+                            <div class="template-item" data-template="custom">Custom</div>
+                        </div>
+                    </div>
+
+                    <div class="options-grid">
+                        <div class="input-group">
+                            <label for="count-input">Number of Items:</label>
+                            <input type="number" id="count-input" min="1" max="1000" value="10" aria-label="Number of items to generate">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="format-select">Output Format:</label>
+                            <select id="format-select" aria-label="Output format">
+                                <option value="json">JSON</option>
+                                <option value="array">JSON Array</option>
+                                <option value="jsonl">JSON Lines</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="schema-editor">Schema Definition (JSON):</label>
+                        <textarea id="schema-editor" class="schema-editor" placeholder="Define your schema here..." aria-label="Schema definition" rows="12"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-schema">Clear</button>
+                            <button class="secondary" id="format-schema">Format</button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="generate-btn">Generate Mock Data</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Generated Data:</h3>
+                        <div class="input-group">
+                            <textarea id="result-text" readonly aria-label="Generated data" rows="15"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="copy-result">Copy Result</button>
+                                <button class="secondary" id="download-result">Download</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const schemaEditor = document.getElementById('schema-editor');
+            const resultText = document.getElementById('result-text');
+            const generateBtn = document.getElementById('generate-btn');
+            const clearSchemaBtn = document.getElementById('clear-schema');
+            const formatSchemaBtn = document.getElementById('format-schema');
+            const resultContainer = document.getElementById('result-container');
+            const copyResultBtn = document.getElementById('copy-result');
+            const downloadResultBtn = document.getElementById('download-result');
+            const countInput = document.getElementById('count-input');
+            const formatSelect = document.getElementById('format-select');
+            const templateList = document.getElementById('template-list');
+            
+            // Template schemas
+            const templates = {
+                users: {
+                    id: { type: 'id' },
+                    firstName: { type: 'firstName' },
+                    lastName: { type: 'lastName' },
+                    email: { type: 'email' },
+                    username: { type: 'username' },
+                    avatar: { type: 'avatar' },
+                    birthDate: { type: 'date', format: 'YYYY-MM-DD' },
+                    registeredAt: { type: 'date', format: 'ISO' },
+                    address: {
+                        type: 'object',
+                        properties: {
+                            street: { type: 'street' },
+                            city: { type: 'city' },
+                            state: { type: 'state' },
+                            zipCode: { type: 'zipCode' },
+                            country: { type: 'country' }
+                        }
+                    },
+                    phone: { type: 'phone' },
+                    isActive: { type: 'boolean' }
+                },
+                products: {
+                    id: { type: 'id' },
+                    name: { type: 'productName' },
+                    description: { type: 'paragraph', min: 1, max: 3 },
+                    price: { type: 'float', min: 10, max: 1000, decimals: 2 },
+                    category: { type: 'enum', values: ['Electronics', 'Clothing', 'Books', 'Home', 'Beauty', 'Sports', 'Toys'] },
+                    tags: { type: 'array', items: { type: 'word' }, min: 2, max: 5 },
+                    inStock: { type: 'boolean' },
+                    rating: { type: 'float', min: 1, max: 5, decimals: 1 },
+                    image: { type: 'imageUrl', width: 640, height: 480 },
+                    createdAt: { type: 'date', format: 'ISO' }
+                },
+                posts: {
+                    id: { type: 'id' },
+                    title: { type: 'sentence', min: 5, max: 10 },
+                    content: { type: 'paragraphs', min: 3, max: 7 },
+                    author: {
+                        type: 'object',
+                        properties: {
+                            id: { type: 'id' },
+                            name: { type: 'fullName' },
+                            avatar: { type: 'avatar' }
+                        }
+                    },
+                    tags: { type: 'array', items: { type: 'word' }, min: 2, max: 6 },
+                    publishedAt: { type: 'date', format: 'ISO' },
+                    views: { type: 'integer', min: 10, max: 10000 },
+                    likes: { type: 'integer', min: 0, max: 500 }
+                },
+                comments: {
+                    id: { type: 'id' },
+                    postId: { type: 'id' },
+                    user: {
+                        type: 'object',
+                        properties: {
+                            id: { type: 'id' },
+                            name: { type: 'fullName' },
+                            avatar: { type: 'avatar' }
+                        }
+                    },
+                    content: { type: 'paragraph', min: 1, max: 3 },
+                    createdAt: { type: 'date', format: 'ISO' },
+                    likes: { type: 'integer', min: 0, max: 100 }
+                },
+                transactions: {
+                    id: { type: 'id' },
+                    userId: { type: 'id' },
+                    amount: { type: 'float', min: 5, max: 1000, decimals: 2 },
+                    currency: { type: 'enum', values: ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD'] },
+                    status: { type: 'enum', values: ['pending', 'completed', 'failed', 'refunded'] },
+                    paymentMethod: { type: 'enum', values: ['credit_card', 'paypal', 'bank_transfer', 'crypto'] },
+                    description: { type: 'sentence', min: 5, max: 10 },
+                    createdAt: { type: 'date', format: 'ISO' },
+                    updatedAt: { type: 'date', format: 'ISO' }
+                },
+                weather: {
+                    cityId: { type: 'id' },
+                    cityName: { type: 'city' },
+                    country: { type: 'country' },
+                    date: { type: 'date', format: 'YYYY-MM-DD' },
+                    temperature: { type: 'float', min: -20, max: 40, decimals: 1 },
+                    feelsLike: { type: 'float', min: -25, max: 45, decimals: 1 },
+                    humidity: { type: 'integer', min: 0, max: 100 },
+                    windSpeed: { type: 'float', min: 0, max: 30, decimals: 1 },
+                    conditions: { type: 'enum', values: ['Sunny', 'Cloudy', 'Partly Cloudy', 'Rainy', 'Stormy', 'Snowy', 'Foggy'] },
+                    precipitation: { type: 'float', min: 0, max: 100, decimals: 1 }
+                },
+                custom: {
+                    id: { type: 'id' },
+                    name: { type: 'fullName' },
+                    email: { type: 'email' },
+                    createdAt: { type: 'date', format: 'ISO' }
+                }
+            };
+            
+            // Select template
+            function selectTemplate(templateName) {
+                // Update active template UI
+                const templateItems = document.querySelectorAll('.template-item');
+                templateItems.forEach(item => {
+                    item.classList.toggle('active', item.dataset.template === templateName);
+                });
+                
+                // Set schema editor content
+                const schema = templates[templateName];
+                schemaEditor.value = JSON.stringify(schema, null, 2);
+            }
+            
+            // Format schema JSON
+            function formatSchema() {
+                try {
+                    const schema = JSON.parse(schemaEditor.value);
+                    schemaEditor.value = JSON.stringify(schema, null, 2);
+                    showSuccess('Schema formatted successfully', 'success-message');
+                } catch (error) {
+                    showError(`Invalid JSON: ${error.message}`, 'error-message');
+                }
+            }
+            
+            // Clear schema
+            function clearSchema() {
+                schemaEditor.value = '';
+                resultContainer.classList.add('hidden');
+                
+                // Clear active template selection
+                const templateItems = document.querySelectorAll('.template-item');
+                templateItems.forEach(item => {
+                    item.classList.remove('active');
+                });
+            }
+            
+            // Generate random data based on schema
+            function generateMockData() {
+                try {
+                    const schema = JSON.parse(schemaEditor.value);
+                    const count = parseInt(countInput.value) || 10;
+                    const format = formatSelect.value;
+                    
+                    if (!schema || Object.keys(schema).length === 0) {
+                        showError('Please define a schema', 'error-message');
+                        return;
+                    }
+                    
+                    // Generate data
+                    const data = Array.from({ length: count }, (_, index) => {
+                        return generateItem(schema, index + 1);
+                    });
+                    
+                    // Format output
+                    let result;
+                    switch (format) {
+                        case 'json':
+                            // Object with items array
+                            result = JSON.stringify({ items: data }, null, 2);
+                            break;
+                        case 'array':
+                            // Plain array
+                            result = JSON.stringify(data, null, 2);
+                            break;
+                        case 'jsonl':
+                            // JSON Lines (one object per line)
+                            result = data.map(item => JSON.stringify(item)).join('\n');
+                            break;
+                        default:
+                            result = JSON.stringify(data, null, 2);
+                    }
+                    
+                    resultText.value = result;
+                    resultContainer.classList.remove('hidden');
+                    showSuccess(`Successfully generated ${count} items`, 'success-message');
+                } catch (error) {
+                    showError(`Error: ${error.message}`, 'error-message');
+                }
+            }
+            
+            // Generate a single item based on schema
+            function generateItem(schema, index) {
+                const result = {};
+                
+                for (const [key, config] of Object.entries(schema)) {
+                    result[key] = generateValue(config, index);
+                }
+                
+                return result;
+            }
+            
+            // Generate a value based on type
+            function generateValue(config, index) {
+                const type = config.type;
+                
+                switch (type) {
+                    case 'id':
+                        return config.format === 'uuid' ? generateUUID() : index;
+                    
+                    case 'boolean':
+                        return Math.random() > 0.5;
+                    
+                    case 'integer':
+                        const min = config.min !== undefined ? config.min : 0;
+                        const max = config.max !== undefined ? config.max : 1000;
+                        return Math.floor(min + Math.random() * (max - min + 1));
+                    
+                    case 'float':
+                        const minFloat = config.min !== undefined ? config.min : 0;
+                        const maxFloat = config.max !== undefined ? config.max : 100;
+                        const decimals = config.decimals !== undefined ? config.decimals : 2;
+                        return parseFloat((minFloat + Math.random() * (maxFloat - minFloat)).toFixed(decimals));
+                    
+                    case 'enum':
+                        const values = config.values || [];
+                        return values[Math.floor(Math.random() * values.length)];
+                    
+                    case 'date':
+                        return generateDate(config.format || 'ISO', config.min, config.max);
+                    
+                    case 'firstName':
+                        return randomChoice(firstNames);
+                    
+                    case 'lastName':
+                        return randomChoice(lastNames);
+                    
+                    case 'fullName':
+                        return `${randomChoice(firstNames)} ${randomChoice(lastNames)}`;
+                    
+                    case 'username':
+                        const firstName = randomChoice(firstNames).toLowerCase();
+                        return `${firstName}${Math.floor(Math.random() * 1000)}`;
+                    
+                    case 'email':
+                        const name = randomChoice(firstNames).toLowerCase();
+                        const surname = randomChoice(lastNames).toLowerCase();
+                        return `${name}.${surname}@${randomChoice(emailDomains)}`;
+                    
+                    case 'avatar':
+                        const gender = Math.random() > 0.5 ? 'men' : 'women';
+                        const avatarId = Math.floor(Math.random() * 100);
+                        return `https://randomuser.me/api/portraits/${gender}/${avatarId}.jpg`;
+                    
+                    case 'imageUrl':
+                        const width = config.width || 640;
+                        const height = config.height || 480;
+                        const category = config.category || 'nature';
+                        return `https://placeimg.com/${width}/${height}/${category}`;
+                    
+                    case 'phone':
+                        return `+1-${Math.floor(Math.random() * 900 + 100)}-${Math.floor(Math.random() * 900 + 100)}-${Math.floor(Math.random() * 9000 + 1000)}`;
+                    
+                    case 'street':
+                        return `${Math.floor(Math.random() * 9000 + 1000)} ${randomChoice(streetNames)} ${randomChoice(streetTypes)}`;
+                    
+                    case 'city':
+                        return randomChoice(cities);
+                    
+                    case 'state':
+                        return randomChoice(states);
+                    
+                    case 'zipCode':
+                        return `${Math.floor(Math.random() * 90000 + 10000)}`;
+                    
+                    case 'country':
+                        return randomChoice(countries);
+                    
+                    case 'word':
+                        return randomChoice(words);
+                    
+                    case 'sentence':
+                        const minWords = config.min || 5;
+                        const maxWords = config.max || 10;
+                        const wordCount = Math.floor(minWords + Math.random() * (maxWords - minWords + 1));
+                        const sentence = Array.from({ length: wordCount }, () => randomChoice(words)).join(' ');
+                        return sentence.charAt(0).toUpperCase() + sentence.slice(1) + '.';
+                    
+                    case 'paragraph':
+                        const minSentences = config.min || 3;
+                        const maxSentences = config.max || 7;
+                        const sentenceCount = Math.floor(minSentences + Math.random() * (maxSentences - minSentences + 1));
+                        return Array.from({ length: sentenceCount }, () => {
+                            return generateValue({ type: 'sentence' });
+                        }).join(' ');
+                    
+                    case 'paragraphs':
+                        const minParagraphs = config.min || 1;
+                        const maxParagraphs = config.max || 3;
+                        const paragraphCount = Math.floor(minParagraphs + Math.random() * (maxParagraphs - minParagraphs + 1));
+                        return Array.from({ length: paragraphCount }, () => {
+                            return generateValue({ type: 'paragraph' });
+                        }).join('\n\n');
+                    
+                    case 'productName':
+                        const adjective = randomChoice(adjectives);
+                        const noun = randomChoice(productNouns);
+                        return `${adjective} ${noun}`;
+                    
+                    case 'array':
+                        const minItems = config.min || 1;
+                        const maxItems = config.max || 5;
+                        const itemCount = Math.floor(minItems + Math.random() * (maxItems - minItems + 1));
+                        return Array.from({ length: itemCount }, (_, i) => {
+                            return generateValue(config.items, i + 1);
+                        });
+                    
+                    case 'object':
+                        return generateItem(config.properties, index);
+                    
+                    default:
+                        return `Unknown type: ${type}`;
+                }
+            }
+            
+            // Generate a UUID
+            function generateUUID() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+            
+            // Generate a date
+            function generateDate(format, min, max) {
+                // Default date range: last 5 years to today
+                const now = new Date();
+                const minDate = min ? new Date(min) : new Date(now.getFullYear() - 5, 0, 1);
+                const maxDate = max ? new Date(max) : now;
+                
+                // Random date in range
+                const timestamp = minDate.getTime() + Math.random() * (maxDate.getTime() - minDate.getTime());
+                const date = new Date(timestamp);
+                
+                // Format the date
+                switch (format) {
+                    case 'ISO':
+                        return date.toISOString();
+                    case 'YYYY-MM-DD':
+                        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                    case 'MM/DD/YYYY':
+                        return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}/${date.getFullYear()}`;
+                    case 'timestamp':
+                        return Math.floor(timestamp / 1000);
+                    default:
+                        return date.toISOString();
+                }
+            }
+            
+            // Random choice from array
+            function randomChoice(array) {
+                return array[Math.floor(Math.random() * array.length)];
+            }
+            
+            // Download result
+            function downloadResult() {
+                const format = formatSelect.value;
+                const extension = format === 'jsonl' ? 'jsonl' : 'json';
+                downloadTextFile(resultText.value, `mock-data.${extension}`, 'application/json');
+            }
+            
+            // Copy result to clipboard
+            function copyResult() {
+                resultText.select();
+                navigator.clipboard.writeText(resultText.value)
+                    .then(() => {
+                        // Show temporary success message
+                        const originalText = copyResultBtn.textContent;
+                        copyResultBtn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyResultBtn.textContent = originalText;
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        showError(`Error copying to clipboard: ${err}`, 'error-message');
+                    });
+            }
+            
+            // Event listeners
+            generateBtn.addEventListener('click', generateMockData);
+            clearSchemaBtn.addEventListener('click', clearSchema);
+            formatSchemaBtn.addEventListener('click', formatSchema);
+            copyResultBtn.addEventListener('click', copyResult);
+            downloadResultBtn.addEventListener('click', downloadResult);
+            
+            // Template selection
+            templateList.addEventListener('click', (e) => {
+                const templateItem = e.target.closest('.template-item');
+                if (templateItem) {
+                    const templateName = templateItem.dataset.template;
+                    selectTemplate(templateName);
+                }
+            });
+            
+            // Initialize with users template
+            selectTemplate('users');
+            
+            // Sample data for mock generation
+            const firstNames = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda', 'William', 'Elizabeth', 'David', 'Susan', 'Richard', 'Jessica', 'Joseph', 'Sarah', 'Thomas', 'Karen', 'Charles', 'Nancy'];
+            
+            const lastNames = ['Smith', 'Johnson', 'Williams', 'Jones', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor', 'Anderson', 'Thomas', 'Jackson', 'White', 'Harris', 'Martin', 'Thompson', 'Garcia', 'Martinez', 'Robinson'];
+            
+            const emailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com', 'example.com', 'company.com', 'mail.com'];
+            
+            const streetNames = ['Main', 'Oak', 'Pine', 'Maple', 'Cedar', 'Elm', 'Washington', 'Park', 'Lake', 'Hill', 'Broadway', 'Highland', 'Sunset', 'Meadow', 'Valley', 'Ridge', 'Forest', 'River', 'Spring', 'Willow'];
+            
+            const streetTypes = ['St', 'Ave', 'Blvd', 'Rd', 'Ln', 'Dr', 'Way', 'Pl', 'Ct', 'Terrace'];
+            
+            const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose', 'Austin', 'Jacksonville', 'Fort Worth', 'Columbus', 'San Francisco', 'Charlotte', 'Indianapolis', 'Seattle', 'Denver', 'Boston'];
+            
+            const states = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland'];
+            
+            const countries = ['United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 'France', 'Japan', 'Italy', 'Spain', 'Brazil', 'Mexico', 'India', 'China', 'Russia', 'South Korea', 'Netherlands', 'Sweden', 'Switzerland', 'Norway', 'Denmark'];
+            
+            const words = ['time', 'person', 'year', 'way', 'day', 'thing', 'man', 'world', 'life', 'hand', 'part', 'child', 'eye', 'woman', 'place', 'work', 'week', 'case', 'point', 'government', 'company', 'number', 'group', 'problem', 'fact'];
+            
+            const adjectives = ['Small', 'Large', 'Portable', 'Wireless', 'Digital', 'Smart', 'Premium', 'Luxury', 'Compact', 'Ergonomic', 'Lightweight', 'Professional', 'Vintage', 'Modern', 'Classic', 'Deluxe', 'Ultimate', 'Advanced', 'Essential', 'Elegant'];
+            
+            const productNouns = ['Phone', 'Laptop', 'Camera', 'Headphones', 'Speaker', 'Watch', 'Tablet', 'Monitor', 'Keyboard', 'Mouse', 'Charger', 'Printer', 'Scanner', 'Router', 'Drive', 'Controller', 'Adapter', 'Cable', 'Case', 'Stand'];
+        });
+    </script>
+</body>
+</html>

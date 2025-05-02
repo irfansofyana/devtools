@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Convert between CSV and JSON formats">
+    <title>CSV <> JSON Converter | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>CSV <> JSON Converter</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Convert data between CSV (Comma-Separated Values) and JSON (JavaScript Object Notation) formats. Useful for data interchange and transformation.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    <div class="success-message hidden" id="success-message"></div>
+                    
+                    <div class="options-group mt-2 mb-2">
+                        <label>Conversion Direction:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="radio" name="conversion" id="csv-to-json" checked>
+                                CSV to JSON
+                            </label>
+                            <label>
+                                <input type="radio" name="conversion" id="json-to-csv">
+                                JSON to CSV
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="options-group mt-2 mb-2" id="csv-options">
+                        <label>CSV Options:</label>
+                        <div class="options-controls">
+                            <label>
+                                Delimiter:
+                                <select id="delimiter">
+                                    <option value="," selected>Comma (,)</option>
+                                    <option value=";">Semicolon (;)</option>
+                                    <option value="\t">Tab</option>
+                                    <option value="|">Pipe (|)</option>
+                                </select>
+                            </label>
+                            <label>
+                                <input type="checkbox" id="header" checked>
+                                First row is header
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="input-text" id="input-label">CSV Input:</label>
+                        <textarea id="input-text" placeholder="Enter CSV data..." aria-label="Input text"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-input">Clear</button>
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="convert-btn">Convert</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Result:</h3>
+                        <div class="input-group">
+                            <textarea id="result-text" readonly aria-label="Result"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="copy-result">Copy Result</button>
+                                <button class="secondary" id="download-result">Download</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputText = document.getElementById('input-text');
+            const resultText = document.getElementById('result-text');
+            const convertBtn = document.getElementById('convert-btn');
+            const clearInputBtn = document.getElementById('clear-input');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const resultContainer = document.getElementById('result-container');
+            const copyResultBtn = document.getElementById('copy-result');
+            const downloadResultBtn = document.getElementById('download-result');
+            const csvToJsonOption = document.getElementById('csv-to-json');
+            const jsonToCsvOption = document.getElementById('json-to-csv');
+            const inputLabel = document.getElementById('input-label');
+            const delimiterSelect = document.getElementById('delimiter');
+            const headerCheckbox = document.getElementById('header');
+            const csvOptions = document.getElementById('csv-options');
+            
+            // Update input label based on selected conversion direction
+            function updateInputLabel() {
+                if (csvToJsonOption.checked) {
+                    inputLabel.textContent = 'CSV Input:';
+                    inputText.placeholder = 'Enter CSV data...';
+                    csvOptions.style.display = 'block';
+                } else {
+                    inputLabel.textContent = 'JSON Input:';
+                    inputText.placeholder = 'Enter JSON data...';
+                    csvOptions.style.display = 'none';
+                }
+            }
+            
+            // Parse CSV to JSON
+            function csvToJson(csv) {
+                const delimiter = delimiterSelect.value === '\\t' ? '\t' : delimiterSelect.value;
+                const hasHeader = headerCheckbox.checked;
+                
+                // Split the CSV into rows
+                const rows = csv.split(/\r?\n/).filter(row => row.trim());
+                if (rows.length === 0) {
+                    throw new Error('CSV data is empty');
+                }
+                
+                // Parse the header row or generate default headers
+                const headers = hasHeader 
+                    ? rows[0].split(delimiter).map(header => header.trim())
+                    : Array.from({ length: rows[0].split(delimiter).length }, (_, i) => `field${i + 1}`);
+                
+                // Process data rows
+                const startRow = hasHeader ? 1 : 0;
+                const jsonData = [];
+                
+                for (let i = startRow; i < rows.length; i++) {
+                    const values = rows[i].split(delimiter);
+                    const row = {};
+                    
+                    // Skip empty rows
+                    if (values.length === 1 && !values[0].trim()) continue;
+                    
+                    // Map values to headers
+                    for (let j = 0; j < headers.length; j++) {
+                        const value = j < values.length ? values[j].trim() : '';
+                        row[headers[j]] = value;
+                    }
+                    
+                    jsonData.push(row);
+                }
+                
+                return JSON.stringify(jsonData, null, 2);
+            }
+            
+            // Parse JSON to CSV
+            function jsonToCsv(json) {
+                // Parse the JSON
+                const data = JSON.parse(json);
+                
+                if (!Array.isArray(data) || data.length === 0) {
+                    throw new Error('JSON must be an array of objects');
+                }
+                
+                const delimiter = delimiterSelect.value === '\\t' ? '\t' : delimiterSelect.value;
+                
+                // Get all unique headers from all objects
+                const headers = Array.from(
+                    new Set(
+                        data.reduce((keys, obj) => keys.concat(Object.keys(obj)), [])
+                    )
+                );
+                
+                // Create CSV header row
+                let csv = headers.join(delimiter) + '\n';
+                
+                // Create data rows
+                data.forEach(obj => {
+                    const row = headers.map(header => {
+                        // Handle values that contain the delimiter, quotes, or newlines
+                        let value = obj[header] === undefined ? '' : String(obj[header]);
+                        
+                        // Escape quotes by doubling them
+                        if (value.includes('"')) {
+                            value = value.replace(/"/g, '""');
+                        }
+                        
+                        // Wrap in quotes if the value contains delimiter, quotes, or newlines
+                        if (value.includes(delimiter) || value.includes('"') || value.includes('\n')) {
+                            value = `"${value}"`;
+                        }
+                        
+                        return value;
+                    });
+                    
+                    csv += row.join(delimiter) + '\n';
+                });
+                
+                return csv;
+            }
+            
+            // Convert data based on selected direction
+            function convertData() {
+                const input = inputText.value.trim();
+                
+                if (!input) {
+                    showError('Please enter data to convert', 'error-message');
+                    return;
+                }
+                
+                try {
+                    let result;
+                    
+                    if (csvToJsonOption.checked) {
+                        // Convert CSV to JSON
+                        result = csvToJson(input);
+                    } else {
+                        // Convert JSON to CSV
+                        result = jsonToCsv(input);
+                    }
+                    
+                    resultText.value = result;
+                    resultContainer.classList.remove('hidden');
+                    showSuccess('Conversion successful!', 'success-message');
+                } catch (error) {
+                    showError(`Error: ${error.message}`, 'error-message');
+                }
+            }
+            
+            // Load sample data
+            function loadSample() {
+                if (csvToJsonOption.checked) {
+                    // Sample CSV data
+                    inputText.value = 'id,name,email,role\n1,John Doe,john@example.com,Admin\n2,Jane Smith,jane@example.com,User\n3,Bob Johnson,bob@example.com,Editor';
+                } else {
+                    // Sample JSON data
+                    inputText.value = JSON.stringify([
+                        {
+                            "id": 1,
+                            "name": "John Doe",
+                            "email": "john@example.com",
+                            "role": "Admin"
+                        },
+                        {
+                            "id": 2,
+                            "name": "Jane Smith",
+                            "email": "jane@example.com",
+                            "role": "User"
+                        },
+                        {
+                            "id": 3,
+                            "name": "Bob Johnson",
+                            "email": "bob@example.com",
+                            "role": "Editor"
+                        }
+                    ], null, 2);
+                }
+            }
+            
+            // Download result
+            function downloadResult() {
+                const content = resultText.value;
+                const fileType = csvToJsonOption.checked ? 'json' : 'csv';
+                const fileName = `converted-data.${fileType}`;
+                const mimeType = csvToJsonOption.checked ? 'application/json' : 'text/csv';
+                
+                downloadTextFile(content, fileName, mimeType);
+            }
+            
+            // Clear input
+            function clearInput() {
+                inputText.value = '';
+                resultContainer.classList.add('hidden');
+            }
+            
+            // Copy result to clipboard
+            function copyResult() {
+                resultText.select();
+                navigator.clipboard.writeText(resultText.value)
+                    .then(() => {
+                        // Show temporary success message
+                        const originalText = copyResultBtn.textContent;
+                        copyResultBtn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyResultBtn.textContent = originalText;
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        showError(`Error copying to clipboard: ${err}`, 'error-message');
+                    });
+            }
+            
+            // Event listeners
+            convertBtn.addEventListener('click', convertData);
+            clearInputBtn.addEventListener('click', clearInput);
+            loadSampleBtn.addEventListener('click', loadSample);
+            copyResultBtn.addEventListener('click', copyResult);
+            downloadResultBtn.addEventListener('click', downloadResult);
+            
+            csvToJsonOption.addEventListener('change', updateInputLabel);
+            jsonToCsvOption.addEventListener('change', updateInputLabel);
+            
+            // Initialize UI
+            updateInputLabel();
+        });
+    </script>
+</body>
+</html>

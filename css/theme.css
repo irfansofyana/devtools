@@ -89,7 +89,7 @@ nav a:hover, nav a.active {
     display: none;
 }
 
-.tool-card, .feature-card {
+.tool-card {
     background-color: var(--card-bg);
     box-shadow: var(--card-shadow);
     border: 1px solid var(--border-color);
@@ -103,7 +103,7 @@ nav a:hover, nav a.active {
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
 }
 
-.tool-card h3, .feature-card h3 {
+.tool-card h3 {
     color: var(--accent-primary);
 }
 
