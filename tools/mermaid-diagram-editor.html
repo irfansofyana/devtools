@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create diagrams with Mermaid syntax and live preview">
+    <title>Mermaid Diagram Editor | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+    <!-- Mermaid.js for diagram rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        .preview-container {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        
+        @media (min-width: 768px) {
+            .preview-container {
+                flex-direction: row;
+            }
+            
+            .preview-container .input-group,
+            .preview-container .preview-panel {
+                flex: 1;
+            }
+        }
+        
+        .preview-panel {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            background-color: var(--card-bg);
+            min-height: 300px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .mermaid-content {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+            cursor: grab;
+        }
+        
+        .mermaid-content.grabbing {
+            cursor: grabbing;
+        }
+        
+        .zoom-controls {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            z-index: 10;
+            background-color: var(--card-bg);
+            padding: 5px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .zoom-controls button {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+        }
+        
+        .zoom-controls button:hover {
+            background-color: var(--bg-tertiary);
+        }
+        
+        .zoom-level {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 8px;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        
+        .diagram-type-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .diagram-type-selector button {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            font-size: 0.9em;
+        }
+        
+        .error-display {
+            color: var(--error);
+            background-color: var(--error-bg);
+            border: 1px solid var(--error);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-sm);
+            margin-top: var(--spacing-sm);
+            display: none;
+        }
+        
+        .export-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>Mermaid Diagram Editor</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Create flowcharts, sequence diagrams, class diagrams, and more using Mermaid syntax with live preview.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="diagram-type-selector">
+                        <button class="secondary" id="flowchart-btn">Flowchart</button>
+                        <button class="secondary" id="sequence-btn">Sequence</button>
+                        <button class="secondary" id="class-btn">Class</button>
+                        <button class="secondary" id="state-btn">State</button>
+                        <button class="secondary" id="er-btn">ER</button>
+                        <button class="secondary" id="gantt-btn">Gantt</button>
+                        <button class="secondary" id="pie-btn">Pie</button>
+                        <button class="secondary" id="git-btn">Git Graph</button>
+                    </div>
+                    
+                    <div class="preview-container">
+                        <div class="input-group">
+                            <label for="mermaid-input">Mermaid Syntax:</label>
+                            <textarea id="mermaid-input" placeholder="Enter Mermaid diagram syntax here..." aria-label="Mermaid syntax input" rows="15"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="render-btn">Render</button>
+                                <button class="secondary" id="clear-btn">Clear</button>
+                                <label>
+                                    <input type="checkbox" id="auto-render" checked>
+                                    Auto Render
+                                </label>
+                            </div>
+                            <div id="error-display" class="error-display"></div>
+                        </div>
+                        
+                        <div class="preview-panel">
+                            <div id="mermaid-output" class="mermaid-content"></div>
+                            <div class="zoom-controls">
+                                <button id="zoom-out-btn" title="Zoom Out">-</button>
+                                <span id="zoom-level" class="zoom-level">100%</span>
+                                <button id="zoom-in-btn" title="Zoom In">+</button>
+                                <button id="zoom-reset-btn" title="Reset Zoom">↺</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="export-options">
+                        <button class="secondary" id="copy-svg-btn">Copy SVG</button>
+                        <button class="secondary" id="download-svg-btn">Download SVG</button>
+                        <button class="secondary" id="download-png-btn">Download PNG</button>
+                        <button class="secondary" id="copy-code-btn">Copy Code</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Mermaid
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: document.body.classList.contains('dark-theme') ? 'dark' : 'default',
+                securityLevel: 'loose',
+                fontFamily: 'var(--font-mono)'
+            });
+            
+            // DOM elements
+            const mermaidInput = document.getElementById('mermaid-input');
+            const mermaidOutput = document.getElementById('mermaid-output');
+            const renderBtn = document.getElementById('render-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const autoRender = document.getElementById('auto-render');
+            const errorDisplay = document.getElementById('error-display');
+            const copySvgBtn = document.getElementById('copy-svg-btn');
+            const downloadSvgBtn = document.getElementById('download-svg-btn');
+            const downloadPngBtn = document.getElementById('download-png-btn');
+            const copyCodeBtn = document.getElementById('copy-code-btn');
+            const zoomInBtn = document.getElementById('zoom-in-btn');
+            const zoomOutBtn = document.getElementById('zoom-out-btn');
+            const zoomResetBtn = document.getElementById('zoom-reset-btn');
+            const zoomLevelDisplay = document.getElementById('zoom-level');
+            const previewPanel = document.querySelector('.preview-panel');
+            
+            // Template buttons
+            const flowchartBtn = document.getElementById('flowchart-btn');
+            const sequenceBtn = document.getElementById('sequence-btn');
+            const classBtn = document.getElementById('class-btn');
+            const stateBtn = document.getElementById('state-btn');
+            const erBtn = document.getElementById('er-btn');
+            const ganttBtn = document.getElementById('gantt-btn');
+            const pieBtn = document.getElementById('pie-btn');
+            const gitBtn = document.getElementById('git-btn');
+            
+            // Render the diagram
+            function renderDiagram() {
+                const input = mermaidInput.value.trim();
+                if (!input) {
+                    mermaidOutput.innerHTML = '<div class="empty-message">Enter Mermaid syntax to render a diagram</div>';
+                    errorDisplay.style.display = 'none';
+                    return;
+                }
+                
+                try {
+                    // Clear previous content
+                    mermaidOutput.innerHTML = '';
+                    errorDisplay.style.display = 'none';
+                    
+                    // Create a unique ID for the diagram
+                    const id = `mermaid-diagram-${Date.now()}`;
+                    mermaidOutput.innerHTML = `<div id="${id}">${input}</div>`;
+                    
+                    // Render the diagram
+                    mermaid.render(id, input).then(result => {
+                        mermaidOutput.innerHTML = result.svg;
+                    }).catch(error => {
+                        showError(`Rendering error: ${error.message}`);
+                    });
+                } catch (error) {
+                    showError(`Error: ${error.message}`);
+                }
+            }
+            
+            // Show error message
+            function showError(message) {
+                errorDisplay.textContent = message;
+                errorDisplay.style.display = 'block';
+            }
+            
+            // Clear the input and output
+            function clearDiagram() {
+                mermaidInput.value = '';
+                mermaidOutput.innerHTML = '<div class="empty-message">Enter Mermaid syntax to render a diagram</div>';
+                errorDisplay.style.display = 'none';
+            }
+            
+            // Copy SVG to clipboard
+            function copySvg() {
+                const svg = mermaidOutput.innerHTML;
+                if (!svg || svg.includes('empty-message')) {
+                    showError('No diagram to copy');
+                    return;
+                }
+                
+                navigator.clipboard.writeText(svg).then(() => {
+                    showNotification('SVG copied to clipboard');
+                }).catch(err => {
+                    showError(`Failed to copy: ${err.message}`);
+                });
+            }
+            
+            // Download SVG
+            function downloadSvg() {
+                const svg = mermaidOutput.innerHTML;
+                if (!svg || svg.includes('empty-message')) {
+                    showError('No diagram to download');
+                    return;
+                }
+                
+                const blob = new Blob([svg], { type: 'image/svg+xml' });
+                downloadBlob(blob, 'diagram.svg');
+            }
+            
+            // Download PNG
+            function downloadPng() {
+                const svgElement = mermaidOutput.querySelector('svg');
+                if (!svgElement) {
+                    showError('No diagram to download');
+                    return;
+                }
+                
+                // Create a canvas element
+                const canvas = document.createElement('canvas');
+                const svgRect = svgElement.getBoundingClientRect();
+                canvas.width = svgRect.width;
+                canvas.height = svgRect.height;
+                const ctx = canvas.getContext('2d');
+                
+                // Create an image from the SVG
+                const image = new Image();
+                const svgData = new XMLSerializer().serializeToString(svgElement);
+                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(svgBlob);
+                
+                image.onload = function() {
+                    // Draw the image on the canvas
+                    ctx.drawImage(image, 0, 0);
+                    URL.revokeObjectURL(url);
+                    
+                    // Convert canvas to PNG and download
+                    canvas.toBlob(function(blob) {
+                        downloadBlob(blob, 'diagram.png');
+                    }, 'image/png');
+                };
+                
+                image.src = url;
+            }
+            
+            // Copy code to clipboard
+            function copyCode() {
+                const code = mermaidInput.value.trim();
+                if (!code) {
+                    showError('No code to copy');
+                    return;
+                }
+                
+                navigator.clipboard.writeText(code).then(() => {
+                    showNotification('Code copied to clipboard');
+                }).catch(err => {
+                    showError(`Failed to copy: ${err.message}`);
+                });
+            }
+            
+            // Download blob as file
+            function downloadBlob(blob, filename) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            
+            // Show notification
+            function showNotification(message) {
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.classList.add('show');
+                    setTimeout(() => {
+                        notification.classList.remove('show');
+                        setTimeout(() => {
+                            document.body.removeChild(notification);
+                        }, 300);
+                    }, 2000);
+                }, 10);
+            }
+            
+            // Load diagram templates
+            function loadFlowchartTemplate() {
+                mermaidInput.value = `flowchart TD
+    A[Start] --> B{Is it working?}
+    B -->|Yes| C[Great!]
+    B -->|No| D[Debug]
+    D --> B`;
+                renderDiagram();
+            }
+            
+            function loadSequenceTemplate() {
+                mermaidInput.value = `sequenceDiagram
+    participant Alice
+    participant Bob
+    Alice->>John: Hello John, how are you?
+    loop Healthcheck
+        John->>John: Fight against hypochondria
+    end
+    Note right of John: Rational thoughts <br/>prevail!
+    John-->>Alice: Great!
+    John->>Bob: How about you?
+    Bob-->>John: Jolly good!`;
+                renderDiagram();
+            }
+            
+            function loadClassTemplate() {
+                mermaidInput.value = `classDiagram
+    class Animal {
+        +int age
+        +String gender
+        +isMammal()
+        +mate()
+    }
+    class Duck {
+        +String beakColor
+        +swim()
+        +quack()
+    }
+    class Fish {
+        -int sizeInFeet
+        -canEat()
+    }
+    Animal <|-- Duck
+    Animal <|-- Fish
+    Animal : +int age
+    Animal : +String gender
+    Animal: +isMammal()
+    Animal: +mate()`;
+                renderDiagram();
+            }
+            
+            function loadStateTemplate() {
+                mermaidInput.value = `stateDiagram-v2
+    [*] --> Still
+    Still --> [*]
+    Still --> Moving
+    Moving --> Still
+    Moving --> Crash
+    Crash --> [*]`;
+                renderDiagram();
+            }
+            
+            function loadErTemplate() {
+                mermaidInput.value = `erDiagram
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ LINE-ITEM : contains
+    CUSTOMER }|..|{ DELIVERY-ADDRESS : uses`;
+                renderDiagram();
+            }
+            
+            function loadGanttTemplate() {
+                mermaidInput.value = `gantt
+    title A Gantt Diagram
+    dateFormat  YYYY-MM-DD
+    section Section
+    A task           :a1, 2023-01-01, 30d
+    Another task     :after a1, 20d
+    section Another
+    Task in sec      :2023-01-12, 12d
+    another task     :24d`;
+                renderDiagram();
+            }
+            
+            function loadPieTemplate() {
+                mermaidInput.value = `pie title Pets adopted by volunteers
+    "Dogs" : 386
+    "Cats" : 85
+    "Rats" : 15`;
+                renderDiagram();
+            }
+            
+            function loadGitTemplate() {
+                mermaidInput.value = `gitGraph
+    commit
+    branch develop
+    checkout develop
+    commit
+    commit
+    checkout main
+    merge develop
+    commit
+    commit`;
+                renderDiagram();
+            }
+            
+            // Event listeners
+            renderBtn.addEventListener('click', renderDiagram);
+            clearBtn.addEventListener('click', clearDiagram);
+            mermaidInput.addEventListener('input', () => {
+                if (autoRender.checked) {
+                    renderDiagram();
+                }
+            });
+            
+            copySvgBtn.addEventListener('click', copySvg);
+            downloadSvgBtn.addEventListener('click', downloadSvg);
+            downloadPngBtn.addEventListener('click', downloadPng);
+            copyCodeBtn.addEventListener('click', copyCode);
+            
+            flowchartBtn.addEventListener('click', loadFlowchartTemplate);
+            sequenceBtn.addEventListener('click', loadSequenceTemplate);
+            classBtn.addEventListener('click', loadClassTemplate);
+            stateBtn.addEventListener('click', loadStateTemplate);
+            erBtn.addEventListener('click', loadErTemplate);
+            ganttBtn.addEventListener('click', loadGanttTemplate);
+            pieBtn.addEventListener('click', loadPieTemplate);
+            gitBtn.addEventListener('click', loadGitTemplate);
+            
+            // Zoom and Pan functionality
+            let currentZoom = 1;
+            let isDragging = false;
+            let startX, startY, translateX = 0, translateY = 0;
+            
+            // Zoom in function
+            function zoomIn() {
+                if (currentZoom < 3) {
+                    currentZoom += 0.1;
+                    updateZoom();
+                }
+            }
+            
+            // Zoom out function
+            function zoomOut() {
+                if (currentZoom > 0.5) {
+                    currentZoom -= 0.1;
+                    updateZoom();
+                }
+            }
+            
+            // Reset zoom function
+            function resetZoom() {
+                currentZoom = 1;
+                translateX = 0;
+                translateY = 0;
+                updateZoom();
+            }
+            
+            // Update zoom and transform
+            function updateZoom() {
+                mermaidOutput.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
+                zoomLevelDisplay.textContent = `${Math.round(currentZoom * 100)}%`;
+            }
+            
+            // Handle mouse wheel for zooming
+            previewPanel.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
+            });
+            
+            // Mouse down event for panning
+            mermaidOutput.addEventListener('mousedown', (e) => {
+                if (e.button === 0) { // Left mouse button
+                    isDragging = true;
+                    mermaidOutput.classList.add('grabbing');
+                    startX = e.clientX - translateX;
+                    startY = e.clientY - translateY;
+                }
+            });
+            
+            // Mouse move event for panning
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    translateX = e.clientX - startX;
+                    translateY = e.clientY - startY;
+                    updateZoom();
+                }
+            });
+            
+            // Mouse up event to stop panning
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                mermaidOutput.classList.remove('grabbing');
+            });
+            
+            // Mouse leave event to stop panning
+            previewPanel.addEventListener('mouseleave', () => {
+                isDragging = false;
+                mermaidOutput.classList.remove('grabbing');
+            });
+            
+            // Zoom control buttons
+            zoomInBtn.addEventListener('click', zoomIn);
+            zoomOutBtn.addEventListener('click', zoomOut);
+            zoomResetBtn.addEventListener('click', resetZoom);
+            
+            // Theme change event
+            document.getElementById('theme-toggle-btn').addEventListener('click', () => {
+                setTimeout(() => {
+                    // Update mermaid theme when page theme changes
+                    mermaid.initialize({
+                        startOnLoad: false,
+                        theme: document.body.classList.contains('dark-theme') ? 'dark' : 'default',
+                        securityLevel: 'loose',
+                        fontFamily: 'var(--font-mono)'
+                    });
+                    
+                    // Re-render current diagram with new theme
+                    if (mermaidInput.value.trim()) {
+                        renderDiagram();
+                    }
+                }, 100);
+            });
+            
+            // Initialize with a flowchart example
+            loadFlowchartTemplate();
+        });
+    </script>
+    <style>
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--accent-primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .empty-message {
+            color: var(--text-secondary);
+            text-align: center;
+            padding: var(--spacing-md);
+        }
+        
+        /* Adjust SVG styling for dark/light themes */
+        .dark-theme .mermaid-content svg {
+            filter: brightness(0.9);
+        }
+        
+        .mermaid-content svg {
+            max-width: 100%;
+            height: auto;
+            pointer-events: none; /* Prevent SVG from capturing mouse events */
+        }
+    </style>
+</body>
+</html>

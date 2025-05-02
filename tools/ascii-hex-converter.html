@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Convert between ASCII text and hexadecimal representation">
+    <title>ASCII <> HEX Converter | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="../assets/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html"><i class="fas fa-tools"></i> Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devutils" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>ASCII <> HEX Converter</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Convert between ASCII text and hexadecimal representation. Useful for data analysis, programming, and debugging binary data.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="options-group mt-2 mb-2">
+                        <label>Operation:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="radio" name="operation" id="ascii-to-hex-option" checked>
+                                ASCII to HEX
+                            </label>
+                            <label>
+                                <input type="radio" name="operation" id="hex-to-ascii-option">
+                                HEX to ASCII
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="options-group mt-2 mb-2" id="hex-format-options">
+                        <label>HEX Format:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="radio" name="hex-format" id="space-separated-option" checked>
+                                Space Separated (41 42 43)
+                            </label>
+                            <label>
+                                <input type="radio" name="hex-format" id="continuous-option">
+                                Continuous (414243)
+                            </label>
+                            <label>
+                                <input type="radio" name="hex-format" id="prefixed-option">
+                                0x Prefixed (0x41 0x42 0x43)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="input-text" id="input-label">ASCII Text:</label>
+                        <textarea id="input-text" placeholder="Enter ASCII text to convert to HEX..." aria-label="Input text"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-input">Clear</button>
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="convert-btn">Convert</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Result:</h3>
+                        <div class="input-group">
+                            <textarea id="result-text" readonly aria-label="Result"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="copy-result">Copy Result</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devutils" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devutils/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputText = document.getElementById('input-text');
+            const resultText = document.getElementById('result-text');
+            const convertBtn = document.getElementById('convert-btn');
+            const clearInputBtn = document.getElementById('clear-input');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const resultContainer = document.getElementById('result-container');
+            const errorMessage = document.getElementById('error-message');
+            const copyResultBtn = document.getElementById('copy-result');
+            const asciiToHexOption = document.getElementById('ascii-to-hex-option');
+            const hexToAsciiOption = document.getElementById('hex-to-ascii-option');
+            const inputLabel = document.getElementById('input-label');
+            const hexFormatOptions = document.getElementById('hex-format-options');
+            const spaceSeparatedOption = document.getElementById('space-separated-option');
+            const continuousOption = document.getElementById('continuous-option');
+            const prefixedOption = document.getElementById('prefixed-option');
+            
+            // Update input label and options visibility based on selected operation
+            function updateInputLabel() {
+                if (asciiToHexOption.checked) {
+                    inputLabel.textContent = 'ASCII Text:';
+                    inputText.placeholder = 'Enter ASCII text to convert to HEX...';
+                    hexFormatOptions.style.display = 'flex';
+                } else {
+                    inputLabel.textContent = 'HEX Text:';
+                    inputText.placeholder = 'Enter HEX to convert to ASCII...';
+                    hexFormatOptions.style.display = 'none';
+                }
+            }
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Convert text based on selected operation
+            function convertText() {
+                const input = inputText.value.trim();
+                
+                if (!input) {
+                    showError('Please enter text to convert');
+                    return;
+                }
+                
+                try {
+                    let result;
+                    
+                    if (asciiToHexOption.checked) {
+                        // ASCII to HEX
+                        result = asciiToHex(input);
+                    } else {
+                        // HEX to ASCII
+                        result = hexToAscii(input);
+                    }
+                    
+                    resultText.value = result;
+                    resultContainer.classList.remove('hidden');
+                } catch (error) {
+                    showError(`Error: ${error.message}`);
+                }
+            }
+            
+            // Convert ASCII to HEX
+            function asciiToHex(str) {
+                let hexArray = [];
+                for (let i = 0; i < str.length; i++) {
+                    const hex = str.charCodeAt(i).toString(16).padStart(2, '0');
+                    hexArray.push(hex);
+                }
+                
+                if (spaceSeparatedOption.checked) {
+                    return hexArray.join(' ').toUpperCase();
+                } else if (continuousOption.checked) {
+                    return hexArray.join('').toUpperCase();
+                } else if (prefixedOption.checked) {
+                    return hexArray.map(h => '0x' + h).join(' ').toUpperCase();
+                }
+            }
+            
+            // Convert HEX to ASCII
+            function hexToAscii(hex) {
+                // Clean up the input - remove 0x prefixes, spaces, and non-hex characters
+                hex = hex.replace(/0x/gi, '').replace(/\s+/g, '');
+                
+                // Check if the hex string is valid
+                if (!/^[0-9A-Fa-f]+$/.test(hex)) {
+                    throw new Error('Invalid hexadecimal input');
+                }
+                
+                // Check if the hex string has an even number of characters
+                if (hex.length % 2 !== 0) {
+                    throw new Error('Hexadecimal input must have an even number of characters');
+                }
+                
+                let result = '';
+                for (let i = 0; i < hex.length; i += 2) {
+                    const charCode = parseInt(hex.substr(i, 2), 16);
+                    result += String.fromCharCode(charCode);
+                }
+                return result;
+            }
+            
+            // Load sample data
+            function loadSample() {
+                if (asciiToHexOption.checked) {
+                    inputText.value = 'Hello, World!';
+                } else {
+                    inputText.value = '48 65 6C 6C 6F 2C 20 57 6F 72 6C 64 21';
+                }
+            }
+            
+            // Copy result to clipboard
+            function copyResult() {
+                resultText.select();
+                document.execCommand('copy');
+                
+                // Show temporary success message
+                const originalText = copyResultBtn.textContent;
+                copyResultBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyResultBtn.textContent = originalText;
+                }, 2000);
+            }
+            
+            // Clear input
+            function clearInput() {
+                inputText.value = '';
+                resultContainer.classList.add('hidden');
+            }
+            
+            // Event listeners
+            convertBtn.addEventListener('click', convertText);
+            clearInputBtn.addEventListener('click', clearInput);
+            loadSampleBtn.addEventListener('click', loadSample);
+            copyResultBtn.addEventListener('click', copyResult);
+            
+            asciiToHexOption.addEventListener('change', updateInputLabel);
+            hexToAsciiOption.addEventListener('change', updateInputLabel);
+            
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            
+            // Initialize UI
+            updateInputLabel();
+        });
+    </script>
+</body>
+</html>

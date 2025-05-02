@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Generate and read QR codes">
+    <title>QR Code Reader/Generator | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="../assets/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html"><i class="fas fa-tools"></i> Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devutils" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>QR Code Reader/Generator</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Generate QR codes from text or URLs, and scan QR codes from images.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="tabs">
+                        <button class="tab-btn active" id="generate-tab">Generate QR Code</button>
+                        <button class="tab-btn" id="read-tab">Read QR Code</button>
+                    </div>
+
+                    <!-- Generate QR Code Tab -->
+                    <div class="tab-content active" id="generate-content">
+                        <div class="input-group">
+                            <label for="qr-text">Text or URL:</label>
+                            <textarea id="qr-text" placeholder="Enter text or URL to encode in QR code..." aria-label="Text or URL"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="clear-qr-text">Clear</button>
+                                <button class="secondary" id="load-sample-qr">Load Sample</button>
+                            </div>
+                        </div>
+
+                        <div class="options-group mt-2 mb-2">
+                            <label>QR Code Options:</label>
+                            <div class="options-controls">
+                                <label for="qr-size">Size:</label>
+                                <select id="qr-size">
+                                    <option value="128">Small (128px)</option>
+                                    <option value="200" selected>Medium (200px)</option>
+                                    <option value="300">Large (300px)</option>
+                                    <option value="400">Extra Large (400px)</option>
+                                </select>
+                                
+                                <label for="qr-error-correction">Error Correction:</label>
+                                <select id="qr-error-correction">
+                                    <option value="L">Low (7%)</option>
+                                    <option value="M" selected>Medium (15%)</option>
+                                    <option value="Q">Quartile (25%)</option>
+                                    <option value="H">High (30%)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button class="primary" id="generate-qr-btn">Generate QR Code</button>
+                        </div>
+
+                        <div class="result-container hidden" id="qr-result-container">
+                            <h3>Generated QR Code:</h3>
+                            <div class="qr-code-container">
+                                <canvas id="qr-canvas"></canvas>
+                            </div>
+                            <div class="input-controls text-center mt-2">
+                                <button class="secondary" id="download-qr">Download QR Code</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Read QR Code Tab -->
+                    <div class="tab-content" id="read-content">
+                        <div class="input-group">
+                            <label for="qr-file">Upload QR Code Image:</label>
+                            <div class="file-drop-area" id="file-drop-area">
+                                <div class="file-drop-message">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Drag & drop a QR code image here, or</p>
+                                    <label class="file-input-label" for="qr-file">Choose File</label>
+                                </div>
+                                <input type="file" id="qr-file" accept="image/*" aria-label="Upload QR Code Image">
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-2">
+                            <div class="qr-preview-container hidden" id="qr-preview-container">
+                                <h3>Uploaded Image:</h3>
+                                <img id="qr-preview" src="#" alt="QR Code Preview">
+                            </div>
+                        </div>
+
+                        <div class="result-container hidden" id="qr-read-result-container">
+                            <h3>QR Code Content:</h3>
+                            <div class="input-group">
+                                <textarea id="qr-read-result" readonly aria-label="QR Code Content"></textarea>
+                                <div class="input-controls">
+                                    <button class="secondary" id="copy-qr-result">Copy Content</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devutils" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devutils/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tab elements
+            const generateTab = document.getElementById('generate-tab');
+            const readTab = document.getElementById('read-tab');
+            const generateContent = document.getElementById('generate-content');
+            const readContent = document.getElementById('read-content');
+            
+            // Generate QR elements
+            const qrText = document.getElementById('qr-text');
+            const qrSize = document.getElementById('qr-size');
+            const qrErrorCorrection = document.getElementById('qr-error-correction');
+            const generateQrBtn = document.getElementById('generate-qr-btn');
+            const clearQrTextBtn = document.getElementById('clear-qr-text');
+            const loadSampleQrBtn = document.getElementById('load-sample-qr');
+            const qrResultContainer = document.getElementById('qr-result-container');
+            const qrCanvas = document.getElementById('qr-canvas');
+            const downloadQrBtn = document.getElementById('download-qr');
+            
+            // Read QR elements
+            const qrFile = document.getElementById('qr-file');
+            const qrPreviewContainer = document.getElementById('qr-preview-container');
+            const qrPreview = document.getElementById('qr-preview');
+            const qrReadResultContainer = document.getElementById('qr-read-result-container');
+            const qrReadResult = document.getElementById('qr-read-result');
+            const copyQrResultBtn = document.getElementById('copy-qr-result');
+            
+            // Error message element
+            const errorMessage = document.getElementById('error-message');
+            
+            // Tab switching
+            function switchTab(tab) {
+                // Remove active class from all tabs and content
+                generateTab.classList.remove('active');
+                readTab.classList.remove('active');
+                generateContent.classList.remove('active');
+                readContent.classList.remove('active');
+                
+                // Add active class to selected tab and content
+                if (tab === 'generate') {
+                    generateTab.classList.add('active');
+                    generateContent.classList.add('active');
+                } else {
+                    readTab.classList.add('active');
+                    readContent.classList.add('active');
+                }
+            }
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Generate QR code
+            function generateQrCode() {
+                const text = qrText.value.trim();
+                
+                if (!text) {
+                    showError('Please enter text or URL to generate QR code');
+                    return;
+                }
+                
+                try {
+                    QRCode.toCanvas(qrCanvas, text, {
+                        width: parseInt(qrSize.value),
+                        margin: 4,
+                        errorCorrectionLevel: qrErrorCorrection.value,
+                        color: {
+                            dark: getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim(),
+                            light: getComputedStyle(document.documentElement).getPropertyValue('--background-color').trim()
+                        }
+                    }, (error) => {
+                        if (error) {
+                            showError(`Error generating QR code: ${error}`);
+                            return;
+                        }
+                        
+                        qrResultContainer.classList.remove('hidden');
+                    });
+                } catch (error) {
+                    showError(`Error: ${error.message}`);
+                }
+            }
+            
+            // Read QR code from image
+            function readQrCode(file) {
+                if (!file) {
+                    showError('Please select an image file');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    
+                    // Show preview
+                    qrPreview.src = e.target.result;
+                    qrPreviewContainer.classList.remove('hidden');
+                    
+                    img.onload = function() {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            context.drawImage(img, 0, 0, img.width, img.height);
+                            
+                            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                            const code = jsQR(imageData.data, imageData.width, imageData.height);
+                            
+                            if (code) {
+                                qrReadResult.value = code.data;
+                                qrReadResultContainer.classList.remove('hidden');
+                            } else {
+                                showError('No QR code found in the image');
+                            }
+                        } catch (error) {
+                            showError(`Error reading QR code: ${error.message}`);
+                        }
+                    };
+                };
+                
+                reader.onerror = function() {
+                    showError('Error reading the file');
+                };
+                
+                reader.readAsDataURL(file);
+            }
+            
+            // Download QR code
+            function downloadQrCode() {
+                const link = document.createElement('a');
+                link.download = 'qrcode.png';
+                link.href = qrCanvas.toDataURL('image/png');
+                link.click();
+            }
+            
+            // Load sample text
+            function loadSampleQr() {
+                qrText.value = 'https://github.com/irfansofyana/devutils';
+            }
+            
+            // Copy QR read result
+            function copyQrResult() {
+                qrReadResult.select();
+                document.execCommand('copy');
+                
+                // Show temporary success message
+                const originalText = copyQrResultBtn.textContent;
+                copyQrResultBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyQrResultBtn.textContent = originalText;
+                }, 2000);
+            }
+            
+            // Clear QR text
+            function clearQrText() {
+                qrText.value = '';
+                qrResultContainer.classList.add('hidden');
+            }
+            
+            // Event listeners
+            generateTab.addEventListener('click', () => switchTab('generate'));
+            readTab.addEventListener('click', () => switchTab('read'));
+            
+            generateQrBtn.addEventListener('click', generateQrCode);
+            clearQrTextBtn.addEventListener('click', clearQrText);
+            loadSampleQrBtn.addEventListener('click', loadSampleQr);
+            downloadQrBtn.addEventListener('click', downloadQrCode);
+            
+            qrFile.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    readQrCode(e.target.files[0]);
+                }
+            });
+            
+            copyQrResultBtn.addEventListener('click', copyQrResult);
+            
+            // Drag and drop functionality
+            const fileDropArea = document.getElementById('file-drop-area');
+            
+            fileDropArea.addEventListener('click', () => {
+                qrFile.click();
+            });
+            
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                fileDropArea.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            // Highlight drop area when item is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileDropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileDropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            // Handle dropped files
+            fileDropArea.addEventListener('drop', handleDrop, false);
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            function highlight() {
+                fileDropArea.classList.add('drag-over');
+            }
+            
+            function unhighlight() {
+                fileDropArea.classList.remove('drag-over');
+            }
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files && files.length) {
+                    readQrCode(files[0]);
+                }
+            }
+            
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+        });
+    </script>
+    <style>
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--text-color);
+            opacity: 0.7;
+            transition: opacity 0.3s, border-bottom 0.3s;
+        }
+        
+        .tab-btn.active {
+            opacity: 1;
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .qr-code-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: var(--card-background);
+            border-radius: 8px;
+        }
+        
+        .qr-preview-container {
+            margin: 20px 0;
+        }
+        
+        #qr-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+        }
+        
+        .file-drop-area {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 30px 20px;
+            background-color: var(--input-background);
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            transition: border-color 0.3s;
+            cursor: pointer;
+        }
+        
+        .file-drop-area.drag-over {
+            border-color: var(--primary-color);
+            background-color: rgba(var(--primary-color-rgb), 0.05);
+        }
+        
+        .file-drop-message {
+            text-align: center;
+        }
+        
+        .file-drop-message i {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--text-color-light);
+        }
+        
+        .file-drop-message p {
+            margin-bottom: 10px;
+            color: var(--text-color-light);
+        }
+        
+        .file-input-label {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .file-input-label:hover {
+            background-color: var(--primary-color-dark);
+        }
+        
+        #qr-file {
+            position: absolute;
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            z-index: -1;
+        }
+    </style>
+</body>
+</html>

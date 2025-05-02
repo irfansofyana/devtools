@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Escape and unescape backslashes in text">
+    <title>Backslash Escape/Unescape | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>Backslash Escape/Unescape</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Escape or unescape backslashes in text. Useful for preparing strings for programming languages, configuration files, or regular expressions.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="options-group mt-2 mb-2">
+                        <label>Operation:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="radio" name="operation" id="escape-option" checked>
+                                Escape
+                            </label>
+                            <label>
+                                <input type="radio" name="operation" id="unescape-option">
+                                Unescape
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="input-text" id="input-label">Text to Escape:</label>
+                        <textarea id="input-text" placeholder="Enter text to escape..." aria-label="Input text"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-input">Clear</button>
+                            <button class="secondary" id="load-sample">Sample</button>
+                            <button class="secondary" id="clipboard-btn">Clipboard</button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="convert-btn">Convert</button>
+                    </div>
+
+                    <div class="output-container mt-3">
+                        <h3>Output:</h3>
+                        <textarea id="output-text" readonly aria-label="Output"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="copy-output">Copy</button>
+                            <button class="secondary" id="use-as-input">Use as input</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputText = document.getElementById('input-text');
+            const outputText = document.getElementById('output-text');
+            const convertBtn = document.getElementById('convert-btn');
+            const clearInputBtn = document.getElementById('clear-input');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const clipboardBtn = document.getElementById('clipboard-btn');
+            const errorMessage = document.getElementById('error-message');
+            const copyOutputBtn = document.getElementById('copy-output');
+            const useAsInputBtn = document.getElementById('use-as-input');
+            const escapeOption = document.getElementById('escape-option');
+            const unescapeOption = document.getElementById('unescape-option');
+            const inputLabel = document.getElementById('input-label');
+            
+            // Update input label based on selected operation
+            function updateInputLabel() {
+                if (escapeOption.checked) {
+                    inputLabel.textContent = 'Text to Escape:';
+                    inputText.placeholder = 'Enter text to escape...';
+                } else {
+                    inputLabel.textContent = 'Text to Unescape:';
+                    inputText.placeholder = 'Enter text to unescape...';
+                }
+            }
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Escape backslashes in text
+            function escapeBackslashes(text) {
+                return text.replace(/\\/g, '\\\\')
+                           .replace(/\n/g, '\\n')
+                           .replace(/\r/g, '\\r')
+                           .replace(/\t/g, '\\t')
+                           .replace(/\v/g, '\\v')
+                           .replace(/\f/g, '\\f')
+                           .replace(/\"/g, '\\"')
+                           .replace(/\'/g, '\\\'');
+            }
+            
+            // Unescape backslashes in text
+            function unescapeBackslashes(text) {
+                return text.replace(/\\\\(?!\\)/g, '\\')
+                           .replace(/\\n/g, '\n')
+                           .replace(/\\r/g, '\r')
+                           .replace(/\\t/g, '\t')
+                           .replace(/\\v/g, '\v')
+                           .replace(/\\f/g, '\f')
+                           .replace(/\\"/g, '"')
+                           .replace(/\\'/g, '\'');
+            }
+            
+            // Convert text based on selected operation
+            function convertText() {
+                const input = inputText.value;
+                
+                if (!input) {
+                    showError('Please enter text to convert');
+                    return;
+                }
+                
+                try {
+                    let result;
+                    
+                    if (escapeOption.checked) {
+                        result = escapeBackslashes(input);
+                    } else {
+                        result = unescapeBackslashes(input);
+                    }
+                    
+                    outputText.value = result;
+                } catch (error) {
+                    showError(`Error: ${error.message}`);
+                }
+            }
+            
+            // Load sample data
+            function loadSample() {
+                if (escapeOption.checked) {
+                    inputText.value = 'Example values:\n\tallow.auto.create.topics = true\n\tauto.commit.interval.ms = 5000\n\tauto.offset.reset = latest\n\tbootstrap.servers = [kafka.service.consul:9092]\n\tcheck.crcs = true\n\tclient.dns.lookup = default\n\tclient.id = \n\tclient.rack = \n\tconnect.max.idle.ms = 540000\n\tdefault.api.timeout.ms = 60000\n\tenable.auto.commit = true\n\texclude.internal.topics = true\n\tfetch.max.bytes = 52428800\n\tfetch.max.wait.ms = 500\n\tfetch.min.bytes = 1\n\tgroup.id = my-devutils\n\tgroup.instance.id = null\n\theartbeat.interval.ms = 3000\n\tinterceptor.classes = []';
+                } else {
+                    inputText.value = 'Example values:\\n\\tallow.auto.create.topics = true\\n\\tauto.commit.interval.ms = 5000\\n\\tauto.offset.reset = latest\\n\\tbootstrap.servers = [kafka.service.consul:9092]\\n\\tcheck.crcs = true\\n\\tclient.dns.lookup = default';
+                }
+            }
+            
+            // Copy output to clipboard
+            function copyOutput() {
+                if (!outputText.value) {
+                    showError('No output to copy');
+                    return;
+                }
+                
+                outputText.select();
+                document.execCommand('copy');
+                
+                // Show temporary success message
+                const originalText = copyOutputBtn.textContent;
+                copyOutputBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyOutputBtn.textContent = originalText;
+                }, 2000);
+            }
+            
+            // Use output as input
+            function useAsInput() {
+                if (!outputText.value) {
+                    showError('No output to use');
+                    return;
+                }
+                
+                inputText.value = outputText.value;
+                outputText.value = '';
+                
+                // Toggle operation if needed
+                if (escapeOption.checked) {
+                    unescapeOption.checked = true;
+                } else {
+                    escapeOption.checked = true;
+                }
+                
+                updateInputLabel();
+            }
+            
+            // Clear input
+            function clearInput() {
+                inputText.value = '';
+                outputText.value = '';
+            }
+            
+            // Get clipboard content
+            async function getClipboardContent() {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    inputText.value = text;
+                } catch (error) {
+                    showError('Failed to read clipboard: ' + error.message);
+                }
+            }
+            
+            // Event listeners
+            convertBtn.addEventListener('click', convertText);
+            clearInputBtn.addEventListener('click', clearInput);
+            loadSampleBtn.addEventListener('click', loadSample);
+            clipboardBtn.addEventListener('click', getClipboardContent);
+            copyOutputBtn.addEventListener('click', copyOutput);
+            useAsInputBtn.addEventListener('click', useAsInput);
+            escapeOption.addEventListener('change', updateInputLabel);
+            unescapeOption.addEventListener('change', updateInputLabel);
+            
+            // Initialize
+            updateInputLabel();
+            
+            // Update current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+        });
+    </script>
+</body>
+</html>
