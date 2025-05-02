@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Generate random UUIDs (Universally Unique Identifiers)">
+    <title>UUID Generator | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>UUID Generator</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Generate random UUIDs (Universally Unique Identifiers) in version 4 format. UUIDs are 128-bit identifiers that are unique across both space and time.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="options-group mt-2 mb-2">
+                        <label>Options:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="checkbox" id="uppercase-option">
+                                Uppercase
+                            </label>
+                            <label>
+                                <input type="checkbox" id="hyphens-option" checked>
+                                Include Hyphens
+                            </label>
+                            <label>
+                                <select id="quantity-option">
+                                    <option value="1">1 UUID</option>
+                                    <option value="5">5 UUIDs</option>
+                                    <option value="10">10 UUIDs</option>
+                                    <option value="25">25 UUIDs</option>
+                                    <option value="50">50 UUIDs</option>
+                                </select>
+                                Quantity
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="generate-btn">Generate UUID</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Generated UUIDs:</h3>
+                        <div class="input-group">
+                            <textarea id="result-text" readonly aria-label="Result"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="copy-result">Copy All</button>
+                                <button class="secondary" id="generate-new">Generate New</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const resultText = document.getElementById('result-text');
+            const generateBtn = document.getElementById('generate-btn');
+            const generateNewBtn = document.getElementById('generate-new');
+            const resultContainer = document.getElementById('result-container');
+            const errorMessage = document.getElementById('error-message');
+            const copyResultBtn = document.getElementById('copy-result');
+            const uppercaseOption = document.getElementById('uppercase-option');
+            const hyphensOption = document.getElementById('hyphens-option');
+            const quantityOption = document.getElementById('quantity-option');
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Generate a random UUID v4
+            function generateUUID() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+            
+            // Format UUID based on options
+            function formatUUID(uuid) {
+                let formattedUUID = uuid;
+                
+                if (!hyphensOption.checked) {
+                    formattedUUID = formattedUUID.replace(/-/g, '');
+                }
+                
+                if (uppercaseOption.checked) {
+                    formattedUUID = formattedUUID.toUpperCase();
+                }
+                
+                return formattedUUID;
+            }
+            
+            // Generate UUIDs
+            function generateUUIDs() {
+                try {
+                    const quantity = parseInt(quantityOption.value);
+                    const uuids = [];
+                    
+                    for (let i = 0; i < quantity; i++) {
+                        const uuid = generateUUID();
+                        uuids.push(formatUUID(uuid));
+                    }
+                    
+                    resultText.value = uuids.join('\n');
+                    resultContainer.classList.remove('hidden');
+                } catch (error) {
+                    showError(`Error: ${error.message}`);
+                }
+            }
+            
+            // Copy result to clipboard
+            function copyResult() {
+                resultText.select();
+                document.execCommand('copy');
+                
+                // Show temporary success message
+                const originalText = copyResultBtn.textContent;
+                copyResultBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyResultBtn.textContent = originalText;
+                }, 2000);
+            }
+            
+            // Event listeners
+            generateBtn.addEventListener('click', generateUUIDs);
+            generateNewBtn.addEventListener('click', generateUUIDs);
+            copyResultBtn.addEventListener('click', copyResult);
+            
+            // Update result when options change
+            uppercaseOption.addEventListener('change', () => {
+                if (!resultContainer.classList.contains('hidden')) {
+                    generateUUIDs();
+                }
+            });
+            
+            hyphensOption.addEventListener('change', () => {
+                if (!resultContainer.classList.contains('hidden')) {
+                    generateUUIDs();
+                }
+            });
+            
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+        });
+    </script>
+</body>
+</html>

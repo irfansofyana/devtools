@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Generate hash values using MD5, SHA-1, SHA-256, and more">
+    <title>Hash Generator | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>Hash Generator</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Generate cryptographic hash values for text using various algorithms including MD5, SHA-1, SHA-256, and SHA-512.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="options-group mt-2 mb-2">
+                        <label>Hash Algorithm:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="checkbox" id="md5-option" checked>
+                                MD5
+                            </label>
+                            <label>
+                                <input type="checkbox" id="sha1-option" checked>
+                                SHA-1
+                            </label>
+                            <label>
+                                <input type="checkbox" id="sha256-option" checked>
+                                SHA-256
+                            </label>
+                            <label>
+                                <input type="checkbox" id="sha512-option">
+                                SHA-512
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="input-text">Text to Hash:</label>
+                        <textarea id="input-text" placeholder="Enter text to hash..." aria-label="Input text"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-input">Clear</button>
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="generate-btn">Generate Hash</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Hash Results:</h3>
+                        <div id="hash-results"></div>
+                        <div class="input-controls mt-2">
+                            <button class="secondary" id="copy-all-results">Copy All Results</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputText = document.getElementById('input-text');
+            const generateBtn = document.getElementById('generate-btn');
+            const clearInputBtn = document.getElementById('clear-input');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const resultContainer = document.getElementById('result-container');
+            const hashResults = document.getElementById('hash-results');
+            const errorMessage = document.getElementById('error-message');
+            const copyAllResultsBtn = document.getElementById('copy-all-results');
+            const md5Option = document.getElementById('md5-option');
+            const sha1Option = document.getElementById('sha1-option');
+            const sha256Option = document.getElementById('sha256-option');
+            const sha512Option = document.getElementById('sha512-option');
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Generate hash values
+            function generateHashes() {
+                const input = inputText.value.trim();
+                
+                if (!input) {
+                    showError('Please enter text to hash');
+                    return;
+                }
+                
+                if (!md5Option.checked && !sha1Option.checked && !sha256Option.checked && !sha512Option.checked) {
+                    showError('Please select at least one hash algorithm');
+                    return;
+                }
+                
+                try {
+                    hashResults.innerHTML = '';
+                    let results = [];
+                    
+                    if (md5Option.checked) {
+                        const md5Hash = CryptoJS.MD5(input).toString();
+                        addHashResult('MD5', md5Hash);
+                        results.push(`MD5: ${md5Hash}`);
+                    }
+                    
+                    if (sha1Option.checked) {
+                        const sha1Hash = CryptoJS.SHA1(input).toString();
+                        addHashResult('SHA-1', sha1Hash);
+                        results.push(`SHA-1: ${sha1Hash}`);
+                    }
+                    
+                    if (sha256Option.checked) {
+                        const sha256Hash = CryptoJS.SHA256(input).toString();
+                        addHashResult('SHA-256', sha256Hash);
+                        results.push(`SHA-256: ${sha256Hash}`);
+                    }
+                    
+                    if (sha512Option.checked) {
+                        const sha512Hash = CryptoJS.SHA512(input).toString();
+                        addHashResult('SHA-512', sha512Hash);
+                        results.push(`SHA-512: ${sha512Hash}`);
+                    }
+                    
+                    resultContainer.classList.remove('hidden');
+                } catch (error) {
+                    showError(`Error: ${error.message}`);
+                }
+            }
+            
+            // Add a hash result to the results container
+            function addHashResult(algorithm, hash) {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'hash-result-item';
+                
+                const resultHeader = document.createElement('div');
+                resultHeader.className = 'hash-result-header';
+                resultHeader.innerHTML = `<strong>${algorithm}:</strong>`;
+                
+                const resultContent = document.createElement('div');
+                resultContent.className = 'hash-result-content';
+                
+                const resultInput = document.createElement('input');
+                resultInput.type = 'text';
+                resultInput.className = 'hash-result-value';
+                resultInput.value = hash;
+                resultInput.readOnly = true;
+                
+                const copyButton = document.createElement('button');
+                copyButton.className = 'secondary copy-hash-btn';
+                copyButton.textContent = 'Copy';
+                copyButton.addEventListener('click', () => {
+                    resultInput.select();
+                    document.execCommand('copy');
+                    
+                    // Show temporary success message
+                    const originalText = copyButton.textContent;
+                    copyButton.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyButton.textContent = originalText;
+                    }, 2000);
+                });
+                
+                resultContent.appendChild(resultInput);
+                resultContent.appendChild(copyButton);
+                
+                resultItem.appendChild(resultHeader);
+                resultItem.appendChild(resultContent);
+                
+                hashResults.appendChild(resultItem);
+            }
+            
+            // Load sample data
+            function loadSample() {
+                inputText.value = 'Hello, World! This is a sample text to hash.';
+            }
+            
+            // Copy all results to clipboard
+            function copyAllResults() {
+                const hashValues = Array.from(hashResults.querySelectorAll('.hash-result-value'))
+                    .map(input => `${input.previousElementSibling.textContent} ${input.value}`)
+                    .join('\n');
+                
+                const tempTextarea = document.createElement('textarea');
+                tempTextarea.value = hashValues;
+                document.body.appendChild(tempTextarea);
+                tempTextarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextarea);
+                
+                // Show temporary success message
+                const originalText = copyAllResultsBtn.textContent;
+                copyAllResultsBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyAllResultsBtn.textContent = originalText;
+                }, 2000);
+            }
+            
+            // Clear input
+            function clearInput() {
+                inputText.value = '';
+                resultContainer.classList.add('hidden');
+            }
+            
+            // Event listeners
+            generateBtn.addEventListener('click', generateHashes);
+            clearInputBtn.addEventListener('click', clearInput);
+            loadSampleBtn.addEventListener('click', loadSample);
+            copyAllResultsBtn.addEventListener('click', copyAllResults);
+            
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            
+            // Add some CSS for the hash results
+            const style = document.createElement('style');
+            style.textContent = `
+                .hash-result-item {
+                    margin-bottom: 1rem;
+                }
+                .hash-result-header {
+                    margin-bottom: 0.5rem;
+                }
+                .hash-result-content {
+                    display: flex;
+                    gap: 0.5rem;
+                }
+                .hash-result-value {
+                    flex: 1;
+                    font-family: var(--font-mono);
+                    padding: 0.5rem;
+                    border-radius: var(--border-radius);
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+</body>
+</html>

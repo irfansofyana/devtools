@@ -8,6 +8,94 @@
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/theme.css">
     <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+    <style>
+        /* Diff specific styles */
+        .diff-view {
+            display: flex;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            margin-top: var(--spacing-md);
+        }
+        
+        .diff-original, .diff-modified {
+            flex: 1;
+            overflow-x: auto;
+            padding: var(--spacing-sm);
+        }
+        
+        .diff-original {
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .diff-line {
+            display: flex;
+            padding: 2px 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .diff-line.added {
+            background-color: rgba(0, 255, 0, 0.1);
+        }
+        
+        .diff-line.removed {
+            background-color: rgba(255, 0, 0, 0.1);
+        }
+        
+        .line-num {
+            min-width: 40px;
+            text-align: right;
+            padding-right: var(--spacing-sm);
+            color: var(--text-muted);
+            user-select: none;
+        }
+        
+        .line-content {
+            flex: 1;
+            font-family: var(--font-mono);
+        }
+        
+        .diff-view-inline {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            margin-top: var(--spacing-md);
+        }
+        
+        .diff-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+            margin: var(--spacing-md) 0;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        
+        .stat-label {
+            font-weight: bold;
+        }
+        
+        /* Character-level diff highlighting */
+        .char-added {
+            background-color: rgba(0, 255, 0, 0.3);
+            border-radius: 2px;
+            padding: 0 2px;
+            margin: 0 -2px;
+        }
+        
+        .char-removed {
+            background-color: rgba(255, 0, 0, 0.3);
+            border-radius: 2px;
+            padding: 0 2px;
+            margin: 0 -2px;
+            text-decoration: line-through;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -122,7 +210,7 @@
 
     <script src="../js/theme.js"></script>
     <script src="../js/main.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff/5.1.0/diff.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.1.0/diff.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const originalText = document.getElementById('original-text');
@@ -174,7 +262,7 @@
                     const originalLines = preparedOriginal.split('\n');
                     const modifiedLines = preparedModified.split('\n');
                     
-                    // Compute the diff
+                    // Compute the line-level diff
                     const diff = Diff.diffLines(preparedOriginal, preparedModified);
                     
                     // Calculate statistics
@@ -240,8 +328,8 @@
                 const originalLines = original.split('\n');
                 const modifiedLines = modified.split('\n');
                 
-                // Create diff
-                const diff = Diff.diffLines(original, modified, {
+                // Create line-level diff
+                const lineDiff = Diff.diffLines(original, modified, {
                     ignoreCase: ignoreCase.checked,
                     ignoreWhitespace: ignoreWhitespace.checked
                 });
@@ -253,8 +341,9 @@
                 // Process diff
                 let originalLineNum = 1;
                 let modifiedLineNum = 1;
+                let lastRemovedLines = [];
                 
-                diff.forEach(part => {
+                lineDiff.forEach(part => {
                     const value = part.value;
                     const lines = value.split('\n');
                     
@@ -265,15 +354,66 @@
                         // Added lines - only in modified
                         for (let i = 0; i < linesCount; i++) {
                             const line = lines[i];
-                            diffModified.innerHTML += `<div class="diff-line added"><span class="line-num">${modifiedLineNum++}</span><span class="line-content">${escapeHtml(line)}</span></div>`;
+                            // Check if we have a corresponding removed line to compare with
+                            if (lastRemovedLines && lastRemovedLines.length > 0) {
+                                const removedLine = lastRemovedLines[i] || '';
+                                // Compare character by character
+                                const charDiff = Diff.diffChars(removedLine, line, {
+                                    ignoreCase: ignoreCase.checked
+                                });
+                                
+                                let formattedLine = '';
+                                charDiff.forEach(charPart => {
+                                    if (charPart.added) {
+                                        formattedLine += `<span class="char-added">${escapeHtml(charPart.value)}</span>`;
+                                    } else if (!charPart.removed) {
+                                        formattedLine += escapeHtml(charPart.value);
+                                    }
+                                });
+                                
+                                diffModified.innerHTML += `<div class="diff-line added"><span class="line-num">${modifiedLineNum++}</span><span class="line-content">${formattedLine}</span></div>`;
+                            } else {
+                                // No corresponding removed line, just show as added
+                                diffModified.innerHTML += `<div class="diff-line added"><span class="line-num">${modifiedLineNum++}</span><span class="line-content">${escapeHtml(line)}</span></div>`;
+                            }
                         }
                     } else if (part.removed) {
+                        // Store removed lines for character diff with added lines
+                        lastRemovedLines = [];
+                        
                         // Removed lines - only in original
                         for (let i = 0; i < linesCount; i++) {
                             const line = lines[i];
-                            diffOriginal.innerHTML += `<div class="diff-line removed"><span class="line-num">${originalLineNum++}</span><span class="line-content">${escapeHtml(line)}</span></div>`;
+                            lastRemovedLines.push(line);
+                            // If there will be added lines after this, we'll do character diff there
+                            // For now, just show the removed line
+                            // Check if there are upcoming added parts
+                            const nextPart = lineDiff[lineDiff.indexOf(part) + 1];
+                            if (nextPart && nextPart.added) {
+                                // We'll handle this in the added section with character diff
+                                diffOriginal.innerHTML += `<div class="diff-line removed"><span class="line-num">${originalLineNum++}</span><span class="line-content">${escapeHtml(line)}</span></div>`;
+                            } else {
+                                // No upcoming added parts, highlight removed characters
+                                const charDiff = Diff.diffChars('', line, {
+                                    ignoreCase: ignoreCase.checked
+                                });
+                                
+                                let formattedLine = '';
+                                charDiff.forEach(charPart => {
+                                    if (charPart.removed) {
+                                        formattedLine += `<span class="char-removed">${escapeHtml(charPart.value)}</span>`;
+                                    } else {
+                                        formattedLine += escapeHtml(charPart.value);
+                                    }
+                                });
+                                
+                                diffOriginal.innerHTML += `<div class="diff-line removed"><span class="line-num">${originalLineNum++}</span><span class="line-content">${formattedLine}</span></div>`;
+                            }
                         }
                     } else {
+                        // Clear any remaining removed lines
+                        lastRemovedLines = [];
+                        
                         // Unchanged lines - in both
                         for (let i = 0; i < linesCount; i++) {
                             const line = lines[i];
@@ -301,6 +441,7 @@
                 
                 // Process diff
                 let lineNum = 1;
+                let lastRemovedLines = [];
                 
                 diff.forEach(part => {
                     const value = part.value;
@@ -313,15 +454,65 @@
                         // Added lines
                         for (let i = 0; i < linesCount; i++) {
                             const line = lines[i];
-                            diffViewInline.innerHTML += `<div class="diff-line added"><span class="line-num">+</span><span class="line-content">${escapeHtml(line)}</span></div>`;
+                            // Check if we have a corresponding removed line to compare with
+                            const removedLine = lastRemovedLines.shift();
+                            
+                            if (removedLine !== undefined) {
+                                // We have a pair of lines to compare character by character
+                                const charDiff = Diff.diffChars(removedLine, line, {
+                                    ignoreCase: ignoreCase.checked
+                                });
+                                
+                                let formattedLine = '';
+                                charDiff.forEach(charPart => {
+                                    if (charPart.added) {
+                                        formattedLine += `<span class="char-added">${escapeHtml(charPart.value)}</span>`;
+                                    } else if (!charPart.removed) {
+                                        formattedLine += escapeHtml(charPart.value);
+                                    }
+                                });
+                                
+                                diffViewInline.innerHTML += `<div class="diff-line added"><span class="line-num">+</span><span class="line-content">${formattedLine}</span></div>`;
+                            } else {
+                                // No corresponding removed line, just show as added
+                                diffViewInline.innerHTML += `<div class="diff-line added"><span class="line-num">+</span><span class="line-content">${escapeHtml(line)}</span></div>`;
+                            }
                         }
+                        
+                        // Clear any remaining removed lines
+                        lastRemovedLines = [];
                     } else if (part.removed) {
-                        // Removed lines
+                        // Store removed lines for potential character diff with added lines
                         for (let i = 0; i < linesCount; i++) {
                             const line = lines[i];
-                            diffViewInline.innerHTML += `<div class="diff-line removed"><span class="line-num">-</span><span class="line-content">${escapeHtml(line)}</span></div>`;
+                            lastRemovedLines.push(line);
+                            // Check if there are upcoming added parts
+                            const nextPart = diff[diff.indexOf(part) + 1];
+                            if (nextPart && nextPart.added) {
+                                // We'll handle character highlighting in the added section
+                                diffViewInline.innerHTML += `<div class="diff-line removed"><span class="line-num">-</span><span class="line-content">${escapeHtml(line)}</span></div>`;
+                            } else {
+                                // No upcoming added parts, highlight removed characters
+                                const charDiff = Diff.diffChars('', line, {
+                                    ignoreCase: ignoreCase.checked
+                                });
+                                
+                                let formattedLine = '';
+                                charDiff.forEach(charPart => {
+                                    if (charPart.removed) {
+                                        formattedLine += `<span class="char-removed">${escapeHtml(charPart.value)}</span>`;
+                                    } else {
+                                        formattedLine += escapeHtml(charPart.value);
+                                    }
+                                });
+                                
+                                diffViewInline.innerHTML += `<div class="diff-line removed"><span class="line-num">-</span><span class="line-content">${formattedLine}</span></div>`;
+                            }
                         }
                     } else {
+                        // Clear any remaining removed lines
+                        lastRemovedLines = [];
+                        
                         // Unchanged lines
                         for (let i = 0; i < linesCount; i++) {
                             const line = lines[i];

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Encode and decode text using Base64">
+    <title>Base64 Encoder/Decoder | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>Base64 Encoder/Decoder</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Encode text to Base64 or decode Base64 to plain text. Useful for data transmission where binary data needs to be encoded as text.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="options-group mt-2 mb-2">
+                        <label>Operation:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="radio" name="operation" id="encode-option" checked>
+                                Encode
+                            </label>
+                            <label>
+                                <input type="radio" name="operation" id="decode-option">
+                                Decode
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="input-text" id="input-label">Text to Encode:</label>
+                        <textarea id="input-text" placeholder="Enter text to encode..." aria-label="Input text"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-input">Clear</button>
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="convert-btn">Convert</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Result:</h3>
+                        <div class="input-group">
+                            <textarea id="result-text" readonly aria-label="Result"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="copy-result">Copy Result</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputText = document.getElementById('input-text');
+            const resultText = document.getElementById('result-text');
+            const convertBtn = document.getElementById('convert-btn');
+            const clearInputBtn = document.getElementById('clear-input');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const resultContainer = document.getElementById('result-container');
+            const errorMessage = document.getElementById('error-message');
+            const copyResultBtn = document.getElementById('copy-result');
+            const encodeOption = document.getElementById('encode-option');
+            const decodeOption = document.getElementById('decode-option');
+            const inputLabel = document.getElementById('input-label');
+            
+            // Update input label based on selected operation
+            function updateInputLabel() {
+                inputLabel.textContent = encodeOption.checked ? 'Text to Encode:' : 'Base64 to Decode:';
+                inputText.placeholder = encodeOption.checked ? 'Enter text to encode...' : 'Enter Base64 to decode...';
+            }
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Convert text based on selected operation
+            function convertText() {
+                const input = inputText.value.trim();
+                
+                if (!input) {
+                    showError('Please enter text to convert');
+                    return;
+                }
+                
+                try {
+                    let result;
+                    
+                    if (encodeOption.checked) {
+                        // Encode to Base64
+                        result = btoa(unescape(encodeURIComponent(input)));
+                    } else {
+                        // Decode from Base64
+                        try {
+                            result = decodeURIComponent(escape(atob(input)));
+                        } catch (e) {
+                            showError('Invalid Base64 input. Please check your input and try again.');
+                            return;
+                        }
+                    }
+                    
+                    resultText.value = result;
+                    resultContainer.classList.remove('hidden');
+                } catch (error) {
+                    showError(`Error: ${error.message}`);
+                }
+            }
+            
+            // Load sample data
+            function loadSample() {
+                if (encodeOption.checked) {
+                    inputText.value = 'Hello, World! This is a sample text to encode to Base64.';
+                } else {
+                    inputText.value = 'SGVsbG8sIFdvcmxkISBUaGlzIGlzIGEgc2FtcGxlIHRleHQgdG8gZW5jb2RlIHRvIEJhc2U2NC4=';
+                }
+            }
+            
+            // Copy result to clipboard
+            function copyResult() {
+                resultText.select();
+                document.execCommand('copy');
+                
+                // Show temporary success message
+                const originalText = copyResultBtn.textContent;
+                copyResultBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyResultBtn.textContent = originalText;
+                }, 2000);
+            }
+            
+            // Clear input
+            function clearInput() {
+                inputText.value = '';
+                resultContainer.classList.add('hidden');
+            }
+            
+            // Event listeners
+            convertBtn.addEventListener('click', convertText);
+            clearInputBtn.addEventListener('click', clearInput);
+            loadSampleBtn.addEventListener('click', loadSample);
+            copyResultBtn.addEventListener('click', copyResult);
+            
+            encodeOption.addEventListener('change', updateInputLabel);
+            decodeOption.addEventListener('change', updateInputLabel);
+            
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+        });
+    </script>
+</body>
+</html>
