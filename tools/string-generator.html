@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Generate random strings, names, emails, addresses and other developer data">
+    <title>Random String Generator | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>Random String Generator</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Generate random strings, names, emails, addresses, and other developer data for testing and prototyping.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="tabs">
+                        <button class="tab-btn active" id="simple-tab">Simple Generator</button>
+                        <button class="tab-btn" id="pattern-tab">Pattern-based Generator</button>
+                        <button class="tab-btn" id="dev-data-tab">Developer Data</button>
+                    </div>
+                    
+                    <div class="tab-content" id="simple-generator">
+                        <div class="options-container">
+                            <div class="option-group">
+                                <label for="string-length">String Length:</label>
+                                <div class="length-control">
+                                    <input type="range" id="string-length" min="1" max="100" value="16" aria-label="String length">
+                                    <span id="length-value">16</span>
+                                </div>
+                            </div>
+                            
+                            <div class="option-group">
+                                <label>Character Types:</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="include-uppercase" checked>
+                                        Uppercase Letters (A-Z)
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="include-lowercase" checked>
+                                        Lowercase Letters (a-z)
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="include-numbers" checked>
+                                        Numbers (0-9)
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="include-symbols">
+                                        Special Characters (!@#$%^&*...)
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="include-spaces">
+                                        Spaces
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="option-group">
+                                <label>Custom Character Set (Optional):</label>
+                                <input type="text" id="custom-chars" placeholder="e.g. ABC123!@#" aria-label="Custom character set">
+                                <p class="option-hint">If provided, only these characters will be used</p>
+                            </div>
+                            
+                            <div class="option-group">
+                                <label for="num-strings">Number of Strings to Generate:</label>
+                                <input type="number" id="num-strings" min="1" max="100" value="1" aria-label="Number of strings">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content hidden" id="pattern-generator">
+                        <div class="options-container">
+                            <div class="option-group">
+                                <label for="pattern-input">Pattern:</label>
+                                <input type="text" id="pattern-input" placeholder="e.g. AAA-999-xxx" aria-label="Pattern input">
+                                <p class="option-hint">
+                                    Use the following placeholders:<br>
+                                    A = uppercase letter, a = lowercase letter, 9 = digit, x = any letter, * = any character
+                                </p>
+                            </div>
+                            
+                            <div class="option-group">
+                                <label for="pattern-num-strings">Number of Strings to Generate:</label>
+                                <input type="number" id="pattern-num-strings" min="1" max="100" value="1" aria-label="Number of pattern strings">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content hidden" id="dev-data-generator">
+                        <div class="options-container">
+                            <div class="option-group">
+                                <label for="data-type">Data Type:</label>
+                                <select id="data-type" class="full-width" aria-label="Select data type to generate">
+                                    <option value="full-name">Full Name</option>
+                                    <option value="first-name">First Name</option>
+                                    <option value="last-name">Last Name</option>
+                                    <option value="email">Email Address</option>
+                                    <option value="username">Username</option>
+                                    <option value="address">Street Address</option>
+                                    <option value="city">City</option>
+                                    <option value="country">Country</option>
+                                    <option value="phone">Phone Number</option>
+                                    <option value="credit-card">Credit Card Number</option>
+                                    <option value="company">Company Name</option>
+                                    <option value="job-title">Job Title</option>
+                                    <option value="ip-address">IP Address</option>
+                                    <option value="user-agent">User Agent</option>
+                                    <option value="color">Color (HEX)</option>
+                                    <option value="date">Date</option>
+                                </select>
+                            </div>
+                            
+                            <div class="option-group" id="gender-option">
+                                <label>Gender (for names):</label>
+                                <div class="radio-group">
+                                    <label class="radio-label">
+                                        <input type="radio" name="gender" value="any" checked>
+                                        Any
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="gender" value="male">
+                                        Male
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="gender" value="female">
+                                        Female
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="option-group" id="locale-option">
+                                <label for="locale">Locale/Region:</label>
+                                <select id="locale" class="full-width" aria-label="Select locale or region">
+                                    <option value="en-US">English (US)</option>
+                                    <option value="en-GB">English (UK)</option>
+                                    <option value="fr-FR">French</option>
+                                    <option value="de-DE">German</option>
+                                    <option value="es-ES">Spanish</option>
+                                    <option value="it-IT">Italian</option>
+                                    <option value="ja-JP">Japanese</option>
+                                </select>
+                            </div>
+                            
+                            <div class="option-group" id="date-options" style="display: none;">
+                                <label>Date Range:</label>
+                                <div class="date-range">
+                                    <div class="date-input">
+                                        <label for="date-start">From:</label>
+                                        <input type="date" id="date-start" value="2020-01-01">
+                                    </div>
+                                    <div class="date-input">
+                                        <label for="date-end">To:</label>
+                                        <input type="date" id="date-end">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="option-group">
+                                <label for="dev-data-count">Number of Items:</label>
+                                <input type="number" id="dev-data-count" min="1" max="100" value="5" aria-label="Number of items to generate">
+                            </div>
+                            
+                            <div class="option-group" id="format-option">
+                                <label for="output-format">Output Format:</label>
+                                <select id="output-format" class="full-width" aria-label="Select output format">
+                                    <option value="text">Plain Text (one per line)</option>
+                                    <option value="json">JSON</option>
+                                    <option value="csv">CSV</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="generate-btn">Generate String</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Generated String(s):</h3>
+                        <div class="generated-strings" id="generated-strings">
+                            <!-- Generated strings will be added here -->
+                        </div>
+                        <div class="result-controls">
+                            <button class="secondary" id="copy-all">Copy All</button>
+                            <button class="secondary" id="regenerate">Generate New</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tab elements
+            const simpleTab = document.getElementById('simple-tab');
+            const patternTab = document.getElementById('pattern-tab');
+            const devDataTab = document.getElementById('dev-data-tab');
+            const simpleGenerator = document.getElementById('simple-generator');
+            const patternGenerator = document.getElementById('pattern-generator');
+            const devDataGenerator = document.getElementById('dev-data-generator');
+            
+            // Simple generator elements
+            const stringLength = document.getElementById('string-length');
+            const lengthValue = document.getElementById('length-value');
+            const includeUppercase = document.getElementById('include-uppercase');
+            const includeLowercase = document.getElementById('include-lowercase');
+            const includeNumbers = document.getElementById('include-numbers');
+            const includeSymbols = document.getElementById('include-symbols');
+            const includeSpaces = document.getElementById('include-spaces');
+            const customChars = document.getElementById('custom-chars');
+            const numStrings = document.getElementById('num-strings');
+            
+            // Pattern generator elements
+            const patternInput = document.getElementById('pattern-input');
+            const patternNumStrings = document.getElementById('pattern-num-strings');
+            
+            // Developer data generator elements
+            const dataType = document.getElementById('data-type');
+            const genderOption = document.getElementById('gender-option');
+            const genderRadios = document.querySelectorAll('input[name="gender"]');
+            const locale = document.getElementById('locale');
+            const localeOption = document.getElementById('locale-option');
+            const dateOptions = document.getElementById('date-options');
+            const dateStart = document.getElementById('date-start');
+            const dateEnd = document.getElementById('date-end');
+            const devDataCount = document.getElementById('dev-data-count');
+            const outputFormat = document.getElementById('output-format');
+            
+            // Common elements
+            const generateBtn = document.getElementById('generate-btn');
+            const resultContainer = document.getElementById('result-container');
+            const generatedStrings = document.getElementById('generated-strings');
+            const copyAllBtn = document.getElementById('copy-all');
+            const regenerateBtn = document.getElementById('regenerate');
+            const errorMessage = document.getElementById('error-message');
+            
+            // Character sets
+            const UPPERCASE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const LOWERCASE_CHARS = 'abcdefghijklmnopqrstuvwxyz';
+            const NUMBER_CHARS = '0123456789';
+            const SYMBOL_CHARS = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+            const SPACE_CHAR = ' ';
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Update length value display
+            stringLength.addEventListener('input', () => {
+                lengthValue.textContent = stringLength.value;
+            });
+            
+            // Tab switching
+            simpleTab.addEventListener('click', () => {
+                simpleTab.classList.add('active');
+                patternTab.classList.remove('active');
+                devDataTab.classList.remove('active');
+                simpleGenerator.classList.remove('hidden');
+                patternGenerator.classList.add('hidden');
+                devDataGenerator.classList.add('hidden');
+            });
+            
+            patternTab.addEventListener('click', () => {
+                patternTab.classList.add('active');
+                simpleTab.classList.remove('active');
+                devDataTab.classList.remove('active');
+                patternGenerator.classList.remove('hidden');
+                simpleGenerator.classList.add('hidden');
+                devDataGenerator.classList.add('hidden');
+            });
+            
+            devDataTab.addEventListener('click', () => {
+                devDataTab.classList.add('active');
+                simpleTab.classList.remove('active');
+                patternTab.classList.remove('active');
+                devDataGenerator.classList.remove('hidden');
+                simpleGenerator.classList.add('hidden');
+                patternGenerator.classList.add('hidden');
+            });
+            
+            // Show/hide options based on data type
+            dataType.addEventListener('change', () => {
+                const selectedType = dataType.value;
+                
+                // Show/hide gender option for name-related types
+                if (['full-name', 'first-name', 'last-name'].includes(selectedType)) {
+                    genderOption.style.display = 'block';
+                } else {
+                    genderOption.style.display = 'none';
+                }
+                
+                // Show/hide date options
+                if (selectedType === 'date') {
+                    dateOptions.style.display = 'block';
+                } else {
+                    dateOptions.style.display = 'none';
+                }
+            });
+            
+            // Set today's date as the default end date
+            const today = new Date();
+            dateEnd.value = today.toISOString().split('T')[0];
+            
+            // Generate random character from a set
+            function getRandomChar(charSet) {
+                return charSet.charAt(Math.floor(Math.random() * charSet.length));
+            }
+            
+            // Generate simple random string
+            function generateSimpleString() {
+                // Build character pool
+                let charPool = '';
+                
+                // Check if custom character set is provided
+                if (customChars.value.trim()) {
+                    charPool = customChars.value;
+                } else {
+                    // Use selected character types
+                    if (includeUppercase.checked) charPool += UPPERCASE_CHARS;
+                    if (includeLowercase.checked) charPool += LOWERCASE_CHARS;
+                    if (includeNumbers.checked) charPool += NUMBER_CHARS;
+                    if (includeSymbols.checked) charPool += SYMBOL_CHARS;
+                    if (includeSpaces.checked) charPool += SPACE_CHAR;
+                    
+                    if (charPool.length === 0) {
+                        showError('Please select at least one character type or provide custom characters');
+                        return '';
+                    }
+                }
+                
+                // Generate string
+                let result = '';
+                const length = parseInt(stringLength.value);
+                
+                for (let i = 0; i < length; i++) {
+                    result += charPool.charAt(Math.floor(Math.random() * charPool.length));
+                }
+                
+                return result;
+            }
+            
+            // Generate pattern-based string
+            function generatePatternString() {
+                const pattern = patternInput.value;
+                
+                if (!pattern) {
+                    showError('Please enter a pattern');
+                    return '';
+                }
+                
+                let result = '';
+                
+                for (let i = 0; i < pattern.length; i++) {
+                    const char = pattern.charAt(i);
+                    
+                    switch (char) {
+                        case 'A':
+                            result += getRandomChar(UPPERCASE_CHARS);
+                            break;
+                        case 'a':
+                            result += getRandomChar(LOWERCASE_CHARS);
+                            break;
+                        case '9':
+                            result += getRandomChar(NUMBER_CHARS);
+                            break;
+                        case 'x':
+                        case 'X':
+                            result += getRandomChar(UPPERCASE_CHARS + LOWERCASE_CHARS);
+                            break;
+                        case '*':
+                            result += getRandomChar(UPPERCASE_CHARS + LOWERCASE_CHARS + NUMBER_CHARS + SYMBOL_CHARS);
+                            break;
+                        default:
+                            result += char;
+                    }
+                }
+                
+                return result;
+            }
+            
+            // Data sources for developer data generation
+            const devData = {
+                firstNames: {
+                    male: ['James', 'John', 'Robert', 'Michael', 'William', 'David', 'Richard', 'Joseph', 'Thomas', 'Charles', 'Christopher', 'Daniel', 'Matthew', 'Anthony', 'Mark', 'Donald', 'Steven', 'Paul', 'Andrew', 'Joshua', 'Kenneth', 'Kevin', 'Brian', 'George', 'Timothy', 'Ronald', 'Edward', 'Jason', 'Jeffrey', 'Ryan', 'Jacob', 'Gary', 'Nicholas', 'Eric', 'Jonathan', 'Stephen', 'Larry', 'Justin', 'Scott', 'Brandon', 'Benjamin', 'Samuel', 'Gregory', 'Alexander', 'Patrick', 'Frank', 'Raymond', 'Jack', 'Dennis', 'Jerry'],
+                    female: ['Mary', 'Patricia', 'Jennifer', 'Linda', 'Elizabeth', 'Barbara', 'Susan', 'Jessica', 'Sarah', 'Karen', 'Lisa', 'Nancy', 'Betty', 'Margaret', 'Sandra', 'Ashley', 'Kimberly', 'Emily', 'Donna', 'Michelle', 'Carol', 'Amanda', 'Dorothy', 'Melissa', 'Deborah', 'Stephanie', 'Rebecca', 'Sharon', 'Laura', 'Cynthia', 'Kathleen', 'Amy', 'Angela', 'Shirley', 'Anna', 'Brenda', 'Pamela', 'Emma', 'Nicole', 'Helen', 'Samantha', 'Katherine', 'Christine', 'Debra', 'Rachel', 'Carolyn', 'Janet', 'Catherine', 'Maria', 'Heather']
+                },
+                lastNames: ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson', 'Walker', 'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen', 'Hill', 'Flores', 'Green', 'Adams', 'Nelson', 'Baker', 'Hall', 'Rivera', 'Campbell', 'Mitchell', 'Carter', 'Roberts'],
+                domains: ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com', 'aol.com', 'protonmail.com', 'mail.com', 'zoho.com', 'yandex.com', 'example.com', 'company.com', 'business.org', 'domain.net'],
+                streetNames: ['Main', 'High', 'Park', 'Oak', 'Pine', 'Maple', 'Cedar', 'Elm', 'Washington', 'Lake', 'Hill', 'Woodland', 'Valley', 'Meadow', 'Forest', 'River', 'Spring', 'Sunset', 'Willow', 'Jefferson', 'Highland', 'Franklin', 'Church', 'School', 'Center', 'Broadway', 'First', 'Second', 'Third', 'Fourth', 'Fifth'],
+                streetTypes: ['St', 'Ave', 'Blvd', 'Rd', 'Ln', 'Dr', 'Way', 'Pl', 'Ct', 'Terrace', 'Circle', 'Highway', 'Junction', 'Pass', 'Crossing'],
+                cities: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose', 'Austin', 'Jacksonville', 'Fort Worth', 'Columbus', 'San Francisco', 'Charlotte', 'Indianapolis', 'Seattle', 'Denver', 'Boston', 'Portland', 'Las Vegas', 'Detroit', 'Atlanta', 'Miami', 'Minneapolis', 'Cleveland', 'Orlando', 'Nashville', 'St. Louis'],
+                countries: ['United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 'France', 'Italy', 'Spain', 'Japan', 'China', 'India', 'Brazil', 'Mexico', 'South Korea', 'Russia', 'Netherlands', 'Sweden', 'Switzerland', 'Norway', 'Denmark', 'Finland', 'Ireland', 'New Zealand', 'Singapore', 'Belgium', 'Austria', 'Portugal', 'Greece', 'Israel', 'Poland'],
+                companies: ['Acme Corporation', 'Globex', 'Soylent Corp', 'Initech', 'Umbrella Corporation', 'Stark Industries', 'Wayne Enterprises', 'Cyberdyne Systems', 'Oscorp', 'Massive Dynamic', 'Aperture Science', 'InGen', 'Weyland-Yutani', 'Tyrell Corporation', 'Rekall', 'Xanatos Enterprises', 'Monarch Solutions', 'Abstergo Industries', 'Virtucon', 'Omni Consumer Products', 'Wonka Industries', 'Spacely Sprockets', 'Cogswell Cogs', 'Sirius Cybernetics', 'Gekko & Co', 'Dunder Mifflin', 'Pied Piper', 'Hooli', 'Prestige Worldwide', 'Waystar Royco'],
+                jobTitles: ['Software Engineer', 'Product Manager', 'Data Scientist', 'UX Designer', 'Marketing Manager', 'Sales Representative', 'Financial Analyst', 'Human Resources Manager', 'Operations Manager', 'Customer Support Specialist', 'Business Analyst', 'Project Manager', 'Graphic Designer', 'Content Writer', 'Systems Administrator', 'Network Engineer', 'Quality Assurance Analyst', 'Research Scientist', 'Executive Assistant', 'Account Manager', 'Social Media Specialist', 'Web Developer', 'DevOps Engineer', 'IT Support Specialist', 'Chief Executive Officer', 'Chief Technology Officer', 'Chief Financial Officer', 'Chief Marketing Officer', 'Director of Engineering', 'Director of Product'],
+                userAgents: [
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
+                    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36',
+                    'Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1',
+                    'Mozilla/5.0 (iPad; CPU OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1',
+                    'Mozilla/5.0 (Android 11; Mobile; rv:68.0) Gecko/68.0 Firefox/88.0',
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59',
+                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 OPR/77.0.4054.254'
+                ]
+            };
+            
+            // Helper functions for developer data generation
+            function getRandomItem(array) {
+                return array[Math.floor(Math.random() * array.length)];
+            }
+            
+            function getRandomInt(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+            
+            function getRandomDate(start, end) {
+                const startDate = new Date(start).getTime();
+                const endDate = new Date(end).getTime();
+                const randomTime = startDate + Math.random() * (endDate - startDate);
+                const date = new Date(randomTime);
+                return date.toISOString().split('T')[0];
+            }
+            
+            function getRandomFirstName(gender) {
+                if (gender === 'male') {
+                    return getRandomItem(devData.firstNames.male);
+                } else if (gender === 'female') {
+                    return getRandomItem(devData.firstNames.female);
+                } else {
+                    // Any gender
+                    return Math.random() > 0.5 ? 
+                        getRandomItem(devData.firstNames.male) : 
+                        getRandomItem(devData.firstNames.female);
+                }
+            }
+            
+            function getRandomLastName() {
+                return getRandomItem(devData.lastNames);
+            }
+            
+            function getRandomFullName(gender) {
+                const firstName = getRandomFirstName(gender);
+                const lastName = getRandomLastName();
+                return `${firstName} ${lastName}`;
+            }
+            
+            function getRandomUsername(firstName, lastName) {
+                firstName = firstName || getRandomFirstName('any');
+                lastName = lastName || getRandomLastName();
+                
+                const patterns = [
+                    `${firstName.toLowerCase()}${getRandomInt(1, 999)}`,
+                    `${firstName.toLowerCase()}.${lastName.toLowerCase()}`,
+                    `${firstName.toLowerCase()}${lastName.toLowerCase()}`,
+                    `${firstName.toLowerCase()[0]}${lastName.toLowerCase()}${getRandomInt(1, 99)}`,
+                    `${lastName.toLowerCase()}${getRandomInt(1, 999)}`,
+                    `${firstName.toLowerCase()}_${lastName.toLowerCase()}`,
+                    `${firstName.toLowerCase()}-${lastName.toLowerCase()}`
+                ];
+                
+                return getRandomItem(patterns);
+            }
+            
+            function getRandomEmail(firstName, lastName) {
+                firstName = firstName || getRandomFirstName('any');
+                lastName = lastName || getRandomLastName();
+                const domain = getRandomItem(devData.domains);
+                
+                const patterns = [
+                    `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${domain}`,
+                    `${firstName.toLowerCase()}${getRandomInt(1, 999)}@${domain}`,
+                    `${firstName.toLowerCase()[0]}${lastName.toLowerCase()}@${domain}`,
+                    `${lastName.toLowerCase()}${firstName.toLowerCase()[0]}@${domain}`,
+                    `${firstName.toLowerCase()}_${lastName.toLowerCase()}@${domain}`
+                ];
+                
+                return getRandomItem(patterns);
+            }
+            
+            function getRandomStreetAddress() {
+                const number = getRandomInt(1, 9999);
+                const street = getRandomItem(devData.streetNames);
+                const type = getRandomItem(devData.streetTypes);
+                return `${number} ${street} ${type}`;
+            }
+            
+            function getRandomCity() {
+                return getRandomItem(devData.cities);
+            }
+            
+            function getRandomCountry() {
+                return getRandomItem(devData.countries);
+            }
+            
+            function getRandomPhoneNumber() {
+                const formats = [
+                    `(${getRandomInt(100, 999)}) ${getRandomInt(100, 999)}-${getRandomInt(1000, 9999)}`,
+                    `${getRandomInt(100, 999)}-${getRandomInt(100, 999)}-${getRandomInt(1000, 9999)}`,
+                    `+1 ${getRandomInt(100, 999)} ${getRandomInt(100, 999)} ${getRandomInt(1000, 9999)}`,
+                    `+${getRandomInt(1, 99)} ${getRandomInt(100, 999)} ${getRandomInt(100, 999)} ${getRandomInt(1000, 9999)}`
+                ];
+                return getRandomItem(formats);
+            }
+            
+            function getRandomCreditCard() {
+                const prefixes = ['4', '5', '3', '6']; // Visa, Mastercard, Amex, Discover
+                const prefix = getRandomItem(prefixes);
+                
+                let number = prefix;
+                for (let i = 0; i < 15; i++) {
+                    number += Math.floor(Math.random() * 10);
+                }
+                
+                // Format the number
+                if (prefix === '3') { // Amex format
+                    return `${number.substring(0, 4)} ${number.substring(4, 10)} ${number.substring(10)}`;
+                } else {
+                    return `${number.substring(0, 4)} ${number.substring(4, 8)} ${number.substring(8, 12)} ${number.substring(12)}`;
+                }
+            }
+            
+            function getRandomCompany() {
+                return getRandomItem(devData.companies);
+            }
+            
+            function getRandomJobTitle() {
+                return getRandomItem(devData.jobTitles);
+            }
+            
+            function getRandomIPAddress() {
+                return `${getRandomInt(1, 255)}.${getRandomInt(0, 255)}.${getRandomInt(0, 255)}.${getRandomInt(0, 255)}`;
+            }
+            
+            function getRandomUserAgent() {
+                return getRandomItem(devData.userAgents);
+            }
+            
+            function getRandomHexColor() {
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            }
+            
+            // Generate developer data
+            function generateDevData(type, count) {
+                const results = [];
+                const gender = document.querySelector('input[name="gender"]:checked').value;
+                
+                for (let i = 0; i < count; i++) {
+                    let result;
+                    
+                    switch (type) {
+                        case 'full-name':
+                            result = getRandomFullName(gender);
+                            break;
+                        case 'first-name':
+                            result = getRandomFirstName(gender);
+                            break;
+                        case 'last-name':
+                            result = getRandomLastName();
+                            break;
+                        case 'email':
+                            result = getRandomEmail();
+                            break;
+                        case 'username':
+                            result = getRandomUsername();
+                            break;
+                        case 'address':
+                            result = getRandomStreetAddress();
+                            break;
+                        case 'city':
+                            result = getRandomCity();
+                            break;
+                        case 'country':
+                            result = getRandomCountry();
+                            break;
+                        case 'phone':
+                            result = getRandomPhoneNumber();
+                            break;
+                        case 'credit-card':
+                            result = getRandomCreditCard();
+                            break;
+                        case 'company':
+                            result = getRandomCompany();
+                            break;
+                        case 'job-title':
+                            result = getRandomJobTitle();
+                            break;
+                        case 'ip-address':
+                            result = getRandomIPAddress();
+                            break;
+                        case 'user-agent':
+                            result = getRandomUserAgent();
+                            break;
+                        case 'color':
+                            result = getRandomHexColor();
+                            break;
+                        case 'date':
+                            result = getRandomDate(dateStart.value, dateEnd.value);
+                            break;
+                        default:
+                            result = 'Unknown type';
+                    }
+                    
+                    results.push(result);
+                }
+                
+                return results;
+            }
+            
+            // Format output based on selected format
+            function formatOutput(data, format) {
+                switch (format) {
+                    case 'json':
+                        return JSON.stringify(data, null, 2);
+                    case 'csv':
+                        return data.join(',\n');
+                    case 'text':
+                    default:
+                        return data.join('\n');
+                }
+            }
+            
+            // Generate strings
+            function generateStrings() {
+                // Clear previous results
+                generatedStrings.innerHTML = '';
+                
+                // Determine which generator to use
+                const isSimpleGenerator = !simpleGenerator.classList.contains('hidden');
+                const isPatternGenerator = !patternGenerator.classList.contains('hidden');
+                const isDevDataGenerator = !devDataGenerator.classList.contains('hidden');
+                
+                let results = [];
+                
+                if (isSimpleGenerator) {
+                    const count = parseInt(numStrings.value);
+                    for (let i = 0; i < count; i++) {
+                        const generatedString = generateSimpleString();
+                        if (!generatedString) return; // Error occurred
+                        results.push(generatedString);
+                    }
+                } else if (isPatternGenerator) {
+                    const count = parseInt(patternNumStrings.value);
+                    for (let i = 0; i < count; i++) {
+                        const generatedString = generatePatternString();
+                        if (!generatedString) return; // Error occurred
+                        results.push(generatedString);
+                    }
+                } else if (isDevDataGenerator) {
+                    const type = dataType.value;
+                    const count = parseInt(devDataCount.value);
+                    const format = outputFormat.value;
+                    
+                    results = generateDevData(type, count);
+                    
+                    // Special handling for formatted output
+                    if (format !== 'text') {
+                        const formattedOutput = formatOutput(results, format);
+                        
+                        const stringItem = document.createElement('div');
+                        stringItem.className = 'string-item';
+                        
+                        const stringContent = document.createElement('textarea');
+                        stringContent.value = formattedOutput;
+                        stringContent.readOnly = true;
+                        stringContent.className = 'string-content formatted';
+                        stringContent.rows = Math.min(15, formattedOutput.split('\n').length);
+                        
+                        const copyBtn = document.createElement('button');
+                        copyBtn.className = 'copy-btn';
+                        copyBtn.textContent = 'Copy';
+                        copyBtn.addEventListener('click', () => {
+                            stringContent.select();
+                            document.execCommand('copy');
+                            
+                            const originalText = copyBtn.textContent;
+                            copyBtn.textContent = 'Copied!';
+                            setTimeout(() => {
+                                copyBtn.textContent = originalText;
+                            }, 2000);
+                        });
+                        
+                        stringItem.appendChild(stringContent);
+                        stringItem.appendChild(copyBtn);
+                        generatedStrings.appendChild(stringItem);
+                        
+                        // Show results
+                        resultContainer.classList.remove('hidden');
+                        return; // Skip the standard display
+                    }
+                }
+                
+                // Display results
+                results.forEach((str, index) => {
+                    const stringItem = document.createElement('div');
+                    stringItem.className = 'string-item';
+                    
+                    const stringContent = document.createElement('input');
+                    stringContent.type = 'text';
+                    stringContent.value = str;
+                    stringContent.readOnly = true;
+                    stringContent.className = 'string-content';
+                    
+                    const copyBtn = document.createElement('button');
+                    copyBtn.className = 'copy-btn';
+                    copyBtn.textContent = 'Copy';
+                    copyBtn.addEventListener('click', () => {
+                        stringContent.select();
+                        document.execCommand('copy');
+                        
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                        }, 2000);
+                    });
+                    
+                    stringItem.appendChild(stringContent);
+                    stringItem.appendChild(copyBtn);
+                    generatedStrings.appendChild(stringItem);
+                });
+                
+                // Show results
+                resultContainer.classList.remove('hidden');
+            }
+            
+            // Copy all strings
+            function copyAllStrings() {
+                const allStrings = Array.from(document.querySelectorAll('.string-content'))
+                    .map(input => input.value)
+                    .join('\n');
+                
+                const textarea = document.createElement('textarea');
+                textarea.value = allStrings;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                const originalText = copyAllBtn.textContent;
+                copyAllBtn.textContent = 'Copied All!';
+                setTimeout(() => {
+                    copyAllBtn.textContent = originalText;
+                }, 2000);
+            }
+            
+            // Event listeners
+            generateBtn.addEventListener('click', generateStrings);
+            copyAllBtn.addEventListener('click', copyAllStrings);
+            regenerateBtn.addEventListener('click', generateStrings);
+            
+            // Initialize - hide date options by default
+            dateOptions.style.display = 'none';
+            
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+        });
+    </script>
+    <style>
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--color-border);
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 10px 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            color: var(--color-text);
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn:hover {
+            background-color: var(--color-bg-secondary);
+        }
+        
+        .tab-btn.active {
+            border-bottom: 2px solid var(--color-accent);
+            font-weight: bold;
+        }
+        
+        .options-container {
+            margin-bottom: 20px;
+        }
+        
+        .option-group {
+            margin-bottom: 15px;
+        }
+        
+        .option-hint {
+            font-size: 0.9em;
+            color: var(--color-text-secondary);
+            margin-top: 5px;
+        }
+        
+        .length-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .length-control input {
+            flex: 1;
+        }
+        
+        .length-control span {
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 5px;
+        }
+        
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        .full-width {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+        }
+        
+        .date-range {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .date-input {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .date-input label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .date-input input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+        }
+        
+        .generated-strings {
+            margin-bottom: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .string-item {
+            display: flex;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        
+        .string-content {
+            flex: 1;
+            font-family: monospace;
+            padding: 8px;
+        }
+        
+        .string-content.formatted {
+            white-space: pre;
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .copy-btn {
+            padding: 5px 10px;
+            background-color: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .result-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        @media (max-width: 768px) {
+            .string-item {
+                flex-direction: column;
+            }
+            
+            .copy-btn {
+                align-self: flex-end;
+            }
+            
+            .result-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>

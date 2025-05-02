@@ -28,17 +28,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## Planned Future Tools
-
-- Base64 Encoder/Decoder
-- URL Encoder/Decoder
-- UUID Generator
-- Hash Generator (MD5, SHA-1, SHA-256)
-- Regular Expression Tester
-- Color Converter (HEX, RGB, HSL)
-- JWT Decoder
-- HTML/CSS/JS Minifier
-
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.

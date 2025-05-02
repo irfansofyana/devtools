@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Decode and verify JSON Web Tokens (JWT)">
+    <title>JWT Decoder | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>JWT Decoder</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Decode and inspect JSON Web Tokens (JWT) to view header, payload, and signature information.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    
+                    <div class="input-group">
+                        <label for="jwt-input">JWT Token:</label>
+                        <textarea id="jwt-input" placeholder="Paste your JWT token here..." aria-label="JWT token input"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-input">Clear</button>
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="decode-btn">Decode Token</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <div class="jwt-parts">
+                            <div class="jwt-part">
+                                <h3>Header <span class="copy-link" id="copy-header">(Copy)</span></h3>
+                                <div class="jwt-content">
+                                    <pre id="header-content" class="json-content"></pre>
+                                </div>
+                            </div>
+                            <div class="jwt-part">
+                                <h3>Payload <span class="copy-link" id="copy-payload">(Copy)</span></h3>
+                                <div class="jwt-content">
+                                    <pre id="payload-content" class="json-content"></pre>
+                                </div>
+                            </div>
+                            <div class="jwt-part">
+                                <h3>Signature</h3>
+                                <div class="jwt-content">
+                                    <pre id="signature-content" class="signature-content"></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="jwt-info">
+                            <h3>Token Information</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Issued At:</span>
+                                    <span class="info-value" id="issued-at">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Expires At:</span>
+                                    <span class="info-value" id="expires-at">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Issuer:</span>
+                                    <span class="info-value" id="issuer">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Subject:</span>
+                                    <span class="info-value" id="subject">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Audience:</span>
+                                    <span class="info-value" id="audience">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Algorithm:</span>
+                                    <span class="info-value" id="algorithm">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Token ID:</span>
+                                    <span class="info-value" id="token-id">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Status:</span>
+                                    <span class="info-value" id="token-status">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const jwtInput = document.getElementById('jwt-input');
+            const decodeBtn = document.getElementById('decode-btn');
+            const clearInputBtn = document.getElementById('clear-input');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const resultContainer = document.getElementById('result-container');
+            const errorMessage = document.getElementById('error-message');
+            
+            const headerContent = document.getElementById('header-content');
+            const payloadContent = document.getElementById('payload-content');
+            const signatureContent = document.getElementById('signature-content');
+            
+            const issuedAt = document.getElementById('issued-at');
+            const expiresAt = document.getElementById('expires-at');
+            const issuer = document.getElementById('issuer');
+            const subject = document.getElementById('subject');
+            const audience = document.getElementById('audience');
+            const algorithm = document.getElementById('algorithm');
+            const tokenId = document.getElementById('token-id');
+            const tokenStatus = document.getElementById('token-status');
+            
+            const copyHeader = document.getElementById('copy-header');
+            const copyPayload = document.getElementById('copy-payload');
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Format JSON with syntax highlighting
+            function formatJSON(json) {
+                if (typeof json !== 'string') {
+                    json = JSON.stringify(json, null, 2);
+                }
+                
+                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                    let cls = 'json-number';
+                    if (/^"/.test(match)) {
+                        if (/:$/.test(match)) {
+                            cls = 'json-key';
+                        } else {
+                            cls = 'json-string';
+                        }
+                    } else if (/true|false/.test(match)) {
+                        cls = 'json-boolean';
+                    } else if (/null/.test(match)) {
+                        cls = 'json-null';
+                    }
+                    return '<span class="' + cls + '">' + match + '</span>';
+                });
+            }
+            
+            // Parse JWT token
+            function parseJWT(token) {
+                const parts = token.split('.');
+                
+                if (parts.length !== 3) {
+                    throw new Error('Invalid JWT format. Expected three parts separated by dots.');
+                }
+                
+                try {
+                    // Decode header
+                    const headerBase64 = parts[0];
+                    const headerJson = atob(headerBase64.replace(/-/g, '+').replace(/_/g, '/'));
+                    const header = JSON.parse(headerJson);
+                    
+                    // Decode payload
+                    const payloadBase64 = parts[1];
+                    const payloadJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+                    const payload = JSON.parse(payloadJson);
+                    
+                    // Get signature (we don't decode it)
+                    const signature = parts[2];
+                    
+                    return { header, payload, signature, headerBase64, payloadBase64 };
+                } catch (error) {
+                    throw new Error(`Failed to decode JWT: ${error.message}`);
+                }
+            }
+            
+            // Format date from timestamp
+            function formatDate(timestamp) {
+                if (!timestamp) return 'N/A';
+                
+                const date = new Date(timestamp * 1000);
+                return `${date.toLocaleString()} (${timeAgo(date)})`;
+            }
+            
+            // Get time ago string
+            function timeAgo(date) {
+                const now = new Date();
+                const seconds = Math.floor((now - date) / 1000);
+                
+                if (seconds < 0) {
+                    return 'in the future';
+                }
+                
+                const intervals = [
+                    { label: 'year', seconds: 31536000 },
+                    { label: 'month', seconds: 2592000 },
+                    { label: 'day', seconds: 86400 },
+                    { label: 'hour', seconds: 3600 },
+                    { label: 'minute', seconds: 60 },
+                    { label: 'second', seconds: 1 }
+                ];
+                
+                for (const interval of intervals) {
+                    const count = Math.floor(seconds / interval.seconds);
+                    if (count >= 1) {
+                        return `${count} ${interval.label}${count !== 1 ? 's' : ''} ago`;
+                    }
+                }
+                
+                return 'just now';
+            }
+            
+            // Check token expiration
+            function checkTokenStatus(payload) {
+                if (!payload.exp) return 'No expiration';
+                
+                const now = Math.floor(Date.now() / 1000);
+                if (payload.exp < now) {
+                    return '<span class="status-expired">Expired</span>';
+                } else {
+                    return '<span class="status-valid">Valid</span>';
+                }
+            }
+            
+            // Decode JWT token
+            function decodeJWT() {
+                const token = jwtInput.value.trim();
+                
+                if (!token) {
+                    showError('Please enter a JWT token');
+                    return;
+                }
+                
+                try {
+                    const { header, payload, signature, headerBase64, payloadBase64 } = parseJWT(token);
+                    
+                    // Display header and payload as formatted JSON
+                    headerContent.innerHTML = formatJSON(JSON.stringify(header, null, 2));
+                    payloadContent.innerHTML = formatJSON(JSON.stringify(payload, null, 2));
+                    signatureContent.textContent = signature;
+                    
+                    // Display token information
+                    issuedAt.innerHTML = formatDate(payload.iat);
+                    expiresAt.innerHTML = formatDate(payload.exp);
+                    issuer.textContent = payload.iss || 'N/A';
+                    subject.textContent = payload.sub || 'N/A';
+                    audience.textContent = Array.isArray(payload.aud) ? payload.aud.join(', ') : (payload.aud || 'N/A');
+                    algorithm.textContent = header.alg || 'N/A';
+                    tokenId.textContent = payload.jti || 'N/A';
+                    tokenStatus.innerHTML = checkTokenStatus(payload);
+                    
+                    // Show result container
+                    resultContainer.classList.remove('hidden');
+                    
+                    // Store decoded data for copy functionality
+                    copyHeader.dataset.content = JSON.stringify(header, null, 2);
+                    copyPayload.dataset.content = JSON.stringify(payload, null, 2);
+                    
+                } catch (error) {
+                    showError(error.message);
+                }
+            }
+            
+            // Load sample JWT
+            function loadSample() {
+                // This is a sample JWT with a dummy payload (not a real token)
+                jwtInput.value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE3NjczMjI0MDAsImlzcyI6ImRldnRvb2xzLmFwcCIsImF1ZCI6ImRldnRvb2xzLnVzZXJzIiwianRpIjoiYWJjMTIzIn0.LRVHQVxNGGgRSgxRlzWDroPglxdxQDfk-QA0IXIqvKI';
+            }
+            
+            // Copy text to clipboard
+            function copyToClipboard(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+            
+            // Clear input
+            function clearInput() {
+                jwtInput.value = '';
+                resultContainer.classList.add('hidden');
+            }
+            
+            // Event listeners
+            decodeBtn.addEventListener('click', decodeJWT);
+            clearInputBtn.addEventListener('click', clearInput);
+            loadSampleBtn.addEventListener('click', loadSample);
+            
+            copyHeader.addEventListener('click', function() {
+                copyToClipboard(this.dataset.content);
+                this.textContent = '(Copied!)';
+                setTimeout(() => {
+                    this.textContent = '(Copy)';
+                }, 2000);
+            });
+            
+            copyPayload.addEventListener('click', function() {
+                copyToClipboard(this.dataset.content);
+                this.textContent = '(Copied!)';
+                setTimeout(() => {
+                    this.textContent = '(Copy)';
+                }, 2000);
+            });
+            
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+        });
+    </script>
+    <style>
+        .jwt-parts {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .jwt-part {
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .jwt-part h3 {
+            margin: 0;
+            padding: 10px 15px;
+            background-color: var(--color-bg-secondary);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .jwt-content {
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .json-content {
+            margin: 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        
+        .signature-content {
+            margin: 0;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        
+        .json-key {
+            color: var(--color-accent);
+        }
+        
+        .json-string {
+            color: var(--color-success);
+        }
+        
+        .json-number {
+            color: var(--color-info);
+        }
+        
+        .json-boolean {
+            color: var(--color-warning);
+        }
+        
+        .json-null {
+            color: var(--color-error);
+        }
+        
+        .copy-link {
+            font-size: 0.8em;
+            font-weight: normal;
+            cursor: pointer;
+            color: var(--color-accent);
+        }
+        
+        .copy-link:hover {
+            text-decoration: underline;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .info-item {
+            padding: 10px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .status-valid {
+            color: var(--color-success);
+            font-weight: bold;
+        }
+        
+        .status-expired {
+            color: var(--color-error);
+            font-weight: bold;
+        }
+        
+        @media (min-width: 992px) {
+            .jwt-parts {
+                flex-direction: row;
+            }
+            
+            .jwt-part {
+                flex: 1;
+            }
+        }
+    </style>
+</body>
+</html>
