@@ -51,16 +51,262 @@
             font-size: 14px;
         }
         
+        .generator-options {
+            margin-top: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            padding: var(--spacing-md);
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+        
         .options-grid {
             display: grid;
             grid-template-columns: 1fr;
             gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
         }
         
         @media (min-width: 768px) {
             .options-grid {
                 grid-template-columns: 1fr 1fr;
             }
+        }
+        
+        .number-input {
+            width: 100%;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .format-select {
+            width: 100%;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        /* Schema Designer Styles */
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .tab {
+            padding: var(--spacing-sm) var(--spacing-md);
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            margin-right: var(--spacing-xs);
+            background-color: var(--bg-tertiary);
+        }
+        
+        .tab.active {
+            background-color: var(--bg-secondary);
+            border-color: var(--border-color);
+            position: relative;
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: var(--bg-secondary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .schema-designer {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            background-color: var(--bg-secondary);
+        }
+        
+        .field-list {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .field-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-primary);
+            position: relative;
+        }
+        
+        .field-item.nested {
+            margin-left: var(--spacing-md);
+            border-left: 3px solid var(--accent-primary);
+            padding-left: var(--spacing-md);
+        }
+        
+        .field-item.nested-level-1 {
+            margin-left: var(--spacing-md);
+            border-left-color: var(--accent-primary);
+        }
+        
+        .field-item.nested-level-2 {
+            margin-left: var(--spacing-md);
+            border-left-color: #2196F3;
+        }
+        
+        .field-item.nested-level-3 {
+            margin-left: var(--spacing-md);
+            border-left-color: #9C27B0;
+        }
+        
+        .field-item.nested-level-4 {
+            margin-left: var(--spacing-md);
+            border-left-color: #FF9800;
+        }
+        
+        .field-item.nested-level-5 {
+            margin-left: var(--spacing-md);
+            border-left-color: #4CAF50;
+        }
+        
+        .nested-path-indicator {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+            padding: var(--spacing-xs);
+            background-color: var(--bg-tertiary);
+            border-radius: var(--border-radius);
+            display: inline-block;
+        }
+        
+        .collapse-expand-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-primary);
+            padding: 2px 6px;
+            margin-right: var(--spacing-xs);
+            border-radius: 50%;
+            font-size: 14px;
+            line-height: 1;
+        }
+        
+        .collapse-expand-btn:hover {
+            background-color: var(--bg-tertiary);
+        }
+        
+        .field-container {
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .field-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            margin-left: auto;
+        }
+        
+        .field-control-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: var(--spacing-xs);
+            font-size: 16px;
+            transition: color var(--transition-speed);
+        }
+        
+        .field-control-btn:hover {
+            color: var(--accent-primary);
+        }
+        
+        .add-field-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            background-color: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            cursor: pointer;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .type-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-xs);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .collapsible-content {
+            display: none;
+            padding: var(--spacing-sm);
+            margin-top: var(--spacing-xs);
+            background-color: var(--bg-tertiary);
+            border-radius: var(--border-radius);
+        }
+        
+        .collapsible-content.show {
+            display: block;
+        }
+        
+        .object-container {
+            margin-left: var(--spacing-md);
+            padding-left: var(--spacing-sm);
+            border-left: 2px solid var(--accent-primary);
+        }
+        
+        .drag-handle {
+            cursor: move;
+            color: var(--text-secondary);
+        }
+        
+        .field-config-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-xs);
+        }
+        
+        .field-config-item {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+        }
+        
+        .view-json {
+            font-size: 0.85em;
+            margin-left: auto;
+            color: var(--accent-primary);
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -99,48 +345,86 @@
                     <div class="error-message hidden" id="error-message"></div>
                     <div class="success-message hidden" id="success-message"></div>
                     
-                    <div class="template-container">
-                        <div class="template-header">
-                            <h3>Templates:</h3>
-                        </div>
-                        <div class="template-list" id="template-list">
-                            <div class="template-item" data-template="users">Users</div>
-                            <div class="template-item" data-template="products">Products</div>
-                            <div class="template-item" data-template="posts">Blog Posts</div>
-                            <div class="template-item" data-template="comments">Comments</div>
-                            <div class="template-item" data-template="transactions">Transactions</div>
-                            <div class="template-item" data-template="weather">Weather</div>
-                            <div class="template-item" data-template="custom">Custom</div>
-                        </div>
-                    </div>
+                <div class="tool-description-additional">
+                    <p>Design your data schema using the visual editor or write JSON directly. Then generate mock data based on your schema.</p>
+                </div>
 
-                    <div class="options-grid">
-                        <div class="input-group">
-                            <label for="count-input">Number of Items:</label>
-                            <input type="number" id="count-input" min="1" max="1000" value="10" aria-label="Number of items to generate">
-                        </div>
-                        
-                        <div class="input-group">
-                            <label for="format-select">Output Format:</label>
-                            <select id="format-select" aria-label="Output format">
-                                <option value="json">JSON</option>
-                                <option value="array">JSON Array</option>
-                                <option value="jsonl">JSON Lines</option>
-                            </select>
-                        </div>
+                    <div class="tab-container">
+                        <div class="tab active" data-tab="schema-designer">Schema Designer</div>
+                        <div class="tab" data-tab="json-editor">JSON Editor</div>
+                        <div class="tab" data-tab="json-example">Import JSON Example</div>
                     </div>
-
-                    <div class="input-group">
-                        <label for="schema-editor">Schema Definition (JSON):</label>
-                        <textarea id="schema-editor" class="schema-editor" placeholder="Define your schema here..." aria-label="Schema definition" rows="12"></textarea>
-                        <div class="input-controls">
-                            <button class="secondary" id="clear-schema">Clear</button>
-                            <button class="secondary" id="format-schema">Format</button>
+                    
+                    <div class="tab-content active" id="schema-designer-tab">
+                        <div class="schema-designer">
+                            <div class="field-list" id="field-list">
+                                <!-- Field items will be added here dynamically -->
+                            </div>
+                            
+                            <button class="add-field-btn" id="add-field-btn">
+                                <span>+</span> Add Field
+                            </button>
+                            
+                            <button class="view-json" id="view-schema-json">View Generated JSON</button>
                         </div>
                     </div>
                     
-                    <div class="text-center">
-                        <button class="primary" id="generate-btn">Generate Mock Data</button>
+                    <div class="tab-content" id="json-editor-tab">
+                        <div class="input-group">
+                            <label for="schema-editor">Schema Definition (JSON):</label>
+                            <textarea id="schema-editor" class="schema-editor" placeholder="Define your schema here..." aria-label="Schema definition" rows="12"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="clear-schema">Clear</button>
+                                <button class="secondary" id="format-schema">Format</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="json-example-tab">
+                        <div class="input-group">
+                            <label for="json-example-input">Paste JSON Example:</label>
+                            <textarea id="json-example-input" class="schema-editor" placeholder="Paste your JSON example here..." aria-label="JSON example" rows="12"></textarea>
+                            <div class="help-text">Paste a sample JSON object or array to automatically generate a schema.</div>
+                            <div class="input-controls">
+                                <button class="secondary" id="clear-example">Clear</button>
+                                <button class="primary" id="generate-schema-btn">Generate Schema</button>
+                            </div>
+                        </div>
+                        <div class="options-grid">
+                            <div class="input-group">
+                                <label for="array-handling">If JSON is an array:</label>
+                                <select id="array-handling" class="format-select">
+                                    <option value="first-item">Use first item as example</option>
+                                    <option value="merge-all">Merge all items (union types)</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="detection-depth">Detection depth:</label>
+                                <input type="number" id="detection-depth" min="1" max="10" value="5" class="number-input">
+                                <div class="help-text">Maximum nesting level for schema detection</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="generator-options">
+                        <div class="options-grid">
+                            <div class="input-group">
+                                <label for="count-input">Number of items:</label>
+                                <input type="number" id="count-input" min="1" max="100" value="5" class="number-input">
+                            </div>
+                            <div class="input-group">
+                                <label for="format-select">Output format:</label>
+                                <select id="format-select" class="format-select">
+                                    <option value="json">JSON</option>
+                                    <option value="json-pretty" selected>JSON (Pretty)</option>
+                                    <option value="js">JavaScript</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="text-center action-buttons">
+                            <button class="primary" id="generate-btn">Generate Mock Data</button>
+                            <button class="secondary" id="clear-all-fields">Clear All</button>
+                        </div>
                     </div>
 
                     <div class="result-container hidden" id="result-container">
@@ -170,8 +454,777 @@
 
     <script src="../js/theme.js"></script>
     <script src="../js/main.js"></script>
+    
+    <!-- Template for field item -->
+    <template id="field-item-template">
+        <div class="field-item" data-field-id="">
+            <div class="drag-handle">⋮</div>
+            <div>
+                <input type="text" class="field-name" placeholder="Field name" required>
+                <div class="field-config-row">
+                    <div class="field-config-item">
+                        <select class="field-type">
+                            <option value="" disabled selected>Select type</option>
+                            <optgroup label="Basic Types">
+                                <option value="string">String</option>
+                                <option value="integer">Integer</option>
+                                <option value="float">Float</option>
+                                <option value="boolean">Boolean</option>
+                                <option value="null">Null</option>
+                                <option value="date">Date</option>
+                                <option value="array">Array</option>
+                                <option value="object">Object</option>
+                                <option value="enum">Enum</option>
+                            </optgroup>
+                            <optgroup label="Special Types">
+                                <option value="id">ID</option>
+                                <option value="firstName">First Name</option>
+                                <option value="lastName">Last Name</option>
+                                <option value="fullName">Full Name</option>
+                                <option value="email">Email</option>
+                                <option value="username">Username</option>
+                                <option value="avatar">Avatar</option>
+                                <option value="phone">Phone</option>
+                                <option value="address">Address</option>
+                                <option value="city">City</option>
+                                <option value="state">State</option>
+                                <option value="zipCode">Zip Code</option>
+                                <option value="country">Country</option>
+                                <option value="sentence">Sentence</option>
+                                <option value="paragraph">Paragraph</option>
+                                <option value="paragraphs">Paragraphs</option>
+                                <option value="word">Word</option>
+                                <option value="productName">Product Name</option>
+                                <option value="imageUrl">Image URL</option>
+                            </optgroup>
+                            <optgroup label="API Types">
+                                <option value="uuid">UUID</option>
+                                <option value="timestamp">Timestamp</option>
+                                <option value="iso8601">ISO8601 Date</option>
+                                <option value="url">URL</option>
+                                <option value="ipv4">IPv4 Address</option>
+                                <option value="color">Color Hex</option>
+                                <option value="currency">Currency</option>
+                                <option value="creditCard">Credit Card</option>
+                                <option value="status">Status</option>
+                                <option value="token">API Token</option>
+                                <option value="httpStatus">HTTP Status Code</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Type-specific options will be added here dynamically -->
+                <div class="type-options"></div>
+            </div>
+                
+            <div class="field-controls">
+                <button class="field-control-btn expand-btn" title="Expand options">⚙️</button>
+                <button class="field-control-btn delete-btn" title="Delete field">🗑️</button>
+            </div>
+                
+            <!-- Collapsible content for additional options -->
+            <div class="collapsible-content"></div>
+        </div>
+    </template>
+    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Tab switching functionality
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.dataset.tab;
+                    
+                    // Switch active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Switch active content
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                    
+                    // If switching to JSON editor, update it with current schema
+                    if (tabId === 'json-editor') {
+                        const schema = schemaDesigner.generateSchema();
+                        schemaEditor.value = JSON.stringify(schema, null, 2);
+                    }
+                    
+                    // If switching to schema designer, update it with current JSON
+                    if (tabId === 'schema-designer') {
+                        try {
+                            const schema = JSON.parse(schemaEditor.value);
+                            // Store the current schema before loading the new one
+                            const previousSchema = schemaDesigner.generateSchema();
+                            // Only reload if the schema has actually changed to prevent unnecessary reloading
+                            if (JSON.stringify(previousSchema) !== JSON.stringify(schema)) {
+                                schemaDesigner.loadFromSchema(schema);
+                            }
+                        } catch (error) {
+                            console.error('Invalid JSON schema:', error);
+                            // If JSON is invalid, don't update schema designer
+                        }
+                    }
+                });
+            });
+            
+            // Schema Designer functionality
+            const schemaDesigner = {
+                fieldCounter: 0,
+                fieldList: document.getElementById('field-list'),
+                fieldTemplate: document.getElementById('field-item-template'),
+                
+                init() {
+                    // Add initial field button
+                    document.getElementById('add-field-btn').addEventListener('click', () => {
+                        this.addField();
+                    });
+                    
+                    // View schema JSON button
+                    document.getElementById('view-schema-json').addEventListener('click', () => {
+                        const schema = this.generateSchema();
+                        schemaEditor.value = JSON.stringify(schema, null, 2);
+                        
+                        // Switch to JSON editor tab
+                        document.querySelector('.tab[data-tab="json-editor"]').click();
+                    });
+                    
+                    // Event delegation for field controls
+                    this.fieldList.addEventListener('click', (e) => {
+                        const target = e.target;
+                        const fieldItem = target.closest('.field-item');
+                        
+                        if (!fieldItem) return;
+                        
+                        // Delete button
+                        if (target.classList.contains('delete-btn')) {
+                            fieldItem.remove();
+                        }
+                        
+                        // Expand button
+                        if (target.classList.contains('expand-btn')) {
+                            const collapsibleContent = fieldItem.querySelector('.collapsible-content');
+                            collapsibleContent.classList.toggle('show');
+                        }
+                        
+                        // Add nested field button
+                        if (target.classList.contains('add-nested-field-btn')) {
+                            const parentId = fieldItem.dataset.fieldId;
+                            const parentType = fieldItem.querySelector('.field-type').value;
+                            
+                            if (parentType === 'object') {
+                                const objectContainer = fieldItem.querySelector('.object-container');
+                                this.addNestedField(parentId, objectContainer);
+                            } else if (parentType === 'array') {
+                                const arrayItemType = fieldItem.querySelector('.array-item-type').value;
+                                if (arrayItemType === 'object') {
+                                    const objectContainer = fieldItem.querySelector('.object-container');
+                                    this.addNestedField(parentId, objectContainer);
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Event delegation for field type changes
+                    this.fieldList.addEventListener('change', (e) => {
+                        const target = e.target;
+                        
+                        // Field type change
+                        if (target.classList.contains('field-type')) {
+                            const fieldItem = target.closest('.field-item');
+                            this.updateTypeOptions(fieldItem, target.value);
+                        }
+                        
+                        // Array item type change
+                        if (target.classList.contains('array-item-type')) {
+                            const fieldItem = target.closest('.field-item');
+                            this.updateArrayItemOptions(fieldItem, target.value);
+                        }
+                    });
+                },
+                
+                addField(parentId = null, container = null, nestLevel = 0) {
+                    const fieldId = `field-${++this.fieldCounter}`;
+                    
+                    // Clone template
+                    const template = this.fieldTemplate.content.cloneNode(true);
+                    const fieldItem = template.querySelector('.field-item');
+                    
+                    // Set field ID
+                    fieldItem.dataset.fieldId = fieldId;
+                    
+                    // If this is a nested field
+                    if (parentId) {
+                        fieldItem.dataset.parentId = parentId;
+                        fieldItem.classList.add('nested');
+                        
+                        // Add nested level styling
+                        if (nestLevel > 0) {
+                            fieldItem.classList.add(`nested-level-${Math.min(nestLevel, 5)}`);
+                        }
+                        
+                        // Add path indicator for deeply nested fields
+                        if (nestLevel >= 2) {
+                            const parentField = document.querySelector(`[data-field-id="${parentId}"]`);
+                            if (parentField) {
+                                const parentName = parentField.querySelector('.field-name').value || 'parent';
+                                const pathIndicator = document.createElement('div');
+                                pathIndicator.className = 'nested-path-indicator';
+                                pathIndicator.textContent = `${parentName} › `;
+                                fieldItem.querySelector('.drag-handle').after(pathIndicator);
+                            }
+                        }
+                    }
+                    
+                    // Add collapse/expand button for container fields
+                    const expandBtn = fieldItem.querySelector('.expand-btn');
+                    expandBtn.innerHTML = '⚙️';
+                    expandBtn.title = 'Field Options';
+                    
+                    // Append to container or field list
+                    if (container) {
+                        container.appendChild(fieldItem);
+                    } else {
+                        this.fieldList.appendChild(fieldItem);
+                    }
+                    
+                    return fieldId;
+                },
+                
+                addNestedField(parentId, container) {
+                    // Get the parent's nest level
+                    const parentField = document.querySelector(`[data-field-id="${parentId}"]`);
+                    let nestLevel = 0;
+                    
+                    if (parentField) {
+                        // Determine nesting level based on parent's classes
+                        for (let i = 1; i <= 5; i++) {
+                            if (parentField.classList.contains(`nested-level-${i}`)) {
+                                nestLevel = i;
+                                break;
+                            }
+                        }
+                        
+                        // If parent is nested but without specific level, it's level 1
+                        if (nestLevel === 0 && parentField.classList.contains('nested')) {
+                            nestLevel = 1;
+                        }
+                    }
+                    
+                    return this.addField(parentId, container, nestLevel + 1);
+                },
+                
+                updateTypeOptions(fieldItem, type) {
+                    const typeOptionsContainer = fieldItem.querySelector('.type-options');
+                    const collapsibleContent = fieldItem.querySelector('.collapsible-content');
+                    
+                    // Clear existing options
+                    typeOptionsContainer.innerHTML = '';
+                    collapsibleContent.innerHTML = '';
+                    
+                    // Remove any existing containers
+                    const existingContainer = fieldItem.querySelector('.object-container');
+                    if (existingContainer) {
+                        existingContainer.remove();
+                    }
+                    
+                    // Add collapse/expand functionality for object containers
+                    const addCollapseExpandBtn = (container, containerTitle) => {
+                        const fieldContainer = document.createElement('div');
+                        fieldContainer.className = 'field-container';
+                        
+                        const headerDiv = document.createElement('div');
+                        headerDiv.className = 'field-container-header';
+                        headerDiv.style.display = 'flex';
+                        headerDiv.style.alignItems = 'center';
+                        headerDiv.style.marginBottom = 'var(--spacing-xs)';
+                        
+                        const collapseBtn = document.createElement('button');
+                        collapseBtn.className = 'collapse-expand-btn';
+                        collapseBtn.textContent = '▼';
+                        collapseBtn.title = 'Collapse/Expand';
+                        
+                        // Fix collapse/expand to not interfere with schema
+                        collapseBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation(); // Prevent event bubbling
+                            
+                            const content = container;
+                            if (content.style.display === 'none') {
+                                content.style.display = 'block';
+                                collapseBtn.textContent = '▼';
+                            } else {
+                                content.style.display = 'none';
+                                collapseBtn.textContent = '►';
+                            }
+                        });
+                        
+                        const title = document.createElement('span');
+                        title.textContent = containerTitle || 'Properties';
+                        title.style.fontWeight = 'bold';
+                        
+                        headerDiv.appendChild(collapseBtn);
+                        headerDiv.appendChild(title);
+                        
+                        fieldContainer.appendChild(headerDiv);
+                        fieldContainer.appendChild(container);
+                        
+                        // Store reference to the container in the field container data
+                        fieldContainer.dataset.containerType = 'objectContainer';
+                        
+                        return fieldContainer;
+                    };
+                    
+                    // Add specific options based on type
+                    switch (type) {
+                        case 'string':
+                            collapsibleContent.innerHTML = `
+                                <div class="field-config-row">
+                                    <div class="field-config-item">
+                                        <label>Min Length:</label>
+                                        <input type="number" class="min-length" min="0">
+                                    </div>
+                                    <div class="field-config-item">
+                                        <label>Max Length:</label>
+                                        <input type="number" class="max-length" min="1">
+                                    </div>
+                                </div>
+                            `;
+                            break;
+                            
+                        case 'integer':
+                        case 'float':
+                            collapsibleContent.innerHTML = `
+                                <div class="field-config-row">
+                                    <div class="field-config-item">
+                                        <label>Min Value:</label>
+                                        <input type="number" class="min-value">
+                                    </div>
+                                    <div class="field-config-item">
+                                        <label>Max Value:</label>
+                                        <input type="number" class="max-value">
+                                    </div>
+                                    ${type === 'float' ? `
+                                    <div class="field-config-item">
+                                        <label>Decimals:</label>
+                                        <input type="number" class="decimals" min="0" max="10" value="2">
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                            break;
+                            
+                        case 'date':
+                            collapsibleContent.innerHTML = `
+                                <div class="field-config-row">
+                                    <div class="field-config-item">
+                                        <label>Format:</label>
+                                        <select class="date-format">
+                                            <option value="ISO">ISO</option>
+                                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                            <option value="timestamp">Timestamp</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            `;
+                            break;
+                            
+                        case 'enum':
+                            collapsibleContent.innerHTML = `
+                                <div class="field-config-row">
+                                    <div class="field-config-item" style="width: 100%;">
+                                        <label>Possible Values (comma separated):</label>
+                                        <input type="text" class="enum-values" placeholder="value1, value2, value3">
+                                    </div>
+                                </div>
+                            `;
+                            break;
+                            
+                        case 'array':
+                            typeOptionsContainer.innerHTML = `
+                                <div class="field-config-item">
+                                    <label>Item Type:</label>
+                                    <select class="array-item-type">
+                                        <option value="string">String</option>
+                                        <option value="integer">Integer</option>
+                                        <option value="float">Float</option>
+                                        <option value="boolean">Boolean</option>
+                                        <option value="object">Object</option>
+                                        <option value="enum">Enum</option>
+                                    </select>
+                                </div>
+                            `;
+                            
+                            collapsibleContent.innerHTML = `
+                                <div class="field-config-row">
+                                    <div class="field-config-item">
+                                        <label>Min Items:</label>
+                                        <input type="number" class="min-items" min="0" value="1">
+                                    </div>
+                                    <div class="field-config-item">
+                                        <label>Max Items:</label>
+                                        <input type="number" class="max-items" min="1" value="5">
+                                    </div>
+                                </div>
+                            `;
+                            break;
+                            
+                        case 'object':
+                            // Create container for nested fields
+                            const objectContainer = document.createElement('div');
+                            objectContainer.className = 'object-container';
+                            
+                            // Wrap in collapsible container
+                            const containerWrapper = addCollapseExpandBtn(objectContainer, 'Object Properties');
+                            fieldItem.appendChild(containerWrapper);
+                            
+                            // Add button to add nested fields
+                            collapsibleContent.innerHTML = `
+                                <div class="field-config-row">
+                                    <button class="add-nested-field-btn">+ Add Property</button>
+                                </div>
+                            `;
+                            break;
+                    }
+                },
+                
+                updateArrayItemOptions(fieldItem, itemType) {
+                    const collapsibleContent = fieldItem.querySelector('.collapsible-content');
+                    
+                    // Add container for object items if needed
+                    if (itemType === 'object') {
+                        // Remove existing object container if it exists
+                        const existingContainer = fieldItem.querySelector('.object-container');
+                        if (!existingContainer) {
+                            const objectContainer = document.createElement('div');
+                            objectContainer.className = 'object-container';
+                            fieldItem.appendChild(objectContainer);
+                            
+                            // Add button to add object properties
+                            const addPropertyBtn = document.createElement('button');
+                            addPropertyBtn.className = 'add-nested-field-btn';
+                            addPropertyBtn.textContent = '+ Add Property';
+                            
+                            // Add to collapsible content
+                            if (!collapsibleContent.querySelector('.add-nested-field-btn')) {
+                                const configRow = document.createElement('div');
+                                configRow.className = 'field-config-row';
+                                configRow.appendChild(addPropertyBtn);
+                                collapsibleContent.appendChild(configRow);
+                            }
+                        }
+                    } else if (itemType === 'enum') {
+                        // Add enum values input
+                        if (!collapsibleContent.querySelector('.enum-values')) {
+                            const enumConfig = document.createElement('div');
+                            enumConfig.className = 'field-config-row';
+                            enumConfig.innerHTML = `
+                                <div class="field-config-item" style="width: 100%;">
+                                    <label>Possible Values (comma separated):</label>
+                                    <input type="text" class="enum-values" placeholder="value1, value2, value3">
+                                </div>
+                            `;
+                            collapsibleContent.appendChild(enumConfig);
+                        }
+                    }
+                },
+                
+                generateSchema() {
+                    const schema = {};
+                    const rootFields = Array.from(this.fieldList.querySelectorAll('.field-item:not(.nested)'));
+                    
+                    rootFields.forEach(field => {
+                        const { name, config } = this.processField(field);
+                        if (name) {
+                            schema[name] = config;
+                        }
+                    });
+                    
+                    return schema;
+                },
+                
+                processField(field) {
+                    if (!field) return { name: null, config: null };
+                    
+                    const nameInput = field.querySelector('.field-name');
+                    const typeSelect = field.querySelector('.field-type');
+                    
+                    if (!nameInput || !typeSelect || !nameInput.value || !typeSelect.value) {
+                        return { name: null, config: null };
+                    }
+                    
+                    const name = nameInput.value;
+                    const type = typeSelect.value;
+                    const config = { type };
+                    
+                    // Process specific type options
+                    switch (type) {
+                        case 'string':
+                            const minLength = field.querySelector('.min-length');
+                            const maxLength = field.querySelector('.max-length');
+                            
+                            if (minLength && minLength.value) config.min = parseInt(minLength.value);
+                            if (maxLength && maxLength.value) config.max = parseInt(maxLength.value);
+                            break;
+                            
+                        case 'integer':
+                        case 'float':
+                            const minValue = field.querySelector('.min-value');
+                            const maxValue = field.querySelector('.max-value');
+                            
+                            if (minValue && minValue.value) config.min = parseFloat(minValue.value);
+                            if (maxValue && maxValue.value) config.max = parseFloat(maxValue.value);
+                            
+                            if (type === 'float') {
+                                const decimals = field.querySelector('.decimals');
+                                if (decimals && decimals.value) config.decimals = parseInt(decimals.value);
+                            }
+                            break;
+                            
+                        case 'date':
+                            const dateFormat = field.querySelector('.date-format');
+                            if (dateFormat) config.format = dateFormat.value;
+                            break;
+                            
+                        case 'enum':
+                            const enumValues = field.querySelector('.enum-values');
+                            if (enumValues && enumValues.value) {
+                                config.values = enumValues.value.split(',').map(value => value.trim());
+                            } else {
+                                config.values = [];
+                            }
+                            break;
+                            
+                        case 'array':
+                            const itemType = field.querySelector('.array-item-type');
+                            const minItems = field.querySelector('.min-items');
+                            const maxItems = field.querySelector('.max-items');
+                            
+                            if (minItems && minItems.value) config.min = parseInt(minItems.value);
+                            if (maxItems && maxItems.value) config.max = parseInt(maxItems.value);
+                            
+                            if (itemType) {
+                                const itemTypeValue = itemType.value;
+                                
+                                if (itemTypeValue === 'object') {
+                                    // Handle object items - process nested fields
+                                    const objectContainer = field.querySelector('.object-container');
+                                    if (objectContainer) {
+                                        const nestedFields = objectContainer.querySelectorAll('.field-item');
+                                        const properties = {};
+                                        
+                                        nestedFields.forEach(nestedField => {
+                                            // Only process direct children of this container
+                                            if (nestedField.dataset.parentId === field.dataset.fieldId) {
+                                                const { name, config: nestedConfig } = this.processField(nestedField);
+                                                if (name) {
+                                                    properties[name] = nestedConfig;
+                                                }
+                                            }
+                                        });
+                                        
+                                        config.items = {
+                                            type: 'object',
+                                            properties: properties
+                                        };
+                                    } else {
+                                        config.items = { type: 'object', properties: {} };
+                                    }
+                                } else if (itemTypeValue === 'enum') {
+                                    const enumValues = field.querySelector('.enum-values');
+                                    config.items = { 
+                                        type: 'enum',
+                                        values: enumValues && enumValues.value ? 
+                                            enumValues.value.split(',').map(value => value.trim()) : [] 
+                                    };
+                                } else {
+                                    config.items = { type: itemTypeValue };
+                                }
+                            } else {
+                                config.items = { type: 'string' };
+                            }
+                            break;
+                            
+                        case 'object':
+                            // Process nested fields
+                            const objectContainer = field.querySelector('.object-container');
+                            if (objectContainer) {
+                                const properties = {};
+                                const nestedFields = objectContainer.querySelectorAll('.field-item');
+                                
+                                nestedFields.forEach(nestedField => {
+                                    // Only process direct children of this container
+                                    if (nestedField.dataset.parentId === field.dataset.fieldId) {
+                                        const { name, config: nestedConfig } = this.processField(nestedField);
+                                        if (name) {
+                                            properties[name] = nestedConfig;
+                                        }
+                                    }
+                                });
+                                
+                                config.properties = properties;
+                            } else {
+                                config.properties = {};
+                            }
+                            break;
+                    }
+                    
+                    return { name, config };
+                },
+                
+                loadFromSchema(schema) {
+                    // Clear existing fields
+                    this.fieldList.innerHTML = '';
+                    this.fieldCounter = 0;
+                    
+                    // Create fields from schema
+                    Object.entries(schema).forEach(([name, config]) => {
+                        const fieldId = this.addField();
+                        const fieldItem = this.fieldList.querySelector(`[data-field-id="${fieldId}"]`);
+                        
+                        // Set field name
+                        fieldItem.querySelector('.field-name').value = name;
+                        
+                        // Set field type
+                        const typeSelect = fieldItem.querySelector('.field-type');
+                        typeSelect.value = config.type;
+                        
+                        // First update type options to create necessary containers
+                        this.updateTypeOptions(fieldItem, config.type);
+                        
+                        // Then set additional options based on type
+                        this.populateFieldOptions(fieldItem, config);
+                    });
+                },
+                
+                populateFieldOptions(fieldItem, config) {
+                    if (!fieldItem || !config) return;
+                    
+                    const type = config.type;
+                    if (!type) return;
+                    
+                    switch (type) {
+                        case 'string':
+                            if (config.min !== undefined) {
+                                const minLength = fieldItem.querySelector('.min-length');
+                                if (minLength) minLength.value = config.min;
+                            }
+                            if (config.max !== undefined) {
+                                const maxLength = fieldItem.querySelector('.max-length');
+                                if (maxLength) maxLength.value = config.max;
+                            }
+                            break;
+                            
+                        case 'integer':
+                        case 'float':
+                            if (config.min !== undefined) {
+                                const minValue = fieldItem.querySelector('.min-value');
+                                if (minValue) minValue.value = config.min;
+                            }
+                            if (config.max !== undefined) {
+                                const maxValue = fieldItem.querySelector('.max-value');
+                                if (maxValue) maxValue.value = config.max;
+                            }
+                            if (type === 'float' && config.decimals !== undefined) {
+                                const decimals = fieldItem.querySelector('.decimals');
+                                if (decimals) decimals.value = config.decimals;
+                            }
+                            break;
+                            
+                        case 'date':
+                            if (config.format) {
+                                const dateFormat = fieldItem.querySelector('.date-format');
+                                if (dateFormat) dateFormat.value = config.format;
+                            }
+                            break;
+                            
+                        case 'enum':
+                            if (config.values && Array.isArray(config.values)) {
+                                const enumValues = fieldItem.querySelector('.enum-values');
+                                if (enumValues) enumValues.value = config.values.join(', ');
+                            }
+                            break;
+                            
+                        case 'array':
+                            if (config.min !== undefined) {
+                                const minItems = fieldItem.querySelector('.min-items');
+                                if (minItems) minItems.value = config.min;
+                            }
+                            if (config.max !== undefined) {
+                                const maxItems = fieldItem.querySelector('.max-items');
+                                if (maxItems) maxItems.value = config.max;
+                            }
+                            
+                            if (config.items) {
+                                const itemType = config.items.type;
+                                const arrayItemType = fieldItem.querySelector('.array-item-type');
+                                
+                                if (arrayItemType) {
+                                    arrayItemType.value = itemType;
+                                    this.updateArrayItemOptions(fieldItem, itemType);
+                                    
+                                    if (itemType === 'enum' && config.items.values) {
+                                        const enumValues = fieldItem.querySelector('.enum-values');
+                                        if (enumValues) enumValues.value = config.items.values.join(', ');
+                                    } else if (itemType === 'object' && config.items.properties) {
+                                        const objectContainer = fieldItem.querySelector('.object-container');
+                                        if (objectContainer) {
+                                            const properties = config.items.properties;
+                                            const parentId = fieldItem.dataset.fieldId;
+                                            
+                                            Object.entries(properties).forEach(([propName, propConfig]) => {
+                                                const nestedFieldId = this.addNestedField(parentId, objectContainer);
+                                                const nestedField = objectContainer.querySelector(`[data-field-id="${nestedFieldId}"]`);
+                                                
+                                                // Set field name and type
+                                                nestedField.querySelector('.field-name').value = propName;
+                                                const nestedTypeSelect = nestedField.querySelector('.field-type');
+                                                nestedTypeSelect.value = propConfig.type;
+                                                this.updateTypeOptions(nestedField, propConfig.type);
+                                                
+                                                // Set options recursively
+                                                this.populateFieldOptions(nestedField, propConfig);
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                            
+                        case 'object':
+                            if (config.properties) {
+                                const objectContainer = fieldItem.querySelector('.object-container');
+                                const parentId = fieldItem.dataset.fieldId;
+                                
+                                if (objectContainer) {
+                                    Object.entries(config.properties).forEach(([propName, propConfig]) => {
+                                        const nestedFieldId = this.addNestedField(parentId, objectContainer);
+                                        const nestedField = objectContainer.querySelector(`[data-field-id="${nestedFieldId}"]`);
+                                        
+                                        // Set field name and type
+                                        nestedField.querySelector('.field-name').value = propName;
+                                        const nestedTypeSelect = nestedField.querySelector('.field-type');
+                                        nestedTypeSelect.value = propConfig.type;
+                                        this.updateTypeOptions(nestedField, propConfig.type);
+                                        
+                                        // Make sure the type options are updated before populating
+                                        this.updateTypeOptions(nestedField, propConfig.type);
+                                        
+                                        // Set options recursively
+                                        this.populateFieldOptions(nestedField, propConfig);
+                                    });
+                                }
+                            }
+                            break;
+                    }
+                }
+            };
+            
+            // Initialize schema designer
+            schemaDesigner.init();
             const schemaEditor = document.getElementById('schema-editor');
             const resultText = document.getElementById('result-text');
             const generateBtn = document.getElementById('generate-btn');
@@ -182,119 +1235,223 @@
             const downloadResultBtn = document.getElementById('download-result');
             const countInput = document.getElementById('count-input');
             const formatSelect = document.getElementById('format-select');
+            
+            // Function to generate schema from JSON example
+            function generateSchemaFromExample() {
+                try {
+                    const jsonExample = jsonExampleInput.value.trim();
+                    if (!jsonExample) {
+                        showError('Please paste a JSON example', 'error-message');
+                        return;
+                    }
+                    
+                    const exampleData = JSON.parse(jsonExample);
+                    const maxDepth = parseInt(detectionDepthInput.value) || 5;
+                    let schemaObj;
+                    
+                    if (Array.isArray(exampleData)) {
+                        if (exampleData.length === 0) {
+                            showError('Empty array provided. Please provide an array with at least one item.', 'error-message');
+                            return;
+                        }
+                        
+                        const arrayHandling = arrayHandlingSelect.value;
+                        if (arrayHandling === 'first-item') {
+                            // Use first item as example
+                            schemaObj = inferSchemaFromObject(exampleData[0], maxDepth);
+                        } else {
+                            // Merge all items (union types)
+                            schemaObj = {};
+                            exampleData.forEach(item => {
+                                const itemSchema = inferSchemaFromObject(item, maxDepth);
+                                mergeSchemas(schemaObj, itemSchema);
+                            });
+                        }
+                    } else if (typeof exampleData === 'object' && exampleData !== null) {
+                        schemaObj = inferSchemaFromObject(exampleData, maxDepth);
+                    } else {
+                        showError('Please provide a valid JSON object or array of objects', 'error-message');
+                        return;
+                    }
+                    
+                    // Update schema editor
+                    schemaEditor.value = JSON.stringify(schemaObj, null, 2);
+                    
+                    // Load schema into designer
+                    schemaDesigner.loadFromSchema(schemaObj);
+                    
+                    // Switch to schema designer tab
+                    document.querySelector('.tab[data-tab="schema-designer"]').click();
+                    
+                    showSuccess('Schema successfully generated from example', 'success-message');
+                } catch (error) {
+                    showError(`Error parsing JSON: ${error.message}`, 'error-message');
+                }
+            }
+            
+            // Function to infer schema from object
+            function inferSchemaFromObject(obj, maxDepth, currentDepth = 0) {
+                const schema = {};
+                
+                if (currentDepth >= maxDepth) {
+                    return schema;
+                }
+                
+                for (const [key, value] of Object.entries(obj)) {
+                    schema[key] = inferSchemaFromValue(value, maxDepth, currentDepth + 1);
+                }
+                
+                return schema;
+            }
+            
+            // Function to infer schema from a value
+            function inferSchemaFromValue(value, maxDepth, currentDepth) {
+                if (value === null) {
+                    return { type: 'string' }; // Treat null as string for simplicity
+                }
+                
+                const type = typeof value;
+                
+                switch (type) {
+                    case 'string':
+                        if (isDateString(value)) {
+                            return { type: 'date', format: 'ISO' };
+                        }
+                        if (isEmailString(value)) {
+                            return { type: 'email' };
+                        }
+                        if (isUrlString(value)) {
+                            return { type: 'imageUrl' };
+                        }
+                        return { type: 'string', min: Math.min(value.length, 5), max: Math.max(value.length, 10) };
+                        
+                    case 'number':
+                        if (Number.isInteger(value)) {
+                            return { type: 'integer', min: Math.max(0, Math.floor(value * 0.5)), max: Math.ceil(value * 1.5) };
+                        } else {
+                            return { type: 'float', min: Math.max(0, value * 0.5), max: value * 1.5, decimals: countDecimals(value) };
+                        }
+                        
+                    case 'boolean':
+                        return { type: 'boolean' };
+                        
+                    case 'object':
+                        if (Array.isArray(value)) {
+                            if (value.length === 0) {
+                                return { type: 'array', items: { type: 'string' }, min: 0, max: 5 };
+                            }
+                            
+                            // Determine if array has consistent types
+                            const firstType = typeof value[0];
+                            const allSameType = value.every(item => typeof item === firstType);
+                            
+                            if (allSameType && firstType !== 'object') {
+                                // Simple array of primitives
+                                return { 
+                                    type: 'array', 
+                                    items: inferSchemaFromValue(value[0], maxDepth, currentDepth),
+                                    min: Math.max(1, value.length - 2),
+                                    max: value.length + 3
+                                };
+                            } else if (allSameType && firstType === 'object') {
+                                // Array of objects - merge schemas
+                                const mergedSchema = {};
+                                value.forEach(item => {
+                                    const itemSchema = inferSchemaFromObject(item, maxDepth, currentDepth);
+                                    mergeSchemas(mergedSchema, itemSchema);
+                                });
+                                
+                                return { 
+                                    type: 'array', 
+                                    items: { type: 'object', properties: mergedSchema },
+                                    min: Math.max(1, value.length - 2),
+                                    max: value.length + 3
+                                };
+                            } else {
+                                // Mixed array - default to string
+                                return { type: 'array', items: { type: 'string' }, min: value.length, max: value.length + 5 };
+                            }
+                        } else {
+                            return { 
+                                type: 'object', 
+                                properties: inferSchemaFromObject(value, maxDepth, currentDepth) 
+                            };
+                        }
+                        
+                    default:
+                        return { type: 'string' };
+                }
+            }
+            
+            // Helper function to merge schemas
+            function mergeSchemas(target, source) {
+                for (const [key, sourceConfig] of Object.entries(source)) {
+                    if (!(key in target)) {
+                        target[key] = sourceConfig;
+                        continue;
+                    }
+                    
+                    const targetConfig = target[key];
+                    
+                    // If types match, try to merge properties
+                    if (targetConfig.type === sourceConfig.type) {
+                        if (targetConfig.type === 'object' && sourceConfig.type === 'object') {
+                            if (!targetConfig.properties) targetConfig.properties = {};
+                            if (sourceConfig.properties) {
+                                mergeSchemas(targetConfig.properties, sourceConfig.properties);
+                            }
+                        } else if (targetConfig.type === 'array' && sourceConfig.type === 'array') {
+                            // For arrays, we might need to merge the item types
+                            if (targetConfig.items.type === 'object' && sourceConfig.items.type === 'object') {
+                                if (!targetConfig.items.properties) targetConfig.items.properties = {};
+                                if (sourceConfig.items.properties) {
+                                    mergeSchemas(targetConfig.items.properties, sourceConfig.items.properties);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Helper functions for type detection
+            function isDateString(str) {
+                // Simple check for ISO date format
+                return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(str) || 
+                       /^\d{4}-\d{2}-\d{2}$/.test(str);
+            }
+            
+            function isEmailString(str) {
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
+            }
+            
+            function isUrlString(str) {
+                return /^https?:\/\/[^\s/$.?#].[^\s]*$/.test(str) && 
+                       (/\.(jpg|jpeg|png|gif|bmp|webp)($|\?)/i.test(str) || str.includes('image'));
+            }
+            
+            function countDecimals(num) {
+                if (Math.floor(num) === num) return 0;
+                return num.toString().split('.')[1].length || 0;
+            }
             const templateList = document.getElementById('template-list');
             
-            // Template schemas
-            const templates = {
-                users: {
-                    id: { type: 'id' },
-                    firstName: { type: 'firstName' },
-                    lastName: { type: 'lastName' },
-                    email: { type: 'email' },
-                    username: { type: 'username' },
-                    avatar: { type: 'avatar' },
-                    birthDate: { type: 'date', format: 'YYYY-MM-DD' },
-                    registeredAt: { type: 'date', format: 'ISO' },
-                    address: {
-                        type: 'object',
-                        properties: {
-                            street: { type: 'street' },
-                            city: { type: 'city' },
-                            state: { type: 'state' },
-                            zipCode: { type: 'zipCode' },
-                            country: { type: 'country' }
-                        }
-                    },
-                    phone: { type: 'phone' },
-                    isActive: { type: 'boolean' }
-                },
-                products: {
-                    id: { type: 'id' },
-                    name: { type: 'productName' },
-                    description: { type: 'paragraph', min: 1, max: 3 },
-                    price: { type: 'float', min: 10, max: 1000, decimals: 2 },
-                    category: { type: 'enum', values: ['Electronics', 'Clothing', 'Books', 'Home', 'Beauty', 'Sports', 'Toys'] },
-                    tags: { type: 'array', items: { type: 'word' }, min: 2, max: 5 },
-                    inStock: { type: 'boolean' },
-                    rating: { type: 'float', min: 1, max: 5, decimals: 1 },
-                    image: { type: 'imageUrl', width: 640, height: 480 },
-                    createdAt: { type: 'date', format: 'ISO' }
-                },
-                posts: {
-                    id: { type: 'id' },
-                    title: { type: 'sentence', min: 5, max: 10 },
-                    content: { type: 'paragraphs', min: 3, max: 7 },
-                    author: {
-                        type: 'object',
-                        properties: {
-                            id: { type: 'id' },
-                            name: { type: 'fullName' },
-                            avatar: { type: 'avatar' }
-                        }
-                    },
-                    tags: { type: 'array', items: { type: 'word' }, min: 2, max: 6 },
-                    publishedAt: { type: 'date', format: 'ISO' },
-                    views: { type: 'integer', min: 10, max: 10000 },
-                    likes: { type: 'integer', min: 0, max: 500 }
-                },
-                comments: {
-                    id: { type: 'id' },
-                    postId: { type: 'id' },
-                    user: {
-                        type: 'object',
-                        properties: {
-                            id: { type: 'id' },
-                            name: { type: 'fullName' },
-                            avatar: { type: 'avatar' }
-                        }
-                    },
-                    content: { type: 'paragraph', min: 1, max: 3 },
-                    createdAt: { type: 'date', format: 'ISO' },
-                    likes: { type: 'integer', min: 0, max: 100 }
-                },
-                transactions: {
-                    id: { type: 'id' },
-                    userId: { type: 'id' },
-                    amount: { type: 'float', min: 5, max: 1000, decimals: 2 },
-                    currency: { type: 'enum', values: ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD'] },
-                    status: { type: 'enum', values: ['pending', 'completed', 'failed', 'refunded'] },
-                    paymentMethod: { type: 'enum', values: ['credit_card', 'paypal', 'bank_transfer', 'crypto'] },
-                    description: { type: 'sentence', min: 5, max: 10 },
-                    createdAt: { type: 'date', format: 'ISO' },
-                    updatedAt: { type: 'date', format: 'ISO' }
-                },
-                weather: {
-                    cityId: { type: 'id' },
-                    cityName: { type: 'city' },
-                    country: { type: 'country' },
-                    date: { type: 'date', format: 'YYYY-MM-DD' },
-                    temperature: { type: 'float', min: -20, max: 40, decimals: 1 },
-                    feelsLike: { type: 'float', min: -25, max: 45, decimals: 1 },
-                    humidity: { type: 'integer', min: 0, max: 100 },
-                    windSpeed: { type: 'float', min: 0, max: 30, decimals: 1 },
-                    conditions: { type: 'enum', values: ['Sunny', 'Cloudy', 'Partly Cloudy', 'Rainy', 'Stormy', 'Snowy', 'Foggy'] },
-                    precipitation: { type: 'float', min: 0, max: 100, decimals: 1 }
-                },
-                custom: {
-                    id: { type: 'id' },
-                    name: { type: 'fullName' },
-                    email: { type: 'email' },
-                    createdAt: { type: 'date', format: 'ISO' }
+            // Add a listener to clear all fields
+            document.getElementById('clear-all-fields').addEventListener('click', () => {
+                if (confirm('Are you sure you want to clear all fields?')) {
+                    schemaDesigner.fieldList.innerHTML = '';
+                    schemaDesigner.fieldCounter = 0;
+                    resultContainer.classList.add('hidden');
+                    document.getElementById('error-message').classList.add('hidden');
+                    document.getElementById('success-message').classList.add('hidden');
                 }
-            };
+            });
             
-            // Select template
-            function selectTemplate(templateName) {
-                // Update active template UI
-                const templateItems = document.querySelectorAll('.template-item');
-                templateItems.forEach(item => {
-                    item.classList.toggle('active', item.dataset.template === templateName);
-                });
-                
-                // Set schema editor content
-                const schema = templates[templateName];
-                schemaEditor.value = JSON.stringify(schema, null, 2);
-            }
+            // Add event listener for count input validation
+            countInput.addEventListener('input', () => {
+                const value = parseInt(countInput.value);
+                if (value < 1) countInput.value = 1;
+                if (value > 100) countInput.value = 100;
+            });
             
             // Format schema JSON
             function formatSchema() {
@@ -322,42 +1479,73 @@
             // Generate random data based on schema
             function generateMockData() {
                 try {
-                    const schema = JSON.parse(schemaEditor.value);
-                    const count = parseInt(countInput.value) || 10;
-                    const format = formatSelect.value;
+                    // Get the schema from the active tab
+                    let schema;
+                    if (document.getElementById('schema-designer-tab').classList.contains('active')) {
+                        schema = schemaDesigner.generateSchema();
+                    } else {
+                        schema = JSON.parse(schemaEditor.value);
+                    }
                     
                     if (!schema || Object.keys(schema).length === 0) {
                         showError('Please define a schema', 'error-message');
                         return;
                     }
                     
+                    // Get count from input
+                    const count = parseInt(countInput.value) || 5;
+                    
+                    // Validate count
+                    if (count < 1 || count > 100) {
+                        showError('Please enter a number between 1 and 100', 'error-message');
+                        return;
+                    }
+                    
+                    // Start timing for performance measurement
+                    const startTime = performance.now();
+                    
                     // Generate data
                     const data = Array.from({ length: count }, (_, index) => {
                         return generateItem(schema, index + 1);
                     });
                     
-                    // Format output
+                    // Format based on selected format
                     let result;
+                    const format = formatSelect.value;
+                    
                     switch (format) {
                         case 'json':
-                            // Object with items array
-                            result = JSON.stringify({ items: data }, null, 2);
+                            result = JSON.stringify(data);
                             break;
-                        case 'array':
-                            // Plain array
+                        case 'json-pretty':
                             result = JSON.stringify(data, null, 2);
                             break;
-                        case 'jsonl':
-                            // JSON Lines (one object per line)
-                            result = data.map(item => JSON.stringify(item)).join('\n');
+                        case 'js':
+                            result = `const mockData = ${JSON.stringify(data, null, 2)};`;
                             break;
                         default:
                             result = JSON.stringify(data, null, 2);
                     }
                     
+                    // Calculate size
+                    const dataSize = new Blob([result]).size;
+                    const formattedSize = dataSize < 1024 ? 
+                        `${dataSize} bytes` : 
+                        `${(dataSize / 1024).toFixed(2)} KB`;
+                    
+                    // Calculate generation time
+                    const endTime = performance.now();
+                    const generationTime = (endTime - startTime).toFixed(2);
+                    
                     resultText.value = result;
                     resultContainer.classList.remove('hidden');
-                    showSuccess(`Successfully generated ${count} items`, 'success-message');
+                    
+                    // Show detailed success message
+                    showSuccess(
+                        `Generated ${count} mock item${count !== 1 ? 's' : ''} ` +
+                        `(${formattedSize}, ${generationTime}ms)`, 
+                        'success-message'
+                    );
                 } catch (error) {
                     showError(`Error: ${error.message}`, 'error-message');
                 }
@@ -384,6 +1572,20 @@
                     
                     case 'boolean':
                         return Math.random() > 0.5;
+                        
+                    case 'null':
+                        return null;
+                    
+                    case 'string':
+                        const minLength = config.min !== undefined ? config.min : 5;
+                        const maxLength = config.max !== undefined ? config.max : 10;
+                        const length = Math.floor(minLength + Math.random() * (maxLength - minLength + 1));
+                        let result = '';
+                        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                        for (let i = 0; i < length; i++) {
+                            result += characters.charAt(Math.floor(Math.random() * characters.length));
+                        }
+                        return result;
                     
                     case 'integer':
                         const min = config.min !== undefined ? config.min : 0;
@@ -450,6 +1652,15 @@
                     case 'country':
                         return randomChoice(countries);
                     
+                    case 'address':
+                        const streetNum = Math.floor(Math.random() * 9000 + 1000);
+                        const street = randomChoice(streetNames);
+                        const streetType = randomChoice(streetTypes);
+                        const cityName = randomChoice(cities);
+                        const stateName = randomChoice(states);
+                        const zip = Math.floor(Math.random() * 90000 + 10000);
+                        return `${streetNum} ${street} ${streetType}, ${cityName}, ${stateName} ${zip}`;
+                    
                     case 'word':
                         return randomChoice(words);
                     
@@ -480,6 +1691,66 @@
                         const adjective = randomChoice(adjectives);
                         const noun = randomChoice(productNouns);
                         return `${adjective} ${noun}`;
+                    
+                    // API-specific types
+                    case 'uuid':
+                        return generateUUID();
+                        
+                    case 'timestamp':
+                        return Math.floor(Date.now() / 1000) - Math.floor(Math.random() * 86400 * 30);
+                        
+                    case 'iso8601':
+                        const date = new Date(Date.now() - Math.floor(Math.random() * 86400000 * 365));
+                        return date.toISOString();
+                        
+                    case 'url':
+                        return `https://example.com/${randomChoice(['api', 'services', 'products', 'users'])}/${generateValue({type: 'id'})}`;
+                        
+                    case 'ipv4':
+                        return `${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`;
+                        
+                    case 'color':
+                        return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
+                        
+                    case 'currency':
+                        return {
+                            amount: parseFloat((Math.random() * 1000).toFixed(2)),
+                            currency: randomChoice(['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD'])
+                        };
+                        
+                    case 'creditCard':
+                        return `**** **** **** ${Math.floor(1000 + Math.random() * 9000)}`;
+                        
+                    case 'status':
+                        return randomChoice(['pending', 'processing', 'completed', 'failed', 'cancelled']);
+                        
+                    case 'token':
+                        const tokenChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                        let token = '';
+                        for (let i = 0; i < 32; i++) {
+                            token += tokenChars.charAt(Math.floor(Math.random() * tokenChars.length));
+                        }
+                        return token;
+                        
+                    case 'httpStatus':
+                        // Common HTTP status codes with their meanings
+                        const httpStatuses = [
+                            { code: 200, message: 'OK' },
+                            { code: 201, message: 'Created' },
+                            { code: 204, message: 'No Content' },
+                            { code: 400, message: 'Bad Request' },
+                            { code: 401, message: 'Unauthorized' },
+                            { code: 403, message: 'Forbidden' },
+                            { code: 404, message: 'Not Found' },
+                            { code: 409, message: 'Conflict' },
+                            { code: 422, message: 'Unprocessable Entity' },
+                            { code: 429, message: 'Too Many Requests' },
+                            { code: 500, message: 'Internal Server Error' },
+                            { code: 502, message: 'Bad Gateway' },
+                            { code: 503, message: 'Service Unavailable' },
+                            { code: 504, message: 'Gateway Timeout' }
+                        ];
+                        return randomChoice(httpStatuses);
                     
                     case 'array':
                         const minItems = config.min || 1;
@@ -565,20 +1836,54 @@
             generateBtn.addEventListener('click', generateMockData);
             clearSchemaBtn.addEventListener('click', clearSchema);
             formatSchemaBtn.addEventListener('click', formatSchema);
+            
+            // JSON Example tab listeners
+            const jsonExampleInput = document.getElementById('json-example-input');
+            const generateSchemaBtn = document.getElementById('generate-schema-btn');
+            const clearExampleBtn = document.getElementById('clear-example');
+            const arrayHandlingSelect = document.getElementById('array-handling');
+            const detectionDepthInput = document.getElementById('detection-depth');
+            
+            generateSchemaBtn.addEventListener('click', generateSchemaFromExample);
+            clearExampleBtn.addEventListener('click', () => {
+                jsonExampleInput.value = '';
+            });
+            
+            // Add keyboard shortcut for generating data (Ctrl+Enter or Cmd+Enter)
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    // Only trigger if we're in the schema editor or designer
+                    if (document.activeElement === schemaEditor || 
+                        document.getElementById('schema-designer-tab').contains(document.activeElement) ||
+                        document.activeElement === countInput) {
+                        generateMockData();
+                        e.preventDefault();
+                    }
+                    // If in JSON example tab, generate schema
+                    else if (document.activeElement === jsonExampleInput) {
+                        generateSchemaFromExample();
+                        e.preventDefault();
+                    }
+                }
+            });
             copyResultBtn.addEventListener('click', copyResult);
             downloadResultBtn.addEventListener('click', downloadResult);
             
-            // Template selection
-            templateList.addEventListener('click', (e) => {
-                const templateItem = e.target.closest('.template-item');
-                if (templateItem) {
-                    const templateName = templateItem.dataset.template;
-                    selectTemplate(templateName);
+            // Initialize the schema designer with a simple example
+            setTimeout(() => {
+                // Add a sample field to get users started
+                schemaDesigner.addField();
+                const firstField = document.querySelector('.field-item');
+                if (firstField) {
+                    const nameInput = firstField.querySelector('.field-name');
+                    const typeSelect = firstField.querySelector('.field-type');
+                    if (nameInput && typeSelect) {
+                        nameInput.value = 'sample';
+                        typeSelect.value = 'string';
+                        schemaDesigner.updateTypeOptions(firstField, 'string');
+                    }
                 }
-            });
-            
-            // Initialize with users template
-            selectTemplate('users');
+            }, 100);
             
             // Sample data for mock generation
             const firstNames = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda', 'William', 'Elizabeth', 'David', 'Susan', 'Richard', 'Jessica', 'Joseph', 'Sarah', 'Thomas', 'Karen', 'Charles', 'Nancy'];
@@ -589,7 +1894,7 @@
             
             const streetNames = ['Main', 'Oak', 'Pine', 'Maple', 'Cedar', 'Elm', 'Washington', 'Park', 'Lake', 'Hill', 'Broadway', 'Highland', 'Sunset', 'Meadow', 'Valley', 'Ridge', 'Forest', 'River', 'Spring', 'Willow'];
             
-            const streetTypes = ['St', 'Ave', 'Blvd', 'Rd', 'Ln', 'Dr', 'Way', 'Pl', 'Ct', 'Terrace'];
+            const streetTypes = ['St', 'Ave', 'Blvd', 'Rd', 'Ln', 'Dr', 'Way', 'Pl', 'Ct', 'Terrace', 'Circle'];
             
             const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose', 'Austin', 'Jacksonville', 'Fort Worth', 'Columbus', 'San Francisco', 'Charlotte', 'Indianapolis', 'Seattle', 'Denver', 'Boston'];
             
