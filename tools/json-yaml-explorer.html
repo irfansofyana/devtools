@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Visualize and explore JSON and YAML data with interactive tree view">
+    <title>JSON/YAML Explorer | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+    <!-- Include jsoneditor for visualization -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.10.0/jsoneditor.min.css" rel="stylesheet" type="text/css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.10.0/jsoneditor.min.js"></script>
+    <!-- Include js-yaml for YAML parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>JSON/YAML Explorer</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Visualize and explore JSON and YAML data with an interactive tree view. Paste your data, select the format, and explore with collapsible nodes, search, and different visualization modes.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    <div class="success-message hidden" id="success-message"></div>
+                    
+                    <div class="input-group">
+                        <label for="input-format">Input Format:</label>
+                        <select id="input-format" aria-label="Select input format">
+                            <option value="json">JSON</option>
+                            <option value="yaml">YAML</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="input-content">Input Data:</label>
+                        <textarea id="input-content" placeholder="Paste your JSON or YAML data here..." aria-label="Input content" rows="10"></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-input">Clear</button>
+                            <button class="secondary" id="format-input">Format</button>
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button class="primary" id="visualize-btn">Visualize</button>
+                    </div>
+
+                    <div class="options-group mt-2 mb-2 hidden" id="view-options">
+                        <label>View Options:</label>
+                        <div class="options-controls">
+                            <label>
+                                <select id="view-mode">
+                                    <option value="tree">Tree View</option>
+                                    <option value="code">Code View</option>
+                                    <option value="form">Form View</option>
+                                    <option value="text">Text View</option>
+                                </select>
+                                View Mode
+                            </label>
+                            <label>
+                                <input type="checkbox" id="expand-all" checked>
+                                Expand All
+                            </label>
+                            <label>
+                                <input type="checkbox" id="sort-keys">
+                                Sort Keys
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="search-container hidden mt-2 mb-2" id="search-container">
+                        <div class="input-group">
+                            <input type="text" id="search-input" placeholder="Search in data..." aria-label="Search in data">
+                            <button class="secondary" id="search-btn">Search</button>
+                            <button class="secondary" id="clear-search">Clear</button>
+                        </div>
+                        <div class="search-results hidden" id="search-results">
+                            <div id="search-results-count"></div>
+                            <div id="search-results-nav">
+                                <button class="secondary" id="prev-result" disabled>Previous</button>
+                                <span id="result-position">0/0</span>
+                                <button class="secondary" id="next-result" disabled>Next</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <div class="visualization-wrapper">
+                            <div id="jsoneditor" style="width: 100%; height: 500px;"></div>
+                        </div>
+                        <div class="input-controls mt-2">
+                            <button class="secondary" id="copy-btn">Copy to Clipboard</button>
+                            <button class="secondary" id="download-btn">Download</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputFormatSelect = document.getElementById('input-format');
+            const inputContent = document.getElementById('input-content');
+            const visualizeBtn = document.getElementById('visualize-btn');
+            const clearInputBtn = document.getElementById('clear-input');
+            const formatInputBtn = document.getElementById('format-input');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const copyBtn = document.getElementById('copy-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const resultContainer = document.getElementById('result-container');
+            const viewOptions = document.getElementById('view-options');
+            const searchContainer = document.getElementById('search-container');
+            const viewModeSelect = document.getElementById('view-mode');
+            const expandAllCheckbox = document.getElementById('expand-all');
+            const sortKeysCheckbox = document.getElementById('sort-keys');
+            const searchInput = document.getElementById('search-input');
+            const searchBtn = document.getElementById('search-btn');
+            const clearSearchBtn = document.getElementById('clear-search');
+            const searchResults = document.getElementById('search-results');
+            const searchResultsCount = document.getElementById('search-results-count');
+            const resultPosition = document.getElementById('result-position');
+            const prevResultBtn = document.getElementById('prev-result');
+            const nextResultBtn = document.getElementById('next-result');
+            
+            let editor = null;
+            let currentData = null;
+            let searchMatches = [];
+            let currentMatchIndex = -1;
+            
+            // Initialize the editor
+            function initEditor(data) {
+                // Destroy previous editor if exists
+                if (editor) {
+                    editor.destroy();
+                }
+                
+                // Create container element
+                const container = document.getElementById('jsoneditor');
+                
+                // Create editor options
+                const options = {
+                    mode: viewModeSelect.value,
+                    modes: ['tree', 'code', 'form', 'text'],
+                    onModeChange: function(newMode) {
+                        viewModeSelect.value = newMode;
+                    },
+                    onError: function(err) {
+                        showError(`Editor error: ${err.toString()}`, 'error-message');
+                    },
+                    search: true,
+                    navigationBar: true
+                };
+                
+                // Create the editor
+                editor = new JSONEditor(container, options, data);
+                
+                // Apply view options
+                updateEditorOptions();
+                
+                // Show view options and search container
+                viewOptions.classList.remove('hidden');
+                searchContainer.classList.remove('hidden');
+                
+                // Save current data
+                currentData = data;
+            }
+            
+            // Update editor options based on user selections
+            function updateEditorOptions() {
+                if (!editor) return;
+                
+                // Set view mode
+                editor.setMode(viewModeSelect.value);
+                
+                // Expand/collapse all
+                if (expandAllCheckbox.checked) {
+                    editor.expandAll();
+                } else {
+                    editor.collapseAll();
+                }
+                
+                // Sort keys (only works in tree mode)
+                if (editor.getMode() === 'tree') {
+                    const sortedData = sortKeysCheckbox.checked ? 
+                        sortObjectKeys(editor.get()) : editor.get();
+                    editor.update(sortedData);
+                }
+            }
+            
+            // Sort object keys recursively
+            function sortObjectKeys(obj, direction = 'asc') {
+                if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
+                    return obj;
+                }
+                
+                const sortedKeys = Object.keys(obj).sort((a, b) => {
+                    return direction === 'asc' ? a.localeCompare(b) : b.localeCompare(a);
+                });
+                
+                const sortedObj = {};
+                sortedKeys.forEach(key => {
+                    sortedObj[key] = sortObjectKeys(obj[key], direction);
+                });
+                
+                return sortedObj;
+            }
+            
+            // Visualize button click handler
+            visualizeBtn.addEventListener('click', () => {
+                const input = inputContent.value.trim();
+                if (!input) {
+                    showError('Please enter some data to visualize', 'error-message');
+                    return;
+                }
+                
+                try {
+                    const inputFormat = inputFormatSelect.value;
+                    let data;
+                    
+                    if (inputFormat === 'json') {
+                        // Parse JSON
+                        data = JSON.parse(input);
+                    } else {
+                        // Parse YAML
+                        data = jsyaml.load(input);
+                    }
+                    
+                    // Initialize editor with data
+                    initEditor(data);
+                    
+                    // Show result container
+                    resultContainer.classList.remove('hidden');
+                    
+                    // Clear any previous error
+                    document.getElementById('error-message').classList.add('hidden');
+                    
+                    // Show success message
+                    showSuccess('Data visualized successfully!', 'success-message');
+                    
+                    // Reset search
+                    resetSearch();
+                } catch (error) {
+                    showError(`Error: ${error.message}`, 'error-message');
+                }
+            });
+            
+            // View mode change handler
+            viewModeSelect.addEventListener('change', updateEditorOptions);
+            
+            // Expand all change handler
+            expandAllCheckbox.addEventListener('change', updateEditorOptions);
+            
+            // Sort keys change handler
+            sortKeysCheckbox.addEventListener('change', updateEditorOptions);
+            
+            // Search functionality
+            function performSearch() {
+                if (!editor) return;
+                
+                const searchTerm = searchInput.value.trim();
+                if (!searchTerm) {
+                    resetSearch();
+                    return;
+                }
+                
+                try {
+                    // Perform search using JSONEditor's search function
+                    searchMatches = editor.search(searchTerm);
+                    currentMatchIndex = searchMatches.length > 0 ? 0 : -1;
+                    
+                    // Update search results UI
+                    updateSearchResults();
+                    
+                    // Focus on first result if available
+                    if (searchMatches.length > 0) {
+                        highlightSearchResult(0);
+                    }
+                } catch (error) {
+                    console.error('Search error:', error);
+                }
+            }
+            
+            // Update search results UI
+            function updateSearchResults() {
+                if (searchMatches.length > 0) {
+                    searchResults.classList.remove('hidden');
+                    searchResultsCount.textContent = `Found ${searchMatches.length} matches`;
+                    resultPosition.textContent = `${currentMatchIndex + 1}/${searchMatches.length}`;
+                    prevResultBtn.disabled = currentMatchIndex <= 0;
+                    nextResultBtn.disabled = currentMatchIndex >= searchMatches.length - 1;
+                } else {
+                    searchResults.classList.remove('hidden');
+                    searchResultsCount.textContent = 'No matches found';
+                    resultPosition.textContent = '0/0';
+                    prevResultBtn.disabled = true;
+                    nextResultBtn.disabled = true;
+                }
+            }
+            
+            // Highlight a specific search result
+            function highlightSearchResult(index) {
+                if (index >= 0 && index < searchMatches.length) {
+                    editor.focus(searchMatches[index].path);
+                    currentMatchIndex = index;
+                    updateSearchResults();
+                }
+            }
+            
+            // Reset search
+            function resetSearch() {
+                searchInput.value = '';
+                searchMatches = [];
+                currentMatchIndex = -1;
+                searchResults.classList.add('hidden');
+            }
+            
+            // Search button click handler
+            searchBtn.addEventListener('click', performSearch);
+            
+            // Clear search button click handler
+            clearSearchBtn.addEventListener('click', resetSearch);
+            
+            // Previous result button click handler
+            prevResultBtn.addEventListener('click', () => {
+                if (currentMatchIndex > 0) {
+                    highlightSearchResult(currentMatchIndex - 1);
+                }
+            });
+            
+            // Next result button click handler
+            nextResultBtn.addEventListener('click', () => {
+                if (currentMatchIndex < searchMatches.length - 1) {
+                    highlightSearchResult(currentMatchIndex + 1);
+                }
+            });
+            
+            // Search input enter key handler
+            searchInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+            
+            // Clear input button
+            clearInputBtn.addEventListener('click', () => {
+                inputContent.value = '';
+                resultContainer.classList.add('hidden');
+                viewOptions.classList.add('hidden');
+                searchContainer.classList.add('hidden');
+                resetSearch();
+                
+                // Destroy editor if exists
+                if (editor) {
+                    editor.destroy();
+                    editor = null;
+                }
+            });
+            
+            // Format input button
+            formatInputBtn.addEventListener('click', () => {
+                const input = inputContent.value.trim();
+                if (!input) return;
+                
+                try {
+                    const inputFormat = inputFormatSelect.value;
+                    
+                    if (inputFormat === 'json') {
+                        const jsonObj = JSON.parse(input);
+                        inputContent.value = JSON.stringify(jsonObj, null, 2);
+                    } else {
+                        const yamlObj = jsyaml.load(input);
+                        inputContent.value = jsyaml.dump(yamlObj);
+                    }
+                    
+                    showSuccess('Input formatted successfully!', 'success-message');
+                } catch (error) {
+                    showError(`Format error: ${error.message}`, 'error-message');
+                }
+            });
+            
+            // Load sample button
+            loadSampleBtn.addEventListener('click', () => {
+                const inputFormat = inputFormatSelect.value;
+                const sampleData = {
+                    name: "Devtools",
+                    version: "1.0.0",
+                    description: "A collection of developer tools",
+                    features: [
+                        "JSON/YAML Explorer",
+                        "JSON/YAML Converter",
+                        "Cron Parser",
+                        "Timestamp Converter"
+                    ],
+                    settings: {
+                        theme: "dark",
+                        autoSave: true,
+                        notifications: {
+                            enabled: true,
+                            frequency: "daily",
+                            channels: ["email", "browser"]
+                        }
+                    },
+                    stats: {
+                        users: 1250,
+                        tools: 28,
+                        averageRating: 4.8
+                    },
+                    lastUpdated: "2025-05-22T00:03:27+07:00"
+                };
+                
+                if (inputFormat === 'json') {
+                    inputContent.value = JSON.stringify(sampleData, null, 2);
+                } else {
+                    inputContent.value = jsyaml.dump(sampleData);
+                }
+            });
+            
+            // Copy button click handler
+            copyBtn.addEventListener('click', () => {
+                if (!editor) return;
+                
+                try {
+                    const data = editor.get();
+                    const jsonString = JSON.stringify(data, null, 2);
+                    
+                    navigator.clipboard.writeText(jsonString)
+                        .then(() => {
+                            showSuccess('Data copied to clipboard!', 'success-message');
+                        })
+                        .catch(err => {
+                            showError(`Copy failed: ${err.message}`, 'error-message');
+                        });
+                } catch (error) {
+                    showError(`Copy error: ${error.message}`, 'error-message');
+                }
+            });
+            
+            // Download button click handler
+            downloadBtn.addEventListener('click', () => {
+                if (!editor) return;
+                
+                try {
+                    const data = editor.get();
+                    const jsonString = JSON.stringify(data, null, 2);
+                    
+                    downloadTextFile(jsonString, 'visualized-data.json', 'application/json');
+                } catch (error) {
+                    showError(`Download error: ${error.message}`, 'error-message');
+                }
+            });
+        });
+    </script>
+    <style>
+        .visualization-wrapper {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .jsoneditor {
+            border: none !important;
+        }
+        
+        .jsoneditor-menu {
+            background-color: var(--primary-color) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+        }
+        
+        /* Dark theme adjustments */
+        .dark-theme .jsoneditor {
+            color: var(--text-color);
+        }
+        
+        .dark-theme .jsoneditor-menu {
+            background-color: var(--primary-color) !important;
+        }
+        
+        .dark-theme .jsoneditor-navigation-bar {
+            background-color: var(--bg-color-secondary);
+            color: var(--text-color);
+        }
+        
+        .dark-theme .jsoneditor-tree,
+        .dark-theme .ace-jsoneditor {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        
+        .search-results {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+        
+        .search-results-count {
+            flex-grow: 1;
+        }
+        
+        .search-results-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #result-position {
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .success-message {
+            background-color: var(--success-color);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+    </style>
+</body>
+</html>
