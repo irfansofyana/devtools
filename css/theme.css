@@ -1,60 +1,136 @@
 /* Theme Variables */
 :root {
-    /* Light Theme (Default) */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f5f7fa;
-    --bg-tertiary: #e9ecef;
-    --text-primary: #333333;
-    --text-secondary: #6c757d;
-    --accent-primary: #4361ee;
-    --accent-secondary: #3a0ca3;
-    --border-color: #dee2e6;
-    --card-bg: #ffffff;
-    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --error-bg: #f8d7da;
-    --error-text: #721c24;
-    --success-bg: #d4edda;
-    --success-text: #155724;
-    --code-bg: #f8f9fa;
-    --header-bg: rgba(255, 255, 255, 0.95);
-    --button-bg: #4361ee;
+    /* Light Theme (Default) - Enhanced for better harmony and visual appeal */
+    /* Background colors with subtle gradients */
+    --bg-primary: #f8fafc;
+    --bg-secondary: #f1f5f9;
+    --bg-tertiary: #e2e8f0;
+    /* Text colors with better contrast */
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    /* Vibrant accent colors */
+    --accent-primary: #3b82f6;
+    --accent-secondary: #2563eb;
+    --border-color: #e2e8f0;
+    /* Card styling with subtle shadows */
+    --card-bg: linear-gradient(145deg, #ffffff, #f8fafc);
+    --card-shadow: 0 4px 10px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03);
+    /* Status colors */
+    --error-bg: #fee2e2;
+    --error-text: #b91c1c;
+    --success-bg: #dcfce7;
+    --success-text: #166534;
+    /* Code blocks */
+    --code-bg: #f1f5f9;
+    --code-text: #1e293b;
+    /* Header with subtle transparency */
+    --header-bg: rgba(248, 250, 252, 0.95);
+    /* Buttons with gradients */
+    --button-bg: linear-gradient(135deg, #3b82f6, #2563eb);
     --button-text: #ffffff;
-    --button-hover: #3a0ca3;
+    --button-hover: linear-gradient(135deg, #2563eb, #1d4ed8);
+    /* Form elements */
+    --input-bg: #ffffff;
+    --input-border-focus: rgba(59, 130, 246, 0.4);
+    /* Primary theme color */
+    --primary-color: #3b82f6;
+    --primary-color-rgb: 59, 130, 246;
+    /* Scrollbar styling */
+    --scrollbar-track: #f1f5f9;
+    --scrollbar-thumb: #cbd5e0;
+    --scrollbar-thumb-hover: #94a3b8;
+    /* Selection styling */
+    --selection-bg: rgba(59, 130, 246, 0.2);
+    --selection-text: #1e293b;
 }
 
-/* Dark Theme */
+/* Dark Theme - Enhanced for better readability, reduced eye strain, and visual appeal */
 [data-theme="dark"] {
-    --bg-primary: #121212;
-    --bg-secondary: #1e1e1e;
-    --bg-tertiary: #2d2d2d;
-    --text-primary: #f8f9fa;
-    --text-secondary: #adb5bd;
-    --accent-primary: #4cc9f0;
-    --accent-secondary: #4895ef;
-    --border-color: #343a40;
-    --card-bg: #2d2d2d;
-    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    --error-bg: #2c0b0e;
-    --error-text: #f8d7da;
-    --success-bg: #0f401b;
-    --success-text: #d4edda;
-    --code-bg: #2d2d2d;
-    --header-bg: rgba(18, 18, 18, 0.95);
-    --button-bg: #4895ef;
+    /* Darker background with better contrast */
+    --bg-primary: #0f1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    /* Brighter text for better readability */
+    --text-primary: #ffffff;
+    --text-secondary: #d1d5db;
+    /* More vibrant accent colors */
+    --accent-primary: #60a5fa;
+    --accent-secondary: #3b82f6;
+    --border-color: #30363d;
+    /* Subtle gradient for depth */
+    --card-bg: linear-gradient(145deg, #161b22, #0f1117);
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+    /* Error and success states with better contrast */
+    --error-bg: #3c1a1e;
+    --error-text: #fca5a5;
+    --success-bg: #1c4532;
+    --success-text: #86efac;
+    /* Code blocks with better readability */
+    --code-bg: #21262d;
+    --code-text: #ffffff;
+    /* Header with slight transparency */
+    --header-bg: rgba(15, 17, 23, 0.95);
+    /* Buttons with vibrant gradients */
+    --button-bg: linear-gradient(135deg, #60a5fa, #3b82f6);
     --button-text: #ffffff;
-    --button-hover: #4cc9f0;
+    --button-hover: linear-gradient(135deg, #3b82f6, #2563eb);
+    /* Form elements */
+    --input-bg: #21262d;
+    --input-border-focus: rgba(96, 165, 250, 0.4);
+    /* Primary theme color */
+    --primary-color: #60a5fa;
+    --primary-color-rgb: 96, 165, 250;
+    /* Scrollbar styling */
+    --scrollbar-track: #161b22;
+    --scrollbar-thumb: #30363d;
+    --scrollbar-thumb-hover: #4a5568;
+    /* Selection styling */
+    --selection-bg: rgba(96, 165, 250, 0.3);
+    --selection-text: #ffffff;
 }
 
 /* Theme Application */
 body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Selection styling */
+::selection {
+    background-color: var(--selection-bg);
+    color: var(--selection-text);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
 }
 
 header {
     background-color: var(--header-bg);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="dark"] header {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .logo a {
@@ -90,17 +166,18 @@ nav a:hover, nav a.active {
 }
 
 .tool-card {
-    background-color: var(--card-bg);
+    background: var(--card-bg);
     box-shadow: var(--card-shadow);
     border: 1px solid var(--border-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease, border-color 0.3s ease;
 }
 
 .tool-card:hover {
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
 [data-theme="dark"] .tool-card:hover {
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .tool-card h3 {
@@ -110,34 +187,87 @@ nav a:hover, nav a.active {
 footer {
     border-top: 1px solid var(--border-color);
     background-color: var(--bg-secondary);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-footer a {
+[data-theme="dark"] footer {
+    background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+}
+
+footer a, .credits a {
     color: var(--accent-primary);
+    transition: color 0.3s ease, text-decoration 0.3s ease;
 }
 
-footer a:hover {
+footer a:hover, .credits a:hover {
     color: var(--accent-secondary);
 }
 
-textarea, input[type="text"] {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
+.credits a {
+    font-weight: 600;
+    position: relative;
+    text-decoration: none;
 }
 
-textarea:focus, input[type="text"]:focus {
+.credits a::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    bottom: 0;
+    left: 0;
+    background-color: var(--accent-primary);
+    transform: scaleX(0);
+    transform-origin: bottom right;
+    transition: transform 0.3s ease;
+}
+
+.credits a:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+}
+
+[data-theme="dark"] .credits a {
+    color: var(--accent-primary);
+}
+
+[data-theme="dark"] .credits a::after {
+    background-color: var(--accent-secondary);
+}
+
+textarea, input[type="text"], select {
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+textarea:focus, input[type="text"]:focus, select:focus {
     border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--input-border-focus);
     outline: none;
 }
 
 button.primary {
-    background-color: var(--button-bg);
+    background: var(--button-bg);
     color: var(--button-text);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
 }
 
 button.primary:hover {
-    background-color: var(--button-hover);
+    background: var(--button-hover);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+[data-theme="dark"] button.primary {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] button.primary:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 button.secondary {
@@ -164,8 +294,55 @@ button.secondary:hover {
 
 pre, code {
     background-color: var(--code-bg);
+    color: var(--code-text);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     padding: var(--spacing-xs);
     font-family: var(--font-mono);
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+[data-theme="dark"] .hero p {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.hero h1 {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-md);
+    background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+    font-weight: 700;
+}
+
+[data-theme="dark"] .hero h1 {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(to right, var(--accent-primary), var(--text-primary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+    font-weight: 700;
+}
+
+.credits {
+    margin-top: var(--spacing-md);
+    font-size: 0.9rem;
+}
+
+.credits p {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+[data-theme="dark"] .credits p {
+    opacity: 1;
 }
