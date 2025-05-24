@@ -13,7 +13,7 @@ const toolCategories = {
     ],
     'Data Format': [
         'JSON Beautifier/Minifier', 'JSON <-> YAML Converter', 'CSV <> JSON Converter',
-        'JSON to Protobuf', 'JSON/YAML Explorer'
+        'CSV Visualizer', 'JSON to Protobuf', 'JSON/YAML Explorer'
     ],
     'Web': [
         'URL Parser', 'URL to Markdown', 'CURL Constructor', 'JWT Decoder'
