@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="In-browser text editor with Vim key bindings">
+    <title>Vim-Style Code Editor | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="../assets/favicon-32x32.png" type="image/png" sizes="32x32">
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/eclipse.min.css">
+    <style>
+        /* Vim editor specific styles */
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            height: 70vh;
+            min-height: 400px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            margin-top: var(--spacing-md);
+        }
+        
+        .CodeMirror {
+            height: 100%;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .editor-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .editor-toolbar select,
+        .editor-toolbar button {
+            padding: 4px 8px;
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .editor-toolbar select:hover,
+        .editor-toolbar button:hover {
+            background-color: var(--bg-hover);
+        }
+        
+        .editor-status {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background-color: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        
+        .editor-status .mode {
+            font-weight: bold;
+        }
+        
+        .editor-status .position {
+            margin-left: auto;
+        }
+        
+        .vim-help {
+            margin-top: var(--spacing-md);
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-secondary);
+        }
+        
+        .vim-help h3 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .vim-help-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: var(--spacing-md);
+        }
+        
+        .vim-help-section h4 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-xs);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-xs);
+        }
+        
+        .vim-help-section ul {
+            padding-left: var(--spacing-md);
+            margin: var(--spacing-xs) 0;
+        }
+        
+        .vim-help-section li {
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .vim-help-section code {
+            background-color: var(--bg-code);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: var(--font-mono);
+            font-size: 0.9em;
+        }
+        
+        .vim-help-toggle {
+            margin-top: var(--spacing-md);
+            text-align: center;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .editor-container {
+                height: 50vh;
+            }
+            
+            .vim-help-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html"><i class="fas fa-tools"></i> Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>Vim-Style Code Editor</h1>
+                </div>
+                <div class="tool-description">
+                    <p>A browser-based code editor with Vim key bindings for efficient text editing. Perfect for quick code edits and note-taking.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    <div class="success-message hidden" id="success-message"></div>
+                    
+                    <div class="editor-toolbar">
+                        <select id="language-select" aria-label="Select language">
+                            <option value="text/plain">Plain Text</option>
+                            <option value="text/javascript">JavaScript</option>
+                            <option value="text/html">HTML</option>
+                            <option value="text/css">CSS</option>
+                            <option value="text/x-python">Python</option>
+                            <option value="text/x-java">Java</option>
+                            <option value="text/x-go">Go</option>
+                            <option value="text/x-rust">Rust</option>
+                            <option value="text/x-sql">SQL</option>
+                            <option value="application/json">JSON</option>
+                            <option value="text/x-markdown">Markdown</option>
+                            <option value="text/x-yaml">YAML</option>
+                            <option value="text/x-sh">Shell</option>
+                        </select>
+                        
+                        <button id="copy-btn" aria-label="Copy to clipboard">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                        
+                        <button id="download-btn" aria-label="Download file">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                        
+                        <button id="clear-btn" aria-label="Clear editor">
+                            <i class="fas fa-trash-alt"></i> Clear
+                        </button>
+                        
+                        <button id="load-sample-btn" aria-label="Load sample code">
+                            <i class="fas fa-file-code"></i> Load Sample
+                        </button>
+                    </div>
+                    
+                    <div class="editor-container">
+                        <textarea id="editor" aria-label="Code editor with Vim bindings"></textarea>
+                        <div class="editor-status">
+                            <span class="mode" id="vim-mode">NORMAL</span>
+                            <span class="position" id="cursor-position">Line: 1, Column: 0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="vim-help-toggle">
+                        <button id="toggle-help" class="secondary">
+                            <i class="fas fa-question-circle"></i> Toggle Vim Help
+                        </button>
+                    </div>
+                    
+                    <div class="vim-help hidden" id="vim-help">
+                        <h3>Vim Key Bindings Reference</h3>
+                        <div class="vim-help-grid">
+                            <div class="vim-help-section">
+                                <h4>Modes</h4>
+                                <ul>
+                                    <li><code>i</code> - Enter insert mode</li>
+                                    <li><code>Esc</code> - Return to normal mode</li>
+                                    <li><code>v</code> - Enter visual mode</li>
+                                    <li><code>:</code> - Enter command mode</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="vim-help-section">
+                                <h4>Navigation</h4>
+                                <ul>
+                                    <li><code>h</code> - Move left</li>
+                                    <li><code>j</code> - Move down</li>
+                                    <li><code>k</code> - Move up</li>
+                                    <li><code>l</code> - Move right</li>
+                                    <li><code>w</code> - Move to next word</li>
+                                    <li><code>b</code> - Move to previous word</li>
+                                    <li><code>0</code> - Move to start of line</li>
+                                    <li><code>$</code> - Move to end of line</li>
+                                    <li><code>gg</code> - Move to start of document</li>
+                                    <li><code>G</code> - Move to end of document</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="vim-help-section">
+                                <h4>Editing</h4>
+                                <ul>
+                                    <li><code>x</code> - Delete character</li>
+                                    <li><code>dd</code> - Delete line</li>
+                                    <li><code>yy</code> - Yank (copy) line</li>
+                                    <li><code>p</code> - Paste after cursor</li>
+                                    <li><code>P</code> - Paste before cursor</li>
+                                    <li><code>u</code> - Undo</li>
+                                    <li><code>Ctrl+r</code> - Redo</li>
+                                    <li><code>o</code> - Insert new line below</li>
+                                    <li><code>O</code> - Insert new line above</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="vim-help-section">
+                                <h4>Search & Replace</h4>
+                                <ul>
+                                    <li><code>/pattern</code> - Search forward</li>
+                                    <li><code>?pattern</code> - Search backward</li>
+                                    <li><code>n</code> - Next match</li>
+                                    <li><code>N</code> - Previous match</li>
+                                    <li><code>:%s/old/new/g</code> - Replace all</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- CodeMirror and dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/keymap/vim.min.js"></script>
+    
+    <!-- Language modes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/go/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/rust/rust.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/sql/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/markdown/markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/yaml/yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/shell/shell.min.js"></script>
+    
+    <script src="../js/theme.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize CodeMirror with Vim keybindings
+            const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+                lineNumbers: true,
+                mode: 'text/plain',
+                theme: document.body.classList.contains('dark-theme') ? 'dracula' : 'eclipse',
+                keyMap: 'vim',
+                matchBrackets: true,
+                lineWrapping: true,
+                indentUnit: 4,
+                tabSize: 4,
+                autofocus: true
+            });
+            
+            // Update cursor position display
+            editor.on('cursorActivity', () => {
+                const cursor = editor.getCursor();
+                document.getElementById('cursor-position').textContent = `Line: ${cursor.line + 1}, Column: ${cursor.ch}`;
+            });
+            
+            // Update Vim mode display
+            CodeMirror.Vim.defineEx('write', 'w', () => {
+                // Simulate save - in this case, trigger download
+                downloadCode();
+            });
+            
+            // Track Vim mode changes
+            const vimModeElement = document.getElementById('vim-mode');
+            const originalVimMapState = CodeMirror.Vim.mapCommand;
+            
+            CodeMirror.Vim.mapCommand = function(...args) {
+                const result = originalVimMapState.apply(this, args);
+                
+                // Update the mode display
+                const currentMode = CodeMirror.Vim.mode;
+                if (currentMode) {
+                    vimModeElement.textContent = currentMode.toUpperCase();
+                }
+                
+                return result;
+            };
+            
+            // Language selector
+            const languageSelect = document.getElementById('language-select');
+            languageSelect.addEventListener('change', () => {
+                editor.setOption('mode', languageSelect.value);
+            });
+            
+            // Theme toggle integration
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            themeToggleBtn.addEventListener('click', () => {
+                setTimeout(() => {
+                    const isDarkTheme = document.body.classList.contains('dark-theme');
+                    editor.setOption('theme', isDarkTheme ? 'dracula' : 'eclipse');
+                }, 100);
+            });
+            
+            // Copy button
+            const copyBtn = document.getElementById('copy-btn');
+            copyBtn.addEventListener('click', () => {
+                const content = editor.getValue();
+                if (!content) {
+                    showMessage('Nothing to copy!', 'error');
+                    return;
+                }
+                
+                navigator.clipboard.writeText(content)
+                    .then(() => {
+                        showMessage('Copied to clipboard!', 'success');
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy text: ', err);
+                        showMessage('Failed to copy to clipboard', 'error');
+                    });
+            });
+            
+            // Download button
+            const downloadBtn = document.getElementById('download-btn');
+            downloadBtn.addEventListener('click', downloadCode);
+            
+            function downloadCode() {
+                const content = editor.getValue();
+                if (!content) {
+                    showMessage('Nothing to download!', 'error');
+                    return;
+                }
+                
+                // Determine file extension based on language
+                const mode = editor.getOption('mode');
+                let extension = '.txt';
+                
+                switch (mode) {
+                    case 'text/javascript':
+                        extension = '.js';
+                        break;
+                    case 'text/html':
+                        extension = '.html';
+                        break;
+                    case 'text/css':
+                        extension = '.css';
+                        break;
+                    case 'text/x-python':
+                        extension = '.py';
+                        break;
+                    case 'text/x-java':
+                        extension = '.java';
+                        break;
+                    case 'text/x-go':
+                        extension = '.go';
+                        break;
+                    case 'text/x-rust':
+                        extension = '.rs';
+                        break;
+                    case 'text/x-sql':
+                        extension = '.sql';
+                        break;
+                    case 'application/json':
+                        extension = '.json';
+                        break;
+                    case 'text/x-markdown':
+                        extension = '.md';
+                        break;
+                    case 'text/x-yaml':
+                        extension = '.yaml';
+                        break;
+                    case 'text/x-sh':
+                        extension = '.sh';
+                        break;
+                }
+                
+                const filename = `code${extension}`;
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showMessage(`Downloaded as ${filename}`, 'success');
+            }
+            
+            // Clear button
+            const clearBtn = document.getElementById('clear-btn');
+            clearBtn.addEventListener('click', () => {
+                if (editor.getValue().trim()) {
+                    if (confirm('Are you sure you want to clear the editor?')) {
+                        editor.setValue('');
+                        editor.focus();
+                    }
+                } else {
+                    editor.setValue('');
+                    editor.focus();
+                }
+            });
+            
+            // Load sample button
+            const loadSampleBtn = document.getElementById('load-sample-btn');
+            loadSampleBtn.addEventListener('click', () => {
+                const mode = editor.getOption('mode');
+                let sampleCode = '';
+                
+                switch (mode) {
+                    case 'text/javascript':
+                        sampleCode = `// JavaScript Sample
+function fibonacci(n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+// Print the first 10 Fibonacci numbers
+for (let i = 0; i < 10; i++) {
+    console.log(fibonacci(i));
+}`;
+                        break;
+                    case 'text/html':
+                        sampleCode = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sample HTML</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello, World!</h1>
+    <p>This is a sample HTML document.</p>
+</body>
+</html>`;
+                        break;
+                    case 'text/css':
+                        sampleCode = `/* CSS Sample */
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --text-color: #333;
+    --bg-color: #f9f9f9;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}`;
+                        break;
+                    case 'text/x-python':
+                        sampleCode = `# Python Sample
+def fibonacci(n):
+    """Return the nth Fibonacci number."""
+    if n <= 1:
+        return n
+    return fibonacci(n - 1) + fibonacci(n - 2)
+
+# Print the first 10 Fibonacci numbers
+for i in range(10):
+    print(f"Fibonacci({i}) = {fibonacci(i)}")`;
+                        break;
+                    case 'application/json':
+                        sampleCode = `{
+    "name": "Vim Editor Sample",
+    "version": "1.0.0",
+    "description": "A sample JSON file",
+    "features": [
+        "Vim keybindings",
+        "Syntax highlighting",
+        "Multiple language support"
+    ],
+    "settings": {
+        "theme": "dark",
+        "fontSize": 14,
+        "lineNumbers": true
+    }
+}`;
+                        break;
+                    case 'text/x-markdown':
+                        sampleCode = `# Markdown Sample
+
+## Introduction
+This is a sample Markdown document to demonstrate the Vim editor.
+
+## Features
+- **Vim Keybindings**: Navigate and edit efficiently
+- **Syntax Highlighting**: Makes code easier to read
+- **Multiple Languages**: Support for various programming languages
+
+## Code Example
+\`\`\`javascript
+function greet(name) {
+    return \`Hello, \${name}!\`;
+}
+console.log(greet('World'));
+\`\`\`
+
+## Table Example
+| Feature | Description |
+|---------|-------------|
+| Vim Mode | Efficient text editing |
+| Syntax Highlighting | Colorized code |
+| Themes | Light and dark options |`;
+                        break;
+                    default:
+                        sampleCode = `This is a sample text file for the Vim-style editor.
+
+Use Vim commands to navigate and edit this text:
+- Press 'i' to enter insert mode
+- Press 'Esc' to return to normal mode
+- Use 'h', 'j', 'k', 'l' to navigate
+- Press 'dd' to delete a line
+- Press 'yy' to copy a line
+- Press 'p' to paste
+
+Enjoy the power of Vim keybindings in your browser!`;
+                }
+                
+                editor.setValue(sampleCode);
+                editor.setCursor(0, 0);
+                editor.focus();
+            });
+            
+            // Toggle Vim help
+            const toggleHelpBtn = document.getElementById('toggle-help');
+            const vimHelpSection = document.getElementById('vim-help');
+            
+            toggleHelpBtn.addEventListener('click', () => {
+                vimHelpSection.classList.toggle('hidden');
+                toggleHelpBtn.textContent = vimHelpSection.classList.contains('hidden') ? 
+                    'Show Vim Help' : 'Hide Vim Help';
+            });
+            
+            // Helper function to show messages
+            function showMessage(message, type) {
+                const elementId = type === 'error' ? 'error-message' : 'success-message';
+                const element = document.getElementById(elementId);
+                
+                if (element) {
+                    element.textContent = message;
+                    element.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        element.classList.add('hidden');
+                    }, 3000);
+                }
+            }
+            
+            // Set initial cursor position
+            document.getElementById('cursor-position').textContent = 'Line: 1, Column: 0';
+        });
+    </script>
+</body>
+</html>

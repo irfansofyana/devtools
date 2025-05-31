@@ -6,7 +6,7 @@
 const toolCategories = {
     'Text': [
         'String Case Converter', 'Line Sort/Dedupe', 'Backslash Escape/Unescape', 
-        'Random String Generator', 'Text Diff Utility'
+        'Random String Generator', 'Text Diff Utility', 'Vim-Style Code Editor'
     ],
     'Encoding': [
         'Base64 Encoder/Decoder', 'URL Encoder/Decoder', 'ASCII <> HEX Converter'
