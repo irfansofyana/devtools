@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Visualize CSV data as an HTML table with export options">
+    <title>CSV Visualizer | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>CSV Visualizer</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Visualize CSV data as an HTML table. Upload a CSV file or paste data from clipboard, then view, copy, or export the generated HTML table.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    <div class="success-message hidden" id="success-message"></div>
+                    
+                    <div class="options-group mt-2 mb-2">
+                        <label>CSV Options:</label>
+                        <div class="options-controls">
+                            <label>
+                                Delimiter:
+                                <select id="delimiter">
+                                    <option value="," selected>Comma (,)</option>
+                                    <option value=";">Semicolon (;)</option>
+                                    <option value="\t">Tab</option>
+                                    <option value="|">Pipe (|)</option>
+                                </select>
+                            </label>
+                            <label>
+                                <input type="checkbox" id="header" checked>
+                                First row is header
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="input-tabs">
+                        <div class="tab-buttons" role="tablist">
+                            <button class="tab-button active" data-tab="paste" role="tab" aria-selected="true" aria-controls="paste-tab" id="tab-paste" tabindex="0">Paste CSV</button>
+                            <button class="tab-button" data-tab="upload" role="tab" aria-selected="false" aria-controls="upload-tab" id="tab-upload" tabindex="0">Upload File</button>
+                        </div>
+                        
+                        <div class="tab-content active" id="paste-tab" role="tabpanel" aria-labelledby="tab-paste">
+                            <div class="input-group">
+                                <label for="input-text">CSV Input:</label>
+                                <textarea id="input-text" placeholder="Enter CSV data..." aria-label="Input text"></textarea>
+                                <div class="input-controls">
+                                    <button class="secondary" id="clear-input">Clear</button>
+                                    <button class="secondary" id="load-sample">Load Sample</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="upload-tab" role="tabpanel" aria-labelledby="tab-upload">
+                            <div class="file-upload">
+                                <label for="file-input" class="file-upload-label">
+                                    <span>Choose a CSV file</span>
+                                    <input type="file" id="file-input" accept=".csv,text/csv">
+                                </label>
+                                <div id="file-name" class="file-name"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="primary" id="visualize-btn">Visualize CSV</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Table Preview:</h3>
+                        <div class="table-preview" id="table-preview"></div>
+                        
+                        <div class="result-actions">
+                            <button class="secondary" id="copy-html">Copy HTML</button>
+                            <button class="secondary" id="export-html">Export HTML</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p>
+            <p>
+                <a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a> |
+                <a href="https://github.com/irfansofyana/devtools/issues" target="_blank">Report Issues</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const inputText = document.getElementById('input-text');
+            const fileInput = document.getElementById('file-input');
+            const fileName = document.getElementById('file-name');
+            const visualizeBtn = document.getElementById('visualize-btn');
+            const clearInputBtn = document.getElementById('clear-input');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const resultContainer = document.getElementById('result-container');
+            const tablePreview = document.getElementById('table-preview');
+            const copyHtmlBtn = document.getElementById('copy-html');
+            const exportHtmlBtn = document.getElementById('export-html');
+            const delimiterSelect = document.getElementById('delimiter');
+            const headerCheckbox = document.getElementById('header');
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            let activeTab = 'paste';
+            let csvData = null;
+            
+            // Tab switching with improved accessibility
+            tabButtons.forEach(button => {
+                // Add ARIA attributes for accessibility
+                button.setAttribute('role', 'tab');
+                button.setAttribute('aria-selected', button.classList.contains('active') ? 'true' : 'false');
+                button.setAttribute('aria-controls', `${button.dataset.tab}-tab`);
+                button.id = `tab-${button.dataset.tab}`;
+                
+                // Add corresponding ARIA attributes to tab content
+                const tabContent = document.getElementById(`${button.dataset.tab}-tab`);
+                if (tabContent) {
+                    tabContent.setAttribute('role', 'tabpanel');
+                    tabContent.setAttribute('aria-labelledby', `tab-${button.dataset.tab}`);
+                }
+                
+                button.addEventListener('click', () => {
+                    const tab = button.dataset.tab;
+                    
+                    // Update active tab
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        btn.setAttribute('aria-selected', 'false');
+                    });
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    button.classList.add('active');
+                    button.setAttribute('aria-selected', 'true');
+                    document.getElementById(`${tab}-tab`).classList.add('active');
+                    activeTab = tab;
+                });
+                
+                // Keyboard navigation for accessibility
+                button.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        button.click();
+                    }
+                });
+            });
+            
+            // Set up tab container for accessibility
+            const tabContainer = document.querySelector('.tab-buttons');
+            if (tabContainer) {
+                tabContainer.setAttribute('role', 'tablist');
+            }
+            
+            // File input handling
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    fileName.textContent = file.name;
+                } else {
+                    fileName.textContent = '';
+                }
+            });
+            
+            // Parse CSV data using PapaParse
+            function parseCSV(csvText) {
+                const delimiter = delimiterSelect.value === '\\t' ? '\t' : delimiterSelect.value;
+                const hasHeader = headerCheckbox.checked;
+                
+                return Papa.parse(csvText, {
+                    delimiter: delimiter,
+                    header: hasHeader,
+                    skipEmptyLines: true
+                });
+            }
+            
+            // Generate HTML table from parsed CSV data
+            function generateHTMLTable(parsedData) {
+                const hasHeader = headerCheckbox.checked;
+                let tableHTML = '<table class="csv-table">';
+                
+                // If using headers
+                if (hasHeader && parsedData.meta && parsedData.meta.fields) {
+                    tableHTML += '<thead><tr>';
+                    parsedData.meta.fields.forEach(header => {
+                        tableHTML += `<th>${escapeHTML(header)}</th>`;
+                    });
+                    tableHTML += '</tr></thead>';
+                }
+                
+                tableHTML += '<tbody>';
+                
+                // If not using headers or using array data
+                if (!hasHeader || !parsedData.meta || !parsedData.meta.fields) {
+                    parsedData.data.forEach(row => {
+                        tableHTML += '<tr>';
+                        row.forEach(cell => {
+                            tableHTML += `<td>${escapeHTML(cell)}</td>`;
+                        });
+                        tableHTML += '</tr>';
+                    });
+                } else {
+                    // Using headers with object data
+                    parsedData.data.forEach(row => {
+                        tableHTML += '<tr>';
+                        parsedData.meta.fields.forEach(field => {
+                            tableHTML += `<td>${escapeHTML(row[field])}</td>`;
+                        });
+                        tableHTML += '</tr>';
+                    });
+                }
+                
+                tableHTML += '</tbody></table>';
+                return tableHTML;
+            }
+            
+            // Escape HTML to prevent XSS
+            function escapeHTML(text) {
+                if (text === null || text === undefined) {
+                    return '';
+                }
+                return String(text)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+            
+            // Create standalone HTML document
+            function createStandaloneHTML(tableHTML) {
+                return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Table</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .csv-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        .csv-table th, .csv-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        .csv-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .csv-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .csv-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #222;
+                color: #eee;
+            }
+            
+            .csv-table th, .csv-table td {
+                border-color: #444;
+            }
+            
+            .csv-table th {
+                background-color: #333;
+            }
+            
+            .csv-table tr:nth-child(even) {
+                background-color: #2a2a2a;
+            }
+            
+            .csv-table tr:hover {
+                background-color: #383838;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>CSV Data Table</h1>
+    ${tableHTML}
+</body>
+</html>`;
+            }
+            
+            // Process and visualize CSV data
+            function visualizeCSV() {
+                let csvText = '';
+                
+                // Get CSV data based on active tab
+                if (activeTab === 'paste') {
+                    csvText = inputText.value.trim();
+                    if (!csvText) {
+                        showError('Please enter CSV data', 'error-message');
+                        return;
+                    }
+                } else if (activeTab === 'upload') {
+                    const file = fileInput.files[0];
+                    if (!file) {
+                        showError('Please select a CSV file', 'error-message');
+                        return;
+                    }
+                    
+                    // Read file content
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        csvText = e.target.result;
+                        processCSVData(csvText);
+                    };
+                    reader.onerror = () => {
+                        showError('Error reading file', 'error-message');
+                    };
+                    reader.readAsText(file);
+                    return;
+                }
+                
+                processCSVData(csvText);
+            }
+            
+            // Process CSV data and display table
+            function processCSVData(csvText) {
+                try {
+                    // Parse CSV
+                    const parsedData = parseCSV(csvText);
+                    
+                    if (parsedData.errors && parsedData.errors.length > 0) {
+                        showError(`CSV parsing error: ${parsedData.errors[0].message}`, 'error-message');
+                        return;
+                    }
+                    
+                    if (!parsedData.data || parsedData.data.length === 0) {
+                        showError('No data found in CSV', 'error-message');
+                        return;
+                    }
+                    
+                    // Store the parsed data
+                    csvData = parsedData;
+                    
+                    // Generate and display HTML table
+                    const tableHTML = generateHTMLTable(parsedData);
+                    tablePreview.innerHTML = tableHTML;
+                    resultContainer.classList.remove('hidden');
+                    
+                    // Scroll to results
+                    resultContainer.scrollIntoView({ behavior: 'smooth' });
+                    
+                    showSuccess('CSV data visualized successfully', 'success-message');
+                } catch (error) {
+                    showError(`Error: ${error.message}`, 'error-message');
+                }
+            }
+            
+            // Copy HTML to clipboard
+            function copyHTML() {
+                if (!csvData) {
+                    showError('No data to copy', 'error-message');
+                    return;
+                }
+                
+                const tableHTML = generateHTMLTable(csvData);
+                
+                navigator.clipboard.writeText(tableHTML)
+                    .then(() => {
+                        showSuccess('HTML table copied to clipboard', 'success-message');
+                    })
+                    .catch(err => {
+                        showError(`Failed to copy: ${err.message}`, 'error-message');
+                    });
+            }
+            
+            // Export HTML as file
+            function exportHTML() {
+                if (!csvData) {
+                    showError('No data to export', 'error-message');
+                    return;
+                }
+                
+                const tableHTML = generateHTMLTable(csvData);
+                const fullHTML = createStandaloneHTML(tableHTML);
+                
+                downloadTextFile(fullHTML, 'csv-table.html', 'text/html');
+                showSuccess('HTML file exported successfully', 'success-message');
+            }
+            
+            // Load sample CSV data
+            function loadSample() {
+                const sampleCSV = `Name,Age,Email,Country
+John Doe,32,john@example.com,USA
+Jane Smith,28,jane@example.com,Canada
+Michael Johnson,45,michael@example.com,UK
+Emily Davis,36,emily@example.com,Australia
+Robert Wilson,41,robert@example.com,Germany`;
+                
+                inputText.value = sampleCSV;
+                
+                // Switch to paste tab if not active
+                if (activeTab !== 'paste') {
+                    tabButtons.forEach(btn => {
+                        if (btn.dataset.tab === 'paste') {
+                            btn.click();
+                        }
+                    });
+                }
+            }
+            
+            // Clear input
+            function clearInput() {
+                inputText.value = '';
+                fileInput.value = '';
+                fileName.textContent = '';
+                resultContainer.classList.add('hidden');
+                tablePreview.innerHTML = '';
+                csvData = null;
+            }
+            
+            // Event listeners
+            visualizeBtn.addEventListener('click', visualizeCSV);
+            clearInputBtn.addEventListener('click', clearInput);
+            loadSampleBtn.addEventListener('click', loadSample);
+            copyHtmlBtn.addEventListener('click', copyHTML);
+            exportHtmlBtn.addEventListener('click', exportHTML);
+            
+            // Add some custom styles for the tool
+            const style = document.createElement('style');
+            style.textContent = `
+                .input-tabs {
+                    margin-bottom: 20px;
+                }
+                
+                .tab-buttons {
+                    display: flex;
+                    margin-bottom: 0;
+                    position: relative;
+                    z-index: 5;
+                }
+                
+                .tab-button {
+                    padding: 12px 20px;
+                    background: #f0f0f0;
+                    border: 2px solid #ddd;
+                    border-bottom: none;
+                    border-radius: 8px 8px 0 0;
+                    margin-right: 5px;
+                    cursor: pointer;
+                    font-size: 15px;
+                    position: relative;
+                    transition: all 0.2s ease;
+                    min-width: 120px;
+                    text-align: center;
+                    color: #666;
+                    box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+                }
+                
+                .tab-button:hover {
+                    background: #f8f8f8;
+                    color: #333;
+                    transform: translateY(-3px);
+                }
+                
+                .tab-button:focus {
+                    outline: none;
+                    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+                }
+                
+                .tab-button.active {
+                    background: #fff;
+                    border-color: #aaa;
+                    border-bottom: 2px solid #fff;
+                    font-weight: bold;
+                    color: #000;
+                    z-index: 10;
+                    transform: translateY(-5px);
+                }
+                
+                .tab-button.active::after {
+                    content: '';
+                    position: absolute;
+                    bottom: -2px;
+                    left: 0;
+                    right: 0;
+                    height: 2px;
+                    background: #fff;
+                    z-index: 15;
+                }
+                
+                .tab-button::before {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    height: 3px;
+                    background: transparent;
+                    transition: background 0.2s ease;
+                }
+                
+                .tab-button.active::before {
+                    background: #4299e1;
+                }
+                
+                .tab-content {
+                    display: none;
+                    padding: 25px;
+                    border: 2px solid #aaa;
+                    border-radius: 0 8px 8px 8px;
+                    background: #fff;
+                    position: relative;
+                    z-index: 1;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                    animation: fadeIn 0.3s ease;
+                }
+                
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(-5px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                
+                .tab-content.active {
+                    display: block;
+                }
+                
+                .file-upload {
+                    padding: 30px;
+                    text-align: center;
+                    background: #f9f9f9;
+                    border-radius: 8px;
+                    border: 2px dashed #ddd;
+                    transition: all 0.2s ease;
+                }
+                
+                .file-upload:hover {
+                    border-color: #aaa;
+                    background: #f5f5f5;
+                }
+                
+                .file-upload-label {
+                    display: inline-block;
+                    padding: 12px 24px;
+                    background: #4299e1;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                }
+                
+                .file-upload-label:hover {
+                    background: #3182ce;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+                }
+                
+                .file-upload-label:active {
+                    transform: translateY(0);
+                }
+                
+                .file-upload input[type="file"] {
+                    display: none;
+                }
+                
+                .file-name {
+                    margin-top: 15px;
+                    font-style: italic;
+                    color: #666;
+                    font-size: 14px;
+                }
+                
+                .table-preview {
+                    max-width: 100%;
+                    overflow-x: auto;
+                    margin-bottom: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }
+                
+                .csv-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 20px 0;
+                    font-size: 14px;
+                    overflow: hidden;
+                    border-radius: 8px;
+                }
+                
+                .csv-table th, .csv-table td {
+                    padding: 10px 15px;
+                    text-align: left;
+                    border: 1px solid #ddd;
+                }
+                
+                .csv-table th {
+                    background-color: #f2f2f2;
+                    font-weight: bold;
+                    position: sticky;
+                    top: 0;
+                }
+                
+                .csv-table tr:nth-child(even) {
+                    background-color: #f9f9f9;
+                }
+                
+                .csv-table tr:hover {
+                    background-color: #f0f0f0;
+                }
+                
+                .result-actions {
+                    display: flex;
+                    justify-content: center;
+                    gap: 15px;
+                    margin-top: 20px;
+                }
+                
+                /* Dark mode support */
+                @media (prefers-color-scheme: dark) {
+                    .tab-button {
+                        background: #2d3748;
+                        border-color: #4a5568;
+                        color: #cbd5e0;
+                    }
+                    
+                    .tab-button:hover {
+                        background: #3a4a5e;
+                        color: #e2e8f0;
+                    }
+                    
+                    .tab-button.active {
+                        background: #1a202c;
+                        border-color: #4a5568;
+                        border-bottom-color: #1a202c;
+                        color: #fff;
+                    }
+                    
+                    .tab-button.active::after {
+                        background: #1a202c;
+                    }
+                    
+                    .tab-button.active::before {
+                        background: #4299e1;
+                    }
+                    
+                    .tab-content {
+                        background: #1a202c;
+                        border-color: #4a5568;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    }
+                    
+                    .file-upload {
+                        background: #2d3748;
+                        border-color: #4a5568;
+                    }
+                    
+                    .file-upload:hover {
+                        border-color: #718096;
+                        background: #2c3544;
+                    }
+                    
+                    .file-upload-label {
+                        background: #4299e1;
+                    }
+                    
+                    .file-upload-label:hover {
+                        background: #3182ce;
+                    }
+                    
+                    .file-name {
+                        color: #a0aec0;
+                    }
+                    
+                    .csv-table th, .csv-table td {
+                        border-color: #4a5568;
+                    }
+                    
+                    .csv-table th {
+                        background-color: #2d3748;
+                        color: #e2e8f0;
+                    }
+                    
+                    .csv-table tr:nth-child(even) {
+                        background-color: #283141;
+                    }
+                    
+                    .csv-table tr:hover {
+                        background-color: #323d4f;
+                    }
+                    
+                    .table-preview {
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+</body>
+</html>
