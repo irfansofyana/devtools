@@ -51,6 +51,7 @@ Devtools is designed to streamline common development tasks by providing a suite
 27. **URL Parser** - Parse and extract components from URLs
 28. **URL to Markdown** - Scrape URL content and convert to Markdown format
 29. **UUID Generator** - Generate random UUIDs in version 4 format
+30. **Vim-Style Code Editor** - In-browser text editor with Vim key bindings, syntax highlighting, and advanced features
 
 ## ✨ Features
 
