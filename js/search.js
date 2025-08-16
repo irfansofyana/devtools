@@ -19,7 +19,7 @@ const toolCategories = {
         'URL Parser', 'URL to Markdown', 'CURL Constructor', 'JWT Decoder'
     ],
     'Crypto': [
-        'Hash Generator', 'UUID Generator', 'Password Generator'
+        'Hash Generator', 'UUID Generator', 'Password Generator', 'Secret Share'
     ],
     'Time': [
         'Timestamp Converter', 'Crontab Generator'
