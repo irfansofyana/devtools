@@ -114,3 +114,4 @@ The project includes Cursor IDE rules in `.cursor/rules/`:
 - Task management integration
 - Code formatting standards
 - Rule creation and maintenance guidelines
+- can you always update @README.md after update or implement any tools?
