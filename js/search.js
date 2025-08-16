@@ -26,7 +26,7 @@ const toolCategories = {
     ],
     'Visual': [
         'QR Code Reader/Generator', 'Markdown Preview', 'Mermaid Diagram Editor',
-        'OCR Tool', 'Color Converter'
+        'OCR Tool', 'Color Converter', 'ASCII Art Generator'
     ],
     'API': [
         'API Mock Data Generator', 'Regex Tester'
