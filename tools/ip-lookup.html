@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Address Lookup - DevTools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>IP Address Lookup</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Get detailed information about any IP address including geolocation, ISP, and network details</p>
+                </div>
+
+                <div class="tool-content">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="ip-input">IP Address:</label>
+                    <div class="input-with-button">
+                        <input type="text" id="ip-input" placeholder="Enter IP address (e.g., 8.8.8.8)" autocomplete="off">
+                        <button onclick="lookupIP()" class="btn primary">Lookup</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button onclick="getMyIP()" class="btn secondary">Get My IP</button>
+                </div>
+            </div>
+
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Looking up IP address...</p>
+            </div>
+
+            <div id="results" class="results-section" style="display: none;">
+                <h3>IP Information</h3>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4>Basic Information</h4>
+                        <div class="info-item">
+                            <span class="label">IP Address:</span>
+                            <span id="ip-address" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Type:</span>
+                            <span id="ip-type" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Version:</span>
+                            <span id="ip-version" class="value"></span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h4>Location</h4>
+                        <div class="info-item">
+                            <span class="label">Country:</span>
+                            <span id="country" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Region:</span>
+                            <span id="region" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">City:</span>
+                            <span id="city" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Coordinates:</span>
+                            <span id="coordinates" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Timezone:</span>
+                            <span id="timezone" class="value"></span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h4>Network Information</h4>
+                        <div class="info-item">
+                            <span class="label">ISP:</span>
+                            <span id="isp" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Organization:</span>
+                            <span id="organization" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">AS Number:</span>
+                            <span id="asn" class="value"></span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h4>Security & Privacy</h4>
+                        <div class="info-item">
+                            <span class="label">Proxy:</span>
+                            <span id="proxy" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">VPN:</span>
+                            <span id="vpn" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Hosting:</span>
+                            <span id="hosting" class="value"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button onclick="copyResults()" class="btn secondary" data-copy>Copy Results</button>
+                    <button onclick="exportResults()" class="btn secondary">Export JSON</button>
+                </div>
+            </div>
+
+                    <div id="error" class="error-message" style="display: none;"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        let currentResults = null;
+
+        async function lookupIP() {
+            const ipInput = document.getElementById('ip-input');
+            const ip = ipInput.value.trim();
+            
+            if (!ip) {
+                showError('Please enter an IP address');
+                return;
+            }
+
+            if (!isValidIP(ip)) {
+                showError('Please enter a valid IP address');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+            hideResults();
+
+            try {
+                const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,lat,lon,timezone,isp,org,as,query,proxy,hosting`);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    displayResults(data);
+                } else {
+                    showError(data.message || 'Failed to lookup IP address');
+                }
+            } catch (error) {
+                showError('Network error: Unable to lookup IP address');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function getMyIP() {
+            showLoading(true);
+            hideError();
+            hideResults();
+
+            try {
+                const response = await fetch('http://ip-api.com/json/?fields=status,message,country,countryCode,region,regionName,city,lat,lon,timezone,isp,org,as,query,proxy,hosting');
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    document.getElementById('ip-input').value = data.query;
+                    displayResults(data);
+                } else {
+                    showError(data.message || 'Failed to get your IP address');
+                }
+            } catch (error) {
+                showError('Network error: Unable to get your IP address');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayResults(data) {
+            currentResults = data;
+            
+            document.getElementById('ip-address').textContent = data.query;
+            document.getElementById('ip-type').textContent = isPrivateIP(data.query) ? 'Private' : 'Public';
+            document.getElementById('ip-version').textContent = data.query.includes(':') ? 'IPv6' : 'IPv4';
+            
+            document.getElementById('country').textContent = `${data.country} (${data.countryCode})`;
+            document.getElementById('region').textContent = data.regionName;
+            document.getElementById('city').textContent = data.city;
+            document.getElementById('coordinates').textContent = `${data.lat}, ${data.lon}`;
+            document.getElementById('timezone').textContent = data.timezone;
+            
+            document.getElementById('isp').textContent = data.isp;
+            document.getElementById('organization').textContent = data.org;
+            document.getElementById('asn').textContent = data.as;
+            
+            document.getElementById('proxy').textContent = data.proxy ? 'Yes' : 'No';
+            document.getElementById('vpn').textContent = data.proxy ? 'Possible' : 'No';
+            document.getElementById('hosting').textContent = data.hosting ? 'Yes' : 'No';
+
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function isValidIP(ip) {
+            const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
+            
+            if (ipv4Regex.test(ip)) {
+                return ip.split('.').every(octet => parseInt(octet) >= 0 && parseInt(octet) <= 255);
+            }
+            
+            return ipv6Regex.test(ip);
+        }
+
+        function isPrivateIP(ip) {
+            const privateRanges = [
+                /^10\./,
+                /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
+                /^192\.168\./,
+                /^127\./,
+                /^169\.254\./
+            ];
+            
+            return privateRanges.some(range => range.test(ip));
+        }
+
+        function copyResults() {
+            if (!currentResults) return;
+            
+            const resultText = `IP Address Lookup Results
+IP: ${currentResults.query}
+Country: ${currentResults.country} (${currentResults.countryCode})
+Region: ${currentResults.regionName}
+City: ${currentResults.city}
+Coordinates: ${currentResults.lat}, ${currentResults.lon}
+Timezone: ${currentResults.timezone}
+ISP: ${currentResults.isp}
+Organization: ${currentResults.org}
+AS: ${currentResults.as}
+Proxy: ${currentResults.proxy ? 'Yes' : 'No'}
+Hosting: ${currentResults.hosting ? 'Yes' : 'No'}`;
+
+            navigator.clipboard.writeText(resultText).then(() => {
+                showSuccess('Results copied to clipboard!');
+            });
+        }
+
+        function exportResults() {
+            if (!currentResults) return;
+            
+            const jsonData = JSON.stringify(currentResults, null, 2);
+            downloadTextFile(jsonData, `ip-lookup-${currentResults.query}.json`, 'application/json');
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function hideResults() {
+            document.getElementById('results').style.display = 'none';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.className = 'success-message';
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+                errorDiv.className = 'error-message';
+            }, 3000);
+        }
+
+        // Allow Enter key to trigger lookup
+        document.getElementById('ip-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                lookupIP();
+            }
+        });
+    </script>
+</body>
+</html>

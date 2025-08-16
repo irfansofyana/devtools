@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subnet Calculator - DevTools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="../index.html">Devtools</a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="https://github.com/irfansofyana/devtools" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn" aria-label="Toggle dark/light theme">
+                    <span class="icon light-icon">☀️</span>
+                    <span class="icon dark-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <div class="tool-header">
+                    <h1>Subnet Calculator</h1>
+                </div>
+                <div class="tool-description">
+                    <p>Calculate subnet information, IP ranges, and network details from CIDR notation</p>
+                </div>
+
+                <div class="tool-content">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="cidr-input">CIDR Notation:</label>
+                    <div class="input-with-button">
+                        <input type="text" id="cidr-input" placeholder="Enter CIDR (e.g., 192.168.1.0/24)" autocomplete="off">
+                        <button onclick="calculateSubnet()" class="btn primary">Calculate</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Quick Examples:</label>
+                    <div class="example-buttons">
+                        <button onclick="setExample('192.168.1.0/24')" class="btn example">192.168.1.0/24</button>
+                        <button onclick="setExample('10.0.0.0/16')" class="btn example">10.0.0.0/16</button>
+                        <button onclick="setExample('172.16.0.0/12')" class="btn example">172.16.0.0/12</button>
+                        <button onclick="setExample('192.168.0.0/20')" class="btn example">192.168.0.0/20</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="results" class="results-section" style="display: none;">
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4>Network Information</h4>
+                        <div class="info-item">
+                            <span class="label">Network Address:</span>
+                            <span id="network-address" class="value mono"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Broadcast Address:</span>
+                            <span id="broadcast-address" class="value mono"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Subnet Mask:</span>
+                            <span id="subnet-mask" class="value mono"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Wildcard Mask:</span>
+                            <span id="wildcard-mask" class="value mono"></span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h4>Address Range</h4>
+                        <div class="info-item">
+                            <span class="label">First Host:</span>
+                            <span id="first-host" class="value mono"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Last Host:</span>
+                            <span id="last-host" class="value mono"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Total Addresses:</span>
+                            <span id="total-addresses" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Usable Hosts:</span>
+                            <span id="usable-hosts" class="value"></span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h4>Network Class & Type</h4>
+                        <div class="info-item">
+                            <span class="label">IP Version:</span>
+                            <span id="ip-version" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Network Class:</span>
+                            <span id="network-class" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Network Type:</span>
+                            <span id="network-type" class="value"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">CIDR Prefix:</span>
+                            <span id="cidr-prefix" class="value">/</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h4>Binary Representation</h4>
+                        <div class="binary-section">
+                            <div class="binary-item">
+                                <span class="label">Network (Binary):</span>
+                                <div id="network-binary" class="binary-value"></div>
+                            </div>
+                            <div class="binary-item">
+                                <span class="label">Subnet Mask (Binary):</span>
+                                <div id="mask-binary" class="binary-value"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subnet-visualization">
+                    <h4>Subnet Visualization</h4>
+                    <div id="subnet-visual" class="visual-container"></div>
+                </div>
+
+                <div class="action-buttons">
+                    <button onclick="copyResults()" class="btn secondary" data-copy>Copy Results</button>
+                    <button onclick="exportResults()" class="btn secondary">Export JSON</button>
+                    <button onclick="generateSubnets()" class="btn secondary">Generate Subnets</button>
+                </div>
+            </div>
+
+            <div id="subnet-list" class="subnet-list" style="display: none;">
+                <h4>Generated Subnets</h4>
+                <div id="subnets-container"></div>
+            </div>
+
+                    <div id="error" class="error-message" style="display: none;"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        let currentResults = null;
+
+        function calculateSubnet() {
+            const cidrInput = document.getElementById('cidr-input');
+            const cidr = cidrInput.value.trim();
+            
+            if (!cidr) {
+                showError('Please enter a CIDR notation');
+                return;
+            }
+
+            if (!isValidCIDR(cidr)) {
+                showError('Please enter a valid CIDR notation (e.g., 192.168.1.0/24)');
+                return;
+            }
+
+            hideError();
+            hideSubnetList();
+
+            try {
+                const results = calculateSubnetInfo(cidr);
+                displayResults(results);
+            } catch (error) {
+                showError(`Error calculating subnet: ${error.message}`);
+            }
+        }
+
+        function calculateSubnetInfo(cidr) {
+            const [ipStr, prefixStr] = cidr.split('/');
+            const prefix = parseInt(prefixStr);
+            
+            if (prefix < 0 || prefix > 32) {
+                throw new Error('Prefix length must be between 0 and 32');
+            }
+
+            const ip = ipToInt(ipStr);
+            const mask = (0xFFFFFFFF << (32 - prefix)) >>> 0;
+            const network = (ip & mask) >>> 0;
+            const broadcast = (network | ~mask) >>> 0;
+            
+            const totalAddresses = Math.pow(2, 32 - prefix);
+            const usableHosts = totalAddresses > 2 ? totalAddresses - 2 : totalAddresses;
+            
+            const results = {
+                input: cidr,
+                networkAddress: intToIp(network),
+                broadcastAddress: intToIp(broadcast),
+                subnetMask: intToIp(mask),
+                wildcardMask: intToIp(~mask >>> 0),
+                firstHost: intToIp(network + (totalAddresses > 2 ? 1 : 0)),
+                lastHost: intToIp(broadcast - (totalAddresses > 2 ? 1 : 0)),
+                totalAddresses: totalAddresses,
+                usableHosts: usableHosts,
+                prefix: prefix,
+                ipVersion: 'IPv4',
+                networkClass: getNetworkClass(ipStr),
+                networkType: getNetworkType(ipStr),
+                networkBinary: ipToBinary(intToIp(network)),
+                maskBinary: ipToBinary(intToIp(mask))
+            };
+
+            currentResults = results;
+            return results;
+        }
+
+        function ipToInt(ip) {
+            return ip.split('.').reduce((acc, octet, index) => {
+                return acc + (parseInt(octet) << (24 - index * 8));
+            }, 0) >>> 0;
+        }
+
+        function intToIp(int) {
+            return [
+                (int >>> 24) & 0xFF,
+                (int >>> 16) & 0xFF,
+                (int >>> 8) & 0xFF,
+                int & 0xFF
+            ].join('.');
+        }
+
+        function ipToBinary(ip) {
+            return ip.split('.').map(octet => 
+                parseInt(octet).toString(2).padStart(8, '0')
+            ).join('.');
+        }
+
+        function getNetworkClass(ip) {
+            const firstOctet = parseInt(ip.split('.')[0]);
+            if (firstOctet >= 1 && firstOctet <= 126) return 'Class A';
+            if (firstOctet >= 128 && firstOctet <= 191) return 'Class B';
+            if (firstOctet >= 192 && firstOctet <= 223) return 'Class C';
+            if (firstOctet >= 224 && firstOctet <= 239) return 'Class D (Multicast)';
+            if (firstOctet >= 240 && firstOctet <= 255) return 'Class E (Reserved)';
+            return 'Unknown';
+        }
+
+        function getNetworkType(ip) {
+            const parts = ip.split('.').map(Number);
+            
+            if (parts[0] === 10) return 'Private (RFC 1918)';
+            if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return 'Private (RFC 1918)';
+            if (parts[0] === 192 && parts[1] === 168) return 'Private (RFC 1918)';
+            if (parts[0] === 127) return 'Loopback';
+            if (parts[0] === 169 && parts[1] === 254) return 'Link-Local (APIPA)';
+            if (parts[0] >= 224 && parts[0] <= 239) return 'Multicast';
+            if (parts[0] >= 240) return 'Reserved';
+            
+            return 'Public';
+        }
+
+        function isValidCIDR(cidr) {
+            const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
+            if (!cidrRegex.test(cidr)) return false;
+            
+            const [ip, prefix] = cidr.split('/');
+            const prefixNum = parseInt(prefix);
+            
+            if (prefixNum < 0 || prefixNum > 32) return false;
+            
+            return ip.split('.').every(octet => {
+                const num = parseInt(octet);
+                return num >= 0 && num <= 255;
+            });
+        }
+
+        function displayResults(data) {
+            document.getElementById('network-address').textContent = data.networkAddress;
+            document.getElementById('broadcast-address').textContent = data.broadcastAddress;
+            document.getElementById('subnet-mask').textContent = data.subnetMask;
+            document.getElementById('wildcard-mask').textContent = data.wildcardMask;
+            
+            document.getElementById('first-host').textContent = data.firstHost;
+            document.getElementById('last-host').textContent = data.lastHost;
+            document.getElementById('total-addresses').textContent = data.totalAddresses.toLocaleString();
+            document.getElementById('usable-hosts').textContent = data.usableHosts.toLocaleString();
+            
+            document.getElementById('ip-version').textContent = data.ipVersion;
+            document.getElementById('network-class').textContent = data.networkClass;
+            document.getElementById('network-type').textContent = data.networkType;
+            document.getElementById('cidr-prefix').textContent = `/${data.prefix}`;
+            
+            document.getElementById('network-binary').textContent = data.networkBinary;
+            document.getElementById('mask-binary').textContent = data.maskBinary;
+
+            createSubnetVisualization(data);
+            
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function createSubnetVisualization(data) {
+            const container = document.getElementById('subnet-visual');
+            container.innerHTML = '';
+
+            const visualization = document.createElement('div');
+            visualization.className = 'subnet-bar';
+            
+            const networkPart = document.createElement('div');
+            networkPart.className = 'network-part';
+            networkPart.style.width = `${(data.prefix / 32) * 100}%`;
+            networkPart.textContent = `Network (${data.prefix} bits)`;
+            
+            const hostPart = document.createElement('div');
+            hostPart.className = 'host-part';
+            hostPart.style.width = `${((32 - data.prefix) / 32) * 100}%`;
+            hostPart.textContent = `Host (${32 - data.prefix} bits)`;
+            
+            visualization.appendChild(networkPart);
+            visualization.appendChild(hostPart);
+            container.appendChild(visualization);
+
+            const legend = document.createElement('div');
+            legend.className = 'subnet-legend';
+            legend.innerHTML = `
+                <div class="legend-item">
+                    <span class="legend-color network-color"></span>
+                    <span>Network portion (${data.prefix} bits)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color host-color"></span>
+                    <span>Host portion (${32 - data.prefix} bits)</span>
+                </div>
+            `;
+            container.appendChild(legend);
+        }
+
+        function generateSubnets() {
+            if (!currentResults) return;
+            
+            const prefix = currentResults.prefix;
+            if (prefix >= 30) {
+                showError('Cannot generate subnets for networks with /30 or larger prefix');
+                return;
+            }
+            
+            const newPrefix = prefix + 1;
+            const baseNetwork = ipToInt(currentResults.networkAddress);
+            const subnetSize = Math.pow(2, 32 - newPrefix);
+            
+            const subnets = [];
+            for (let i = 0; i < 2; i++) {
+                const subnetNetwork = baseNetwork + (i * subnetSize);
+                const subnetBroadcast = subnetNetwork + subnetSize - 1;
+                
+                subnets.push({
+                    network: intToIp(subnetNetwork),
+                    broadcast: intToIp(subnetBroadcast),
+                    cidr: `${intToIp(subnetNetwork)}/${newPrefix}`,
+                    hosts: subnetSize - 2
+                });
+            }
+            
+            displaySubnets(subnets);
+        }
+
+        function displaySubnets(subnets) {
+            const container = document.getElementById('subnets-container');
+            container.innerHTML = '';
+            
+            subnets.forEach((subnet, index) => {
+                const subnetDiv = document.createElement('div');
+                subnetDiv.className = 'subnet-item';
+                subnetDiv.innerHTML = `
+                    <h5>Subnet ${index + 1}</h5>
+                    <div class="subnet-details">
+                        <span><strong>CIDR:</strong> ${subnet.cidr}</span>
+                        <span><strong>Network:</strong> ${subnet.network}</span>
+                        <span><strong>Broadcast:</strong> ${subnet.broadcast}</span>
+                        <span><strong>Usable Hosts:</strong> ${subnet.hosts}</span>
+                    </div>
+                `;
+                container.appendChild(subnetDiv);
+            });
+            
+            document.getElementById('subnet-list').style.display = 'block';
+        }
+
+        function setExample(cidr) {
+            document.getElementById('cidr-input').value = cidr;
+            calculateSubnet();
+        }
+
+        function copyResults() {
+            if (!currentResults) return;
+            
+            const resultText = `Subnet Calculator Results
+Input: ${currentResults.input}
+Network Address: ${currentResults.networkAddress}
+Broadcast Address: ${currentResults.broadcastAddress}
+Subnet Mask: ${currentResults.subnetMask}
+Wildcard Mask: ${currentResults.wildcardMask}
+First Host: ${currentResults.firstHost}
+Last Host: ${currentResults.lastHost}
+Total Addresses: ${currentResults.totalAddresses.toLocaleString()}
+Usable Hosts: ${currentResults.usableHosts.toLocaleString()}
+Network Class: ${currentResults.networkClass}
+Network Type: ${currentResults.networkType}`;
+
+            navigator.clipboard.writeText(resultText).then(() => {
+                showSuccess('Results copied to clipboard!');
+            });
+        }
+
+        function exportResults() {
+            if (!currentResults) return;
+            
+            const jsonData = JSON.stringify(currentResults, null, 2);
+            downloadTextFile(jsonData, `subnet-calc-${currentResults.input.replace('/', '-')}.json`, 'application/json');
+        }
+
+        function hideSubnetList() {
+            document.getElementById('subnet-list').style.display = 'none';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.className = 'success-message';
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+                errorDiv.className = 'error-message';
+            }, 3000);
+        }
+
+        // Allow Enter key to trigger calculation
+        document.getElementById('cidr-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                calculateSubnet();
+            }
+        });
+    </script>
+
+    <style>
+        .example-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn.example {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            padding: 5px 10px;
+            font-size: 0.9em;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn.example:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .mono {
+            font-family: 'Courier New', monospace;
+        }
+
+        .binary-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .binary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .binary-value {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            padding: 8px;
+            background: var(--surface-color);
+            border-radius: 4px;
+            word-break: break-all;
+        }
+
+        .subnet-visualization {
+            margin: 20px 0;
+        }
+
+        .visual-container {
+            margin-top: 15px;
+        }
+
+        .subnet-bar {
+            display: flex;
+            width: 100%;
+            height: 40px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .network-part {
+            background: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .host-part {
+            background: #28a745;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .subnet-legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+        }
+
+        .network-color {
+            background: #007bff;
+        }
+
+        .host-color {
+            background: #28a745;
+        }
+
+        .subnet-list {
+            margin-top: 20px;
+        }
+
+        .subnet-item {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .subnet-item h5 {
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+        }
+
+        .subnet-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .subnet-details span {
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</body>
+</html>

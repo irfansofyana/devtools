@@ -30,6 +30,9 @@ const toolCategories = {
     ],
     'API': [
         'API Mock Data Generator', 'Regex Tester'
+    ],
+    'Network': [
+        'IP Address Lookup', 'SSL/TLS Certificate Checker', 'Subnet Calculator'
     ]
 };
 
