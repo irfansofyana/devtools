@@ -19,17 +19,20 @@ const toolCategories = {
         'URL Parser', 'URL to Markdown', 'CURL Constructor', 'JWT Decoder'
     ],
     'Crypto': [
-        'Hash Generator', 'UUID Generator', 'Password Generator'
+        'Hash Generator', 'UUID Generator', 'Password Generator', 'Secret Share'
     ],
     'Time': [
         'Timestamp Converter', 'Crontab Generator'
     ],
     'Visual': [
         'QR Code Reader/Generator', 'Markdown Preview', 'Mermaid Diagram Editor',
-        'OCR Tool', 'Color Converter'
+        'OCR Tool', 'Color Converter', 'ASCII Art Generator'
     ],
     'API': [
         'API Mock Data Generator', 'Regex Tester'
+    ],
+    'Network': [
+        'IP Address Lookup', 'SSL/TLS Certificate Checker', 'Subnet Calculator'
     ]
 };
 

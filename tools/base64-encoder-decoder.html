@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Encode and decode text using Base64">
+    <meta name="description" content="Encode and decode text or files using Base64">
     <title>Base64 Encoder/Decoder | Devtools</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/theme.css">
@@ -37,7 +37,7 @@
                     <h1>Base64 Encoder/Decoder</h1>
                 </div>
                 <div class="tool-description">
-                    <p>Encode text to Base64 or decode Base64 to plain text. Useful for data transmission where binary data needs to be encoded as text.</p>
+                    <p>Encode text or files to Base64, or decode Base64 to plain text/files. Useful for data transmission where binary data needs to be encoded as text.</p>
                 </div>
 
                 <div class="tool-content">
@@ -57,12 +57,39 @@
                         </div>
                     </div>
 
-                    <div class="input-group">
+                    <div class="options-group mt-2 mb-2">
+                        <label>Input Type:</label>
+                        <div class="options-controls">
+                            <label>
+                                <input type="radio" name="input-type" id="text-input-option" checked>
+                                Text
+                            </label>
+                            <label>
+                                <input type="radio" name="input-type" id="file-input-option">
+                                File
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="input-group" id="text-input-group">
                         <label for="input-text" id="input-label">Text to Encode:</label>
                         <textarea id="input-text" placeholder="Enter text to encode..." aria-label="Input text"></textarea>
                         <div class="input-controls">
                             <button class="secondary" id="clear-input">Clear</button>
                             <button class="secondary" id="load-sample">Load Sample</button>
+                        </div>
+                    </div>
+
+                    <div class="input-group hidden" id="file-input-group">
+                        <label for="file-input" id="file-label">File to Encode:</label>
+                        <input type="file" id="file-input" aria-label="File input">
+                        <div class="file-info hidden" id="file-info">
+                            <p><strong>Selected file:</strong> <span id="file-name"></span></p>
+                            <p><strong>Size:</strong> <span id="file-size"></span></p>
+                            <p><strong>Type:</strong> <span id="file-type"></span></p>
+                        </div>
+                        <div class="input-controls">
+                            <button class="secondary" id="clear-file">Clear File</button>
                         </div>
                     </div>
                     
@@ -76,6 +103,7 @@
                             <textarea id="result-text" readonly aria-label="Result"></textarea>
                             <div class="input-controls">
                                 <button class="secondary" id="copy-result">Copy Result</button>
+                                <button class="secondary hidden" id="download-file">Download File</button>
                             </div>
                         </div>
                     </div>
@@ -106,14 +134,50 @@
             const resultContainer = document.getElementById('result-container');
             const errorMessage = document.getElementById('error-message');
             const copyResultBtn = document.getElementById('copy-result');
+            const downloadFileBtn = document.getElementById('download-file');
             const encodeOption = document.getElementById('encode-option');
             const decodeOption = document.getElementById('decode-option');
+            const textInputOption = document.getElementById('text-input-option');
+            const fileInputOption = document.getElementById('file-input-option');
             const inputLabel = document.getElementById('input-label');
+            const fileLabel = document.getElementById('file-label');
+            const textInputGroup = document.getElementById('text-input-group');
+            const fileInputGroup = document.getElementById('file-input-group');
+            const fileInput = document.getElementById('file-input');
+            const fileInfo = document.getElementById('file-info');
+            const fileName = document.getElementById('file-name');
+            const fileSize = document.getElementById('file-size');
+            const fileType = document.getElementById('file-type');
+            const clearFileBtn = document.getElementById('clear-file');
             
-            // Update input label based on selected operation
-            function updateInputLabel() {
-                inputLabel.textContent = encodeOption.checked ? 'Text to Encode:' : 'Base64 to Decode:';
-                inputText.placeholder = encodeOption.checked ? 'Enter text to encode...' : 'Enter Base64 to decode...';
+            let currentFile = null;
+            let decodedFileData = null;
+            let originalFileName = '';
+            
+            // Update UI based on selected options
+            function updateUI() {
+                const isEncode = encodeOption.checked;
+                const isTextInput = textInputOption.checked;
+                
+                // Update input group visibility
+                if (isTextInput) {
+                    textInputGroup.classList.remove('hidden');
+                    fileInputGroup.classList.add('hidden');
+                    
+                    inputLabel.textContent = isEncode ? 'Text to Encode:' : 'Base64 to Decode:';
+                    inputText.placeholder = isEncode ? 'Enter text to encode...' : 'Enter Base64 to decode...';
+                } else {
+                    textInputGroup.classList.add('hidden');
+                    fileInputGroup.classList.remove('hidden');
+                    
+                    fileLabel.textContent = isEncode ? 'File to Encode:' : 'Base64 to Decode (as file):';
+                }
+                
+                // Update download button visibility
+                downloadFileBtn.classList.add('hidden');
+                
+                // Clear results when switching modes
+                resultContainer.classList.add('hidden');
             }
             
             // Show error message
@@ -123,6 +187,53 @@
                 setTimeout(() => {
                     errorMessage.classList.add('hidden');
                 }, 5000);
+            }
+            
+            // Format file size
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            // Handle file selection
+            function handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    currentFile = file;
+                    fileName.textContent = file.name;
+                    fileSize.textContent = formatFileSize(file.size);
+                    fileType.textContent = file.type || 'Unknown';
+                    fileInfo.classList.remove('hidden');
+                } else {
+                    clearFile();
+                }
+            }
+            
+            // Clear file selection
+            function clearFile() {
+                currentFile = null;
+                fileInput.value = '';
+                fileInfo.classList.add('hidden');
+                resultContainer.classList.add('hidden');
+            }
+            
+            // Convert based on selected options
+            function convert() {
+                const isEncode = encodeOption.checked;
+                const isTextInput = textInputOption.checked;
+                
+                if (isTextInput) {
+                    convertText();
+                } else {
+                    if (isEncode) {
+                        convertFileToBase64();
+                    } else {
+                        convertBase64ToFile();
+                    }
+                }
             }
             
             // Convert text based on selected operation
@@ -152,8 +263,113 @@
                     
                     resultText.value = result;
                     resultContainer.classList.remove('hidden');
+                    downloadFileBtn.classList.remove('hidden');
                 } catch (error) {
                     showError(`Error: ${error.message}`);
+                }
+            }
+            
+            // Convert file to Base64
+            function convertFileToBase64() {
+                if (!currentFile) {
+                    showError('Please select a file to encode');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const arrayBuffer = e.target.result;
+                        const bytes = new Uint8Array(arrayBuffer);
+                        let binary = '';
+                        for (let i = 0; i < bytes.byteLength; i++) {
+                            binary += String.fromCharCode(bytes[i]);
+                        }
+                        const base64 = btoa(binary);
+                        
+                        resultText.value = base64;
+                        resultContainer.classList.remove('hidden');
+                        downloadFileBtn.classList.remove('hidden');
+                    } catch (error) {
+                        showError(`Error encoding file: ${error.message}`);
+                    }
+                };
+                reader.onerror = function() {
+                    showError('Error reading file');
+                };
+                reader.readAsArrayBuffer(currentFile);
+            }
+            
+            // Convert Base64 to file
+            function convertBase64ToFile() {
+                const input = inputText.value.trim();
+                
+                if (!input) {
+                    showError('Please enter Base64 data to decode');
+                    return;
+                }
+                
+                try {
+                    const binaryString = atob(input);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    
+                    decodedFileData = bytes;
+                    originalFileName = 'decoded_file';
+                    
+                    resultText.value = `File decoded successfully (${formatFileSize(bytes.length)}).\nClick "Download File" to save the decoded file.`;
+                    resultContainer.classList.remove('hidden');
+                    downloadFileBtn.classList.remove('hidden');
+                } catch (error) {
+                    showError('Invalid Base64 input. Please check your input and try again.');
+                }
+            }
+            
+            // Download file or text result
+            function downloadFile() {
+                const isEncode = encodeOption.checked;
+                const isTextInput = textInputOption.checked;
+                
+                if (!isEncode && !isTextInput && decodedFileData) {
+                    // Download decoded file
+                    const blob = new Blob([decodedFileData]);
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = originalFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } else if (resultText.value) {
+                    // Download text result as file
+                    let filename = 'result.txt';
+                    let content = resultText.value;
+                    
+                    if (isEncode && !isTextInput && currentFile) {
+                        // File to Base64 - save as .b64 file
+                        filename = currentFile.name + '.b64';
+                    } else if (isEncode && isTextInput) {
+                        // Text to Base64
+                        filename = 'encoded_base64.txt';
+                    } else if (!isEncode && isTextInput) {
+                        // Base64 to text
+                        filename = 'decoded_text.txt';
+                    }
+                    
+                    const blob = new Blob([content], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } else {
+                    showError('No data to download');
                 }
             }
             
@@ -186,13 +402,21 @@
             }
             
             // Event listeners
-            convertBtn.addEventListener('click', convertText);
+            convertBtn.addEventListener('click', convert);
             clearInputBtn.addEventListener('click', clearInput);
             loadSampleBtn.addEventListener('click', loadSample);
             copyResultBtn.addEventListener('click', copyResult);
+            downloadFileBtn.addEventListener('click', downloadFile);
+            clearFileBtn.addEventListener('click', clearFile);
+            fileInput.addEventListener('change', handleFileSelect);
             
-            encodeOption.addEventListener('change', updateInputLabel);
-            decodeOption.addEventListener('change', updateInputLabel);
+            encodeOption.addEventListener('change', updateUI);
+            decodeOption.addEventListener('change', updateUI);
+            textInputOption.addEventListener('change', updateUI);
+            fileInputOption.addEventListener('change', updateUI);
+            
+            // Initialize UI
+            updateUI();
             
             // Set current year in footer
             document.getElementById('current-year').textContent = new Date().getFullYear();
