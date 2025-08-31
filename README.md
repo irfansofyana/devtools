@@ -113,14 +113,18 @@ Devtools is designed to streamline common development tasks by providing a suite
 
 ```plaintext
 devtools/
-├── assets/            # Static assets (images, icons, etc.)
+├── assets/            # Static assets (images, icons, favicon)
+│   └── images/        # Screenshot and other images
 ├── css/               # Stylesheet files
-├── js/                # JavaScript files
-│   ├── tools/         # Individual tool implementations
-│   ├── utils/         # Utility functions
-│   └── app.js         # Main application script
-├── index.html         # Main HTML entry point
-├── .gitignore         # Git ignore file
+│   ├── styles.css     # Base styles with CSS custom properties
+│   └── theme.css      # Light/dark theme definitions
+├── js/                # JavaScript modules
+│   ├── main.js        # Core utilities (clipboard, error handling, file downloads)
+│   ├── search.js      # Tool search and category filtering system
+│   └── theme.js       # Dark/light theme switcher with persistence
+├── tools/             # Individual tool HTML pages (36 tools)
+├── index.html         # Main homepage with tool navigation
+├── CLAUDE.md          # Claude Code guidance and project context
 ├── CONTRIBUTING.md    # Contribution guidelines
 ├── LICENSE            # MIT License
 └── README.md          # Project documentation

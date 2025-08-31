@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Devtools is a collection of 30+ web-based developer tools deployed via GitHub Pages. It's a static site built with vanilla HTML, CSS, and JavaScript that provides utilities for text processing, data conversion, encoding/decoding, API testing, and more.
+Devtools is a collection of 36 web-based developer tools deployed via GitHub Pages. It's a static site built with vanilla HTML, CSS, and JavaScript that provides utilities for text processing, data conversion, encoding/decoding, API testing, network analysis, and more.
 
 ## Development Commands
 
@@ -22,7 +22,7 @@ git push origin main
 
 ### File Structure
 - `index.html` - Main homepage with tool navigation
-- `tools/` - Individual tool HTML pages (30+ tools)
+- `tools/` - Individual tool HTML pages (36 tools)
 - `css/` - Stylesheets with CSS custom properties and theme system
 - `js/` - JavaScript modules for shared functionality
 - `assets/` - Static assets (icons, images)
@@ -44,6 +44,7 @@ Tools are organized into categories defined in `js/search.js:toolCategories`:
 - Time (timestamps, crontab)
 - Visual (QR codes, markdown preview, diagrams)
 - API (mock data, regex testing)
+- Network (IP lookup, SSL checker, subnet calculator)
 
 ### Theme System
 
@@ -107,6 +108,20 @@ Each tool follows a consistent structure:
 - Export functionality to HTML/CSV formats
 - Configurable parsing options
 
+### Network Tools
+- IP Address Lookup with geolocation and ISP details
+- SSL/TLS Certificate Checker for domain security analysis
+- Subnet Calculator for CIDR notation and network planning
+
+## Documentation Maintenance
+
+When updating documentation after adding or modifying tools:
+1. Update tool count in both README.md and CLAUDE.md
+2. Add new tools to the numbered list in README.md
+3. Update tool categories in CLAUDE.md if new categories are added
+4. Verify tool descriptions match actual functionality
+5. Test all setup and usage instructions
+
 ## Cursor Rules Integration
 
 The project includes Cursor IDE rules in `.cursor/rules/`:
@@ -114,4 +129,3 @@ The project includes Cursor IDE rules in `.cursor/rules/`:
 - Task management integration
 - Code formatting standards
 - Rule creation and maintenance guidelines
-- can you always update @README.md after update or implement any tools?
