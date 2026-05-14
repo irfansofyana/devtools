@@ -387,16 +387,89 @@ footer .container {
    Responsive
    ============================================================ */
 
-@media (max-width: 640px) {
+/* Tablet & narrow desktop — tighten the name column so the
+   description has more room to breathe. */
+@media (max-width: 880px) {
     .tool__link {
-        grid-template-columns: 1fr;
-        row-gap: var(--space-1);
+        grid-template-columns: minmax(0, 11rem) 1fr;
+        column-gap: var(--space-4);
     }
+    .tool-container {
+        padding-left: var(--space-4);
+        padding-right: var(--space-4);
+    }
+}
+
+/* Phones — stack the tool row, drop horizontal padding, bump
+   touch targets, ease in the search input height. */
+@media (max-width: 640px) {
+    body { font-size: 0.9375rem; }
+
     .top-bar,
     .page,
     .app-footer,
     footer {
         padding-left: var(--space-4);
         padding-right: var(--space-4);
+    }
+
+    .page { padding-top: var(--space-5); padding-bottom: var(--space-7); }
+
+    .intro { margin-bottom: var(--space-6); }
+    .intro h1 { font-size: var(--text-xl); }
+
+    .search { margin-bottom: var(--space-6); }
+    .search input { height: 44px; font-size: var(--text-base); }
+    .search__icon { left: var(--space-3); }
+
+    .section { margin-bottom: var(--space-6); }
+
+    .tool__link {
+        grid-template-columns: 1fr;
+        row-gap: 2px;
+        padding: var(--space-3) var(--space-2);
+        margin: 0 calc(var(--space-2) * -1);
+    }
+
+    .tool__name { font-size: var(--text-base); }
+    .tool__desc { font-size: var(--text-sm); }
+
+    /* Bigger tap targets for header buttons */
+    .icon-btn,
+    .theme-toggle-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .tool-container {
+        padding: var(--space-5) var(--space-4) var(--space-7);
+    }
+    .tool-header h1 { font-size: var(--text-xl); }
+}
+
+/* Very narrow — pull padding in further so the row list reads cleanly. */
+@media (max-width: 380px) {
+    .top-bar,
+    .page,
+    .app-footer,
+    footer,
+    .tool-container {
+        padding-left: var(--space-3);
+        padding-right: var(--space-3);
+    }
+    .top-bar { gap: var(--space-2); }
+}
+
+/* Coarse pointers (touch devices regardless of width) — make
+   sure the small icon buttons in the header stay easy to hit. */
+@media (pointer: coarse) {
+    .icon-btn,
+    .theme-toggle-btn {
+        width: 40px;
+        height: 40px;
+    }
+    .search__clear {
+        width: 32px;
+        height: 32px;
     }
 }
