@@ -1,88 +1,145 @@
 /**
- * Main JavaScript functionality for Devtools
+ * Devtools — shared utilities.
+ *
+ * Exposes:
+ *   showError(message, elementId)    — display dismissable error
+ *   showSuccess(message, elementId)  — display dismissable success
+ *   downloadTextFile(content, name)  — trigger a file download
+ *   copyToClipboard(text, btn)       — programmatic copy with button feedback
+ *
+ * Tool pages can opt-in by:
+ *   - giving a button `data-copy="<targetId>"`; the click handler reads the
+ *     value of an <input>/<textarea>, OR the textContent of any other element
+ *     (e.g. <pre>, <code>) and copies it.
+ *
+ * The previous implementation only supported `.value`, which silently copied
+ * empty strings when the target was a <code> element (e.g. JSON formatter).
  */
 document.addEventListener('DOMContentLoaded', () => {
-    // Set current year in footer
     const currentYearElement = document.getElementById('current-year');
     if (currentYearElement) {
         currentYearElement.textContent = new Date().getFullYear();
     }
 
-    // Initialize copy to clipboard functionality
+    populateToolPageTitle();
     initCopyToClipboard();
 });
 
 /**
- * Initialize copy to clipboard functionality for all elements with data-copy attribute
+ * On tool pages, mirror the page <h1> into the top-bar title slot
+ * so the sticky header always shows the current tool name.
+ */
+function populateToolPageTitle() {
+    const slot = document.querySelector('.tool-page-shell .top-bar__title');
+    if (!slot || slot.textContent.trim()) return;
+    const h1 = document.querySelector('.tool-header h1, main h1');
+    if (h1) slot.textContent = h1.textContent.trim();
+}
+
+/**
+ * Initialise the global delegated click handler for `[data-copy]` buttons.
  */
 function initCopyToClipboard() {
     document.addEventListener('click', (e) => {
-        const target = e.target.closest('[data-copy]');
+        const trigger = e.target.closest('[data-copy]');
+        if (!trigger) return;
+
+        const target = document.getElementById(trigger.dataset.copy);
         if (!target) return;
-        
-        const textToCopy = document.getElementById(target.dataset.copy)?.value || '';
-        if (!textToCopy) return;
-        
-        navigator.clipboard.writeText(textToCopy)
-            .then(() => {
-                // Show success feedback
-                const originalText = target.textContent;
-                target.textContent = 'Copied!';
-                target.classList.add('copied');
-                
-                // Reset after 2 seconds
-                setTimeout(() => {
-                    target.textContent = originalText;
-                    target.classList.remove('copied');
-                }, 2000);
-            })
-            .catch(err => {
-                console.error('Failed to copy text: ', err);
-            });
+
+        const text = readCopyableText(target);
+        if (!text) return;
+
+        copyToClipboard(text, trigger);
     });
 }
 
 /**
- * Show an error message
- * @param {string} message - The error message to display
- * @param {string} elementId - The ID of the element to show the error in
+ * Read text from any element type (input, textarea, code/pre, generic block).
+ * @param {HTMLElement} el
+ * @returns {string}
+ */
+function readCopyableText(el) {
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        return el.value || '';
+    }
+    // <pre>, <code>, <div>, etc.
+    return el.innerText || el.textContent || '';
+}
+
+/**
+ * Copy a string to clipboard and show a brief "Copied!" state on the button.
+ * @param {string} text
+ * @param {HTMLElement} [btn]
+ * @returns {Promise<boolean>}
+ */
+function copyToClipboard(text, btn) {
+    const finish = (ok) => {
+        if (!btn) return;
+        const original = btn.textContent;
+        btn.textContent = ok ? 'Copied!' : 'Copy failed';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = original;
+            btn.classList.remove('copied');
+        }, 1800);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text)
+            .then(() => { finish(true); return true; })
+            .catch(() => { fallbackCopy(text); finish(true); return true; });
+    }
+    fallbackCopy(text);
+    finish(true);
+    return Promise.resolve(true);
+}
+
+function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (_) { /* ignore */ }
+    document.body.removeChild(ta);
+}
+
+/**
+ * Show an error message inside an alert element (auto-hides after 5s).
+ * Wraps the message in an alert--error look automatically.
  */
 function showError(message, elementId) {
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) {
-        errorElement.textContent = message;
-        errorElement.classList.remove('hidden');
-        
-        // Hide after 5 seconds
-        setTimeout(() => {
-            errorElement.classList.add('hidden');
-        }, 5000);
-    }
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = message;
+    el.classList.remove('hidden');
+    el.classList.add('alert', 'alert--error');
+    if (!el.hasAttribute('role')) el.setAttribute('role', 'alert');
+    if (!el.hasAttribute('aria-live')) el.setAttribute('aria-live', 'polite');
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(() => el.classList.add('hidden'), 5000);
 }
 
 /**
- * Show a success message
- * @param {string} message - The success message to display
- * @param {string} elementId - The ID of the element to show the message in
+ * Show a success message inside an alert element (auto-hides after 5s).
  */
 function showSuccess(message, elementId) {
-    const successElement = document.getElementById(elementId);
-    if (successElement) {
-        successElement.textContent = message;
-        successElement.classList.remove('hidden');
-        
-        // Hide after 5 seconds
-        setTimeout(() => {
-            successElement.classList.add('hidden');
-        }, 5000);
-    }
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = message;
+    el.classList.remove('hidden');
+    el.classList.add('alert', 'alert--success');
+    if (!el.hasAttribute('role')) el.setAttribute('role', 'status');
+    if (!el.hasAttribute('aria-live')) el.setAttribute('aria-live', 'polite');
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(() => el.classList.add('hidden'), 5000);
 }
 
 /**
- * Utility function to create a download link for text content
- * @param {string} content - The content to download
- * @param {string} filename - The filename for the download
- * @param {string} mimeType - The MIME type of the content
+ * Trigger a download of a text blob.
  */
 function downloadTextFile(content, filename, mimeType = 'text/plain') {
     const blob = new Blob([content], { type: mimeType });
@@ -90,6 +147,8 @@ function downloadTextFile(content, filename, mimeType = 'text/plain') {
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }

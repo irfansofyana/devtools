@@ -1,227 +1,184 @@
 /**
- * Tool search and filtering functionality
+ * Devtools — homepage search, category sidebar, keyboard shortcuts.
+ *
+ * Behaviour:
+ * - Reads `data-category` from each `.tool-card` in the HTML (no DOM injection
+ *   of category tags at runtime — the chips are already in the markup).
+ * - Renders a category list with counts into the sidebar.
+ * - Wires search input + category clicks to filter the grid.
+ * - Persists the active category in localStorage.
+ * - Ctrl/Cmd+K focuses the search input; Esc clears it.
+ * - Hamburger toggles the sidebar on mobile.
  */
 
-// Tool categories with their associated tools
-const toolCategories = {
-    'Text': [
-        'String Case Converter', 'Line Sort/Dedupe', 'Backslash Escape/Unescape', 
-        'Random String Generator', 'Text Diff Utility', 'Vim-Style Code Editor'
-    ],
-    'Encoding': [
-        'Base64 Encoder/Decoder', 'URL Encoder/Decoder', 'ASCII <> HEX Converter'
-    ],
-    'Data Format': [
-        'JSON Beautifier/Minifier', 'JSON <-> YAML Converter', 'CSV <> JSON Converter',
-        'CSV Visualizer', 'JSON to Protobuf', 'JSON/YAML Explorer'
-    ],
-    'Web': [
-        'URL Parser', 'URL to Markdown', 'CURL Constructor', 'JWT Decoder'
-    ],
-    'Crypto': [
-        'Hash Generator', 'UUID Generator', 'Password Generator', 'Secret Share'
-    ],
-    'Time': [
-        'Timestamp Converter', 'Crontab Generator'
-    ],
-    'Visual': [
-        'QR Code Reader/Generator', 'Markdown Preview', 'Mermaid Diagram Editor',
-        'OCR Tool', 'Color Converter', 'ASCII Art Generator'
-    ],
-    'API': [
-        'API Mock Data Generator', 'Regex Tester'
-    ],
-    'Network': [
-        'IP Address Lookup', 'SSL/TLS Certificate Checker', 'Subnet Calculator'
-    ]
-};
+const TOOL_CATEGORIES = [
+    { id: 'all',         label: 'All Tools',  icon: 'fa-th-large' },
+    { id: 'text',        label: 'Text',       icon: 'fa-align-left' },
+    { id: 'encoding',    label: 'Encoding',   icon: 'fa-exchange-alt' },
+    { id: 'data format', label: 'Data',       icon: 'fa-database' },
+    { id: 'web',         label: 'Web',        icon: 'fa-globe' },
+    { id: 'crypto',      label: 'Crypto',     icon: 'fa-shield-alt' },
+    { id: 'time',        label: 'Time',       icon: 'fa-clock' },
+    { id: 'visual',      label: 'Visual',     icon: 'fa-image' },
+    { id: 'api',         label: 'API',        icon: 'fa-plug' },
+    { id: 'network',     label: 'Network',    icon: 'fa-network-wired' },
+];
 
-// Initialize search and filtering functionality
+const STORAGE_KEY = 'devtools-active-category';
+
 document.addEventListener('DOMContentLoaded', () => {
-    initializeSearchAndFilter();
-});
+    const grid = document.getElementById('tools-grid');
+    if (!grid) return;
 
-/**
- * Initialize the search and filtering functionality
- */
-function initializeSearchAndFilter() {
-    // Get the tools grid element
-    const toolsGrid = document.querySelector('.tools-grid');
-    if (!toolsGrid) return;
-    
-    // Get all tool cards
-    const toolCards = Array.from(document.querySelectorAll('.tool-card'));
-    
-    // Create search and filter container
-    const searchFilterContainer = document.createElement('div');
-    searchFilterContainer.className = 'search-filter-container mb-3';
-    
-    // Create search input
-    const searchContainer = document.createElement('div');
-    searchContainer.className = 'search-container';
-    
-    const searchInput = document.createElement('input');
-    searchInput.type = 'text';
-    searchInput.id = 'tool-search';
-    searchInput.className = 'search-input';
-    searchInput.placeholder = 'Search tools...';
-    searchInput.setAttribute('aria-label', 'Search tools');
-    
-    const searchIcon = document.createElement('i');
-    searchIcon.className = 'fas fa-search search-icon';
-    searchIcon.setAttribute('aria-hidden', 'true');
-    
-    const clearButton = document.createElement('button');
-    clearButton.className = 'search-clear-btn hidden';
-    clearButton.innerHTML = '&times;';
-    clearButton.setAttribute('aria-label', 'Clear search');
-    clearButton.setAttribute('type', 'button');
-    
-    searchContainer.appendChild(searchInput);
-    searchContainer.appendChild(searchIcon);
-    searchContainer.appendChild(clearButton);
-    
-    // Add event listener for clear button
-    clearButton.addEventListener('click', () => {
-        searchInput.value = '';
-        clearButton.classList.add('hidden');
-        filterTools('', categorySelect.value);
-        searchInput.focus();
-    });
-    
-    // Show/hide clear button based on input
-    searchInput.addEventListener('input', () => {
-        if (searchInput.value.length > 0) {
-            clearButton.classList.remove('hidden');
-            searchIcon.style.right = 'calc(var(--spacing-md) * 4)';
-        } else {
-            clearButton.classList.add('hidden');
-            searchIcon.style.right = 'var(--spacing-md)';
-        }
-    });
-    
-    // Create category filter
-    const filterContainer = document.createElement('div');
-    filterContainer.className = 'filter-container';
-    
-    const filterLabel = document.createElement('span');
-    filterLabel.className = 'filter-label';
-    filterLabel.textContent = 'Filter by:';
-    
-    const categorySelect = document.createElement('select');
-    categorySelect.id = 'category-filter';
-    categorySelect.className = 'category-select';
-    categorySelect.setAttribute('aria-label', 'Filter by category');
-    
-    // Add "All" option
-    const allOption = document.createElement('option');
-    allOption.value = 'all';
-    allOption.textContent = 'All Categories';
-    categorySelect.appendChild(allOption);
-    
-    // Add category options
-    Object.keys(toolCategories).forEach(category => {
-        const option = document.createElement('option');
-        option.value = category.toLowerCase();
-        option.textContent = category;
-        categorySelect.appendChild(option);
-    });
-    
-    filterContainer.appendChild(filterLabel);
-    filterContainer.appendChild(categorySelect);
-    
-    // Add search and filter to container
-    searchFilterContainer.appendChild(searchContainer);
-    searchFilterContainer.appendChild(filterContainer);
-    
-    // Add tag to each tool card
-    toolCards.forEach(card => {
-        const toolName = card.querySelector('h3').textContent;
-        let toolCategory = 'Other';
-        
-        // Find the category for this tool
-        for (const [category, tools] of Object.entries(toolCategories)) {
-            if (tools.some(tool => toolName.includes(tool))) {
-                toolCategory = category;
-                break;
-            }
-        }
-        
-        // Add category as a data attribute
-        card.setAttribute('data-category', toolCategory.toLowerCase());
-        
-        // Add category tag to the card
-        const tagElement = document.createElement('span');
-        tagElement.className = 'category-tag';
-        tagElement.textContent = toolCategory;
-        card.appendChild(tagElement);
-    });
-    
-    // Insert search and filter before the tools grid
-    const toolsSection = document.querySelector('.tools .container');
-    toolsSection.insertBefore(searchFilterContainer, toolsSection.querySelector('h2').nextSibling);
-    
-    // Add event listeners for search and filter
-    searchInput.addEventListener('input', () => {
-        filterTools(searchInput.value, categorySelect.value);
-    });
-    
-    categorySelect.addEventListener('change', () => {
-        filterTools(searchInput.value, categorySelect.value);
-    });
-    
-    // Initial filter (show all)
-    filterTools('', 'all');
-}
+    const cards = Array.from(grid.querySelectorAll('.tool-card'));
+    const searchInput = document.getElementById('tool-search');
+    const clearBtn = document.getElementById('search-clear');
+    const navContainer = document.getElementById('category-nav');
+    const topBarTitle = document.querySelector('.top-bar__title');
+    const toolCountEl = document.getElementById('tool-count');
 
-/**
- * Filter tools based on search text and category
- * @param {string} searchText - The search text
- * @param {string} category - The selected category
- */
-function filterTools(searchText, category) {
-    const toolCards = Array.from(document.querySelectorAll('.tool-card'));
-    const noResultsMessage = document.getElementById('no-results-message') || createNoResultsMessage();
-    
-    searchText = searchText.toLowerCase();
-    let visibleCount = 0;
-    
-    toolCards.forEach(card => {
-        const toolName = card.querySelector('h3').textContent.toLowerCase();
-        const toolDescription = card.querySelector('p').textContent.toLowerCase();
-        const toolCategory = card.getAttribute('data-category');
-        
-        const matchesSearch = toolName.includes(searchText) || toolDescription.includes(searchText);
-        const matchesCategory = category === 'all' || toolCategory === category;
-        
-        if (matchesSearch && matchesCategory) {
-            card.style.display = '';
-            visibleCount++;
-        } else {
-            card.style.display = 'none';
-        }
-    });
-    
-    // Show/hide no results message
-    if (visibleCount === 0) {
-        noResultsMessage.style.display = 'block';
-    } else {
-        noResultsMessage.style.display = 'none';
+    // Update total tool count in hero strip
+    if (toolCountEl) {
+        toolCountEl.textContent = `${cards.length} tools`;
     }
-}
 
-/**
- * Create a "no results" message element
- * @returns {HTMLElement} The created element
- */
-function createNoResultsMessage() {
-    const toolsGrid = document.querySelector('.tools-grid');
-    const message = document.createElement('div');
-    message.id = 'no-results-message';
-    message.className = 'no-results-message';
-    message.textContent = 'No tools match your search criteria.';
-    message.style.display = 'none';
-    
-    toolsGrid.parentNode.insertBefore(message, toolsGrid.nextSibling);
-    return message;
-}
+    let activeCategory = loadActiveCategory();
+    let activeQuery = '';
+
+    renderSidebar();
+    applyFilter();
+    setupSearch();
+    setupKeyboardShortcuts();
+    setupMobileSidebar();
+
+    function renderSidebar() {
+        if (!navContainer) return;
+        const counts = countByCategory(cards);
+        navContainer.innerHTML = '';
+        TOOL_CATEGORIES.forEach(cat => {
+            const count = cat.id === 'all' ? cards.length : (counts[cat.id] || 0);
+            if (cat.id !== 'all' && count === 0) return;
+            const link = document.createElement('button');
+            link.type = 'button';
+            link.className = 'sidebar__link';
+            link.dataset.category = cat.id;
+            link.setAttribute('aria-pressed', String(cat.id === activeCategory));
+            if (cat.id === activeCategory) link.classList.add('is-active');
+            link.innerHTML = `
+                <span class="sidebar__link-label">
+                    <span class="sidebar__link-icon"><i class="fas ${cat.icon}" aria-hidden="true"></i></span>
+                    ${cat.label}
+                </span>
+                <span class="sidebar__count">${count}</span>
+            `;
+            link.addEventListener('click', () => {
+                setActiveCategory(cat.id);
+                closeMobileSidebar();
+            });
+            navContainer.appendChild(link);
+        });
+    }
+
+    function countByCategory(allCards) {
+        return allCards.reduce((acc, card) => {
+            const c = card.getAttribute('data-category') || 'other';
+            acc[c] = (acc[c] || 0) + 1;
+            return acc;
+        }, {});
+    }
+
+    function setActiveCategory(id) {
+        activeCategory = id;
+        try { localStorage.setItem(STORAGE_KEY, id); } catch (_) { /* ignore */ }
+        navContainer.querySelectorAll('.sidebar__link').forEach(el => {
+            const isActive = el.dataset.category === id;
+            el.classList.toggle('is-active', isActive);
+            el.setAttribute('aria-pressed', String(isActive));
+        });
+        if (topBarTitle) {
+            const cat = TOOL_CATEGORIES.find(c => c.id === id);
+            topBarTitle.textContent = cat ? cat.label : 'All Tools';
+        }
+        applyFilter();
+    }
+
+    function loadActiveCategory() {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored && TOOL_CATEGORIES.some(c => c.id === stored)) return stored;
+        } catch (_) { /* ignore */ }
+        return 'all';
+    }
+
+    function setupSearch() {
+        if (!searchInput) return;
+        searchInput.addEventListener('input', () => {
+            activeQuery = searchInput.value.trim().toLowerCase();
+            if (clearBtn) clearBtn.classList.toggle('hidden', activeQuery.length === 0);
+            applyFilter();
+        });
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                activeQuery = '';
+                clearBtn.classList.add('hidden');
+                applyFilter();
+                searchInput.focus();
+            });
+        }
+    }
+
+    function setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            const isMac = navigator.platform.toUpperCase().includes('MAC');
+            const cmdK = (isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'k';
+            if (cmdK) {
+                e.preventDefault();
+                searchInput?.focus();
+                searchInput?.select();
+            }
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                searchInput.value = '';
+                activeQuery = '';
+                clearBtn?.classList.add('hidden');
+                applyFilter();
+                searchInput.blur();
+            }
+        });
+    }
+
+    function setupMobileSidebar() {
+        const toggle = document.getElementById('sidebar-toggle');
+        const scrim = document.getElementById('sidebar-scrim');
+        if (!toggle) return;
+        toggle.addEventListener('click', () => {
+            const open = !document.body.classList.contains('sidebar-open');
+            document.body.classList.toggle('sidebar-open', open);
+            toggle.setAttribute('aria-expanded', String(open));
+        });
+        scrim?.addEventListener('click', closeMobileSidebar);
+    }
+
+    function closeMobileSidebar() {
+        if (!document.body.classList.contains('sidebar-open')) return;
+        document.body.classList.remove('sidebar-open');
+        document.getElementById('sidebar-toggle')?.setAttribute('aria-expanded', 'false');
+    }
+
+    function applyFilter() {
+        const noResults = document.getElementById('no-results-message');
+        let visible = 0;
+        cards.forEach(card => {
+            const cat = card.getAttribute('data-category') || 'other';
+            const title = card.querySelector('.tool-card__title, h3')?.textContent.toLowerCase() || '';
+            const desc = card.querySelector('.tool-card__desc, p')?.textContent.toLowerCase() || '';
+            const matchesCat = activeCategory === 'all' || cat === activeCategory;
+            const matchesQuery = activeQuery === '' ||
+                title.includes(activeQuery) || desc.includes(activeQuery);
+            const show = matchesCat && matchesQuery;
+            card.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        if (noResults) noResults.classList.toggle('hidden', visible !== 0);
+    }
+});
