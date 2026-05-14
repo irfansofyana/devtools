@@ -1,31 +1,28 @@
 /* ============================================================
-   Devtools — base styles & design tokens
-   Terminal-flavoured: mono-forward, dense, minimal chrome.
+   Devtools — tokens, reset, base typography
    ============================================================ */
 
 :root {
-    /* Fonts — mono is the primary identity */
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-    --font-display: var(--font-mono);
+    --font-display: var(--font-sans);
     --font-body: var(--font-sans);
-    --font-primary: var(--font-sans); /* legacy alias */
+    --font-primary: var(--font-sans);
 
-    /* Type scale (tighter) */
-    --text-xs: 0.75rem;     /* 12 */
-    --text-sm: 0.8125rem;   /* 13 */
-    --text-base: 0.9375rem; /* 15 */
-    --text-md: 1rem;        /* 16 */
-    --text-lg: 1.125rem;    /* 18 */
-    --text-xl: 1.375rem;    /* 22 */
-    --text-2xl: 1.75rem;    /* 28 */
-    --text-3xl: 2.25rem;    /* 36 */
+    /* Type scale */
+    --text-xs: 0.75rem;
+    --text-sm: 0.8125rem;
+    --text-base: 0.9375rem;
+    --text-md: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.375rem;
+    --text-2xl: 1.75rem;
+    --text-3xl: 2.25rem;
     --leading-tight: 1.25;
-    --leading-normal: 1.5;
-    --leading-relaxed: 1.65;
+    --leading-normal: 1.55;
+    --leading-relaxed: 1.7;
 
-    /* Spacing (4px base, denser scale) */
-    --space-0: 0;
+    /* Spacing */
     --space-1: 0.25rem;
     --space-2: 0.5rem;
     --space-3: 0.75rem;
@@ -36,8 +33,6 @@
     --space-8: 2.5rem;
     --space-9: 3rem;
     --space-10: 4rem;
-
-    /* Legacy aliases */
     --spacing-xs: var(--space-1);
     --spacing-sm: var(--space-2);
     --spacing-md: var(--space-4);
@@ -45,29 +40,18 @@
     --spacing-xl: var(--space-6);
     --spacing-xxl: var(--space-8);
 
-    /* Radius — sharper. Just three. */
-    --radius-sm: 3px;
+    /* Radius */
+    --radius-sm: 4px;
     --radius-md: 6px;
     --radius-lg: 8px;
-    --border-radius: var(--radius-md); /* legacy */
-
-    /* Shadows — keep only two */
-    --shadow-sm: 0 1px 0 rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --border-radius: var(--radius-md);
 
     /* Motion */
     --ease-out: cubic-bezier(0.2, 0, 0, 1);
     --duration-fast: 100ms;
     --duration-base: 160ms;
     --transition-speed: var(--duration-base);
-
-    /* Focus ring */
-    --focus-ring: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent);
 }
-
-/* ============================================================
-   Reset
-   ============================================================ */
 
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; padding: 0; }
@@ -78,82 +62,58 @@ html, body { height: 100%; }
 body {
     font-family: var(--font-body);
     font-size: var(--text-base);
-    line-height: var(--leading-normal);
+    line-height: var(--leading-relaxed);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    transition: background-color var(--duration-fast) var(--ease-out),
-                color var(--duration-fast) var(--ease-out);
+    background-color: var(--bg);
+    color: var(--text);
 }
 
-a { color: inherit; text-decoration: none; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
 button { cursor: pointer; font-family: inherit; font-size: inherit; border: 0; background: transparent; color: inherit; }
 input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
-ul { list-style: none; }
+ul, ol { list-style: none; }
 img, svg { display: block; max-width: 100%; }
 
-/* Skip link */
+h1, h2, h3, h4, h5, h6 {
+    line-height: var(--leading-tight);
+    letter-spacing: -0.01em;
+    color: var(--text);
+    font-weight: 600;
+}
+h1 { font-size: var(--text-2xl); }
+h2 { font-size: var(--text-lg); }
+h3 { font-size: var(--text-md); }
+h4 { font-size: var(--text-base); }
+
+p { color: var(--text-secondary); }
+
+code, pre, kbd, samp { font-family: var(--font-mono); }
+
+::selection { background-color: var(--accent); color: var(--bg); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
 .skip-link {
     position: absolute;
     top: -40px;
     left: var(--space-4);
     padding: var(--space-2) var(--space-3);
-    background: var(--accent);
-    color: var(--accent-on);
+    background: var(--text);
+    color: var(--bg);
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     border-radius: var(--radius-sm);
     z-index: 1000;
 }
 .skip-link:focus { top: var(--space-2); outline: none; }
-
-/* ============================================================
-   Typography
-   ============================================================ */
-
-h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
-    line-height: var(--leading-tight);
-    color: var(--text-primary);
-    letter-spacing: -0.01em;
-    font-weight: 600;
-}
-
-h1 { font-size: var(--text-2xl); }
-h2 { font-size: var(--text-xl); }
-h3 { font-size: var(--text-lg); }
-h4 { font-size: var(--text-md); }
-h5 { font-size: var(--text-base); }
-h6 { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.08em; }
-
-p { color: var(--text-secondary); }
-
-code, pre, kbd, samp {
-    font-family: var(--font-mono);
-}
-
-::selection {
-    background-color: var(--accent);
-    color: var(--accent-on);
-}
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 5px;
-    border: 2px solid var(--bg-primary);
-}
-::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
-
-/* ============================================================
-   Utility classes (kept small)
-   ============================================================ */
 
 .hidden { display: none !important; }
 .sr-only {
@@ -171,15 +131,14 @@ code, pre, kbd, samp {
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
 }
 
-/* Container — used by tool pages */
+/* Container — used by legacy tool pages */
 .container {
     width: 100%;
-    max-width: 1100px;
+    max-width: 720px;
     margin: 0 auto;
     padding: 0 var(--space-5);
 }

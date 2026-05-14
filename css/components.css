@@ -1,6 +1,6 @@
 /* ============================================================
    Devtools — components
-   Minimal, opinionated. Legacy aliases keep old tool pages working.
+   Buttons, inputs, alerts. Legacy aliases for old tool pages.
    ============================================================ */
 
 /* ============================================================
@@ -18,8 +18,8 @@ button.secondary {
     padding: 0 var(--space-3);
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-strong);
-    background-color: var(--surface-1);
-    color: var(--text-primary);
+    background-color: var(--bg);
+    color: var(--text);
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     font-weight: 500;
@@ -35,13 +35,13 @@ button.secondary {
 .btn:hover:not(:disabled),
 button.primary:hover:not(:disabled),
 button.secondary:hover:not(:disabled) {
-    border-color: var(--text-primary);
+    border-color: var(--text);
 }
 
 .btn:focus-visible,
 button.primary:focus-visible,
 button.secondary:focus-visible {
-    outline: 1px solid var(--text-primary);
+    outline: 1px solid var(--text);
     outline-offset: 1px;
 }
 
@@ -52,12 +52,12 @@ button.secondary:disabled {
     cursor: not-allowed;
 }
 
-/* Primary — filled, sharp */
+/* Primary — filled */
 .btn--primary,
 button.primary {
-    background-color: var(--text-primary);
-    color: var(--bg-primary);
-    border-color: var(--text-primary);
+    background-color: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
 }
 
 .btn--primary:hover:not(:disabled),
@@ -66,29 +66,16 @@ button.primary:hover:not(:disabled) {
     border-color: var(--button-hover);
 }
 
-/* Secondary keeps default look (subtle surface) */
+/* Secondary — subtle surface */
 button.secondary {
-    background-color: var(--surface-2);
+    background-color: var(--bg-secondary);
 }
 
 button.secondary:hover:not(:disabled) {
-    background-color: var(--surface-3);
+    background-color: var(--bg-tertiary);
 }
 
-/* Ghost */
-.btn--ghost {
-    background-color: transparent;
-    border-color: transparent;
-    color: var(--text-secondary);
-}
-
-.btn--ghost:hover:not(:disabled) {
-    background-color: var(--surface-2);
-    color: var(--text-primary);
-    border-color: transparent;
-}
-
-/* Icon-only */
+/* Icon-only legacy */
 .btn--icon,
 button.icon-button {
     width: 34px;
@@ -96,41 +83,11 @@ button.icon-button {
     padding: 0;
 }
 
-.btn--icon-sm {
-    width: 30px;
-    height: 30px;
-    padding: 0;
-}
-
-/* Copied feedback */
 .btn.copied,
 button.copied {
     background-color: var(--success) !important;
     border-color: var(--success) !important;
     color: #fff !important;
-}
-
-/* ============================================================
-   Input (component-class form)
-   ============================================================ */
-
-.input {
-    display: block;
-    width: 100%;
-    height: 34px;
-    padding: 0 var(--space-3);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--input-border);
-    background-color: var(--input-bg);
-    color: var(--text-primary);
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-}
-
-.input:focus {
-    outline: 1px solid var(--text-primary);
-    outline-offset: -1px;
-    border-color: var(--text-primary);
 }
 
 /* ============================================================
@@ -151,9 +108,9 @@ button.copied {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     margin-bottom: 0;
 }
 
@@ -168,27 +125,6 @@ button.copied {
     align-items: center;
     gap: var(--space-2);
     margin-top: var(--space-3);
-}
-
-.toolbar__spacer { flex: 1; }
-
-/* ============================================================
-   Chip (used sparingly — section count, status)
-   ============================================================ */
-
-.chip {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-    padding: 1px var(--space-2);
-    border-radius: var(--radius-sm);
-    background-color: var(--surface-2);
-    color: var(--text-secondary);
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    font-weight: 500;
-    line-height: 1.6;
-    border: 1px solid var(--border-color);
 }
 
 /* ============================================================
@@ -237,13 +173,7 @@ input[type="radio"] {
 
 /* ============================================================
    Legacy tool page styling
-   Adopt new look without touching markup.
    ============================================================ */
-
-.tool-content {
-    max-width: 980px;
-    margin: 0 auto;
-}
 
 .tool-content textarea,
 .tool-content input[type="text"],
@@ -253,8 +183,7 @@ input[type="radio"] {
 }
 
 .options-group {
-    background-color: var(--surface-1);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: var(--space-4);
     margin-bottom: var(--space-5);
@@ -265,9 +194,9 @@ input[type="radio"] {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     margin-bottom: var(--space-3);
 }
 
