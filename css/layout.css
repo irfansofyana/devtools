@@ -1,106 +1,45 @@
 /* ============================================================
    Devtools — layout
-   Single column. Sticky terminal-style top bar.
-   Tools grouped into sections with mono headers.
+   Narrow centered column. Plain row-list. No cards.
    ============================================================ */
 
 /* ============================================================
-   Top bar
+   Page shell
+   ============================================================ */
+
+.page {
+    flex: 1 0 auto;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: var(--space-7) var(--space-5) var(--space-9);
+}
+
+/* ============================================================
+   Top bar (minimal inline header)
    ============================================================ */
 
 .top-bar {
-    position: sticky;
-    top: 0;
-    z-index: 30;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: var(--space-5) var(--space-5) 0;
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    padding: var(--space-3) var(--space-5);
-    background-color: var(--bg-primary);
-    border-bottom: 1px solid var(--border-color);
-    min-height: 56px;
 }
 
-.brand {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
+.top-bar__brand {
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text);
     letter-spacing: -0.01em;
 }
 
-.brand::before {
-    content: '~';
-    color: var(--accent);
-    font-weight: 700;
-}
+.top-bar__brand:hover { text-decoration: none; color: var(--text); }
 
-.top-bar__search {
-    flex: 1;
-    max-width: 480px;
-    position: relative;
-    margin-left: auto;
-}
-
-.top-bar__search-input {
-    width: 100%;
-    height: 34px;
-    padding: 0 var(--space-3) 0 var(--space-7);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    transition: border-color var(--duration-fast) var(--ease-out);
-}
-
-.top-bar__search-input::placeholder {
-    color: var(--text-muted);
-}
-
-.top-bar__search-input:hover {
-    border-color: var(--input-border-hover);
-}
-
-.top-bar__search-input:focus {
-    outline: 1px solid var(--text-primary);
-    outline-offset: -1px;
-    border-color: var(--text-primary);
-}
-
-.top-bar__search-icon {
-    position: absolute;
-    left: var(--space-3);
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    pointer-events: none;
-    font-size: var(--text-xs);
-}
-
-.top-bar__search-clear {
-    position: absolute;
-    right: var(--space-2);
-    top: 50%;
-    transform: translateY(-50%);
-    width: 22px;
-    height: 22px;
-    display: grid;
-    place-items: center;
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
-    font-size: var(--text-xs);
-    background: transparent;
-}
-
-.top-bar__search-clear:hover {
-    background-color: var(--surface-2);
-    color: var(--text-primary);
-}
+.top-bar__spacer { flex: 1; }
 
 .top-bar__actions {
     display: flex;
@@ -108,253 +47,238 @@
     gap: var(--space-1);
 }
 
-/* Theme toggle */
-.theme-toggle-btn {
-    width: 34px;
-    height: 34px;
+.icon-btn {
+    width: 32px;
+    height: 32px;
     display: inline-grid;
     place-items: center;
     border-radius: var(--radius-sm);
-    border: 1px solid transparent;
-    background-color: transparent;
-    color: var(--text-secondary);
-    transition: background-color var(--duration-fast) var(--ease-out),
-                color var(--duration-fast) var(--ease-out);
+    color: var(--text-muted);
+    background: transparent;
+    border: 0;
+    transition: color var(--duration-fast) var(--ease-out),
+                background-color var(--duration-fast) var(--ease-out);
 }
 
-.theme-toggle-btn:hover {
-    background-color: var(--surface-2);
-    color: var(--text-primary);
+.icon-btn:hover {
+    color: var(--text);
+    background-color: var(--bg-secondary);
+    text-decoration: none;
 }
 
-.theme-toggle-btn:focus-visible {
-    outline: 1px solid var(--text-primary);
+.icon-btn:focus-visible {
+    outline: 1px solid var(--text);
     outline-offset: 1px;
 }
 
-.theme-toggle-btn svg {
+.icon-btn svg {
     width: 16px;
     height: 16px;
 }
 
+.icon-btn .icon-sun { display: none; }
+.icon-btn .icon-moon { display: block; }
+[data-theme="dark"] .icon-btn .icon-sun { display: block; }
+[data-theme="dark"] .icon-btn .icon-moon { display: none; }
+
+.theme-toggle-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    background: transparent;
+    transition: color var(--duration-fast) var(--ease-out),
+                background-color var(--duration-fast) var(--ease-out);
+}
+
+.theme-toggle-btn:hover {
+    color: var(--text);
+    background-color: var(--bg-secondary);
+}
+
+.theme-toggle-btn:focus-visible {
+    outline: 1px solid var(--text);
+    outline-offset: 1px;
+}
+
+.theme-toggle-btn svg { width: 16px; height: 16px; }
 .theme-toggle-btn .icon-sun { display: none; }
 .theme-toggle-btn .icon-moon { display: block; }
 [data-theme="dark"] .theme-toggle-btn .icon-sun { display: block; }
 [data-theme="dark"] .theme-toggle-btn .icon-moon { display: none; }
 
-/* Tool-page back link */
-.top-bar__back {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    height: 34px;
-    padding: 0 var(--space-3) 0 var(--space-2);
-    border-radius: var(--radius-sm);
-    color: var(--text-secondary);
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-}
-
-.top-bar__back:hover {
-    background-color: var(--surface-2);
-    color: var(--text-primary);
-}
-
-.top-bar__crumb {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
-}
-
-.top-bar__crumb-sep {
-    color: var(--text-muted);
-}
-
-.top-bar__crumb-current {
-    color: var(--text-primary);
-}
-
 /* ============================================================
-   Content
+   Intro
    ============================================================ */
 
-.content {
-    flex: 1 0 auto;
-    padding: var(--space-7) var(--space-5) var(--space-9);
-}
-
-.content__inner {
-    max-width: 1100px;
-    margin: 0 auto;
-}
-
-/* Intro line (terminal-style) */
 .intro {
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
+    margin-bottom: var(--space-7);
+}
+
+.intro h1 {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    margin-bottom: var(--space-3);
+    letter-spacing: -0.02em;
+}
+
+.intro p {
     color: var(--text-secondary);
-    margin-bottom: var(--space-8);
     line-height: var(--leading-relaxed);
 }
 
-.intro__prompt {
-    color: var(--accent);
-    margin-right: var(--space-2);
-    user-select: none;
+/* ============================================================
+   Search
+   ============================================================ */
+
+.search {
+    position: relative;
+    margin-bottom: var(--space-7);
 }
 
-.intro__count {
-    color: var(--text-primary);
-    font-weight: 500;
+.search input {
+    width: 100%;
+    height: 38px;
+    padding: 0 var(--space-3) 0 var(--space-8);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.search input::placeholder { color: var(--text-muted); }
+
+.search input:hover { border-color: var(--input-border-hover); }
+
+.search input:focus {
+    outline: 1px solid var(--text);
+    outline-offset: -1px;
+    border-color: var(--text);
+}
+
+.search__icon {
+    position: absolute;
+    left: var(--space-3);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    pointer-events: none;
+}
+
+.search__clear {
+    position: absolute;
+    right: var(--space-2);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    background: transparent;
+}
+
+.search__clear:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text);
 }
 
 /* ============================================================
-   Category sections
+   Category section
    ============================================================ */
 
 .section {
-    margin-bottom: var(--space-8);
+    margin-bottom: var(--space-7);
 }
 
 .section[hidden] { display: none; }
 
-.section__header {
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-3);
-    margin-bottom: var(--space-4);
-    padding-bottom: var(--space-2);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.section__index {
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-    font-weight: 500;
-}
-
 .section__title {
     font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-primary);
-}
-
-.section__count {
-    font-family: var(--font-mono);
     font-size: var(--text-xs);
+    font-weight: 500;
     color: var(--text-muted);
-    margin-left: auto;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border);
 }
 
 /* ============================================================
-   Tool grid (dense)
+   Tool list — plain rows, no cards
    ============================================================ */
 
-.tool-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 0;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    background-color: var(--surface-1);
+.tool-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
-/* ============================================================
-   Tool card — minimal, dense, no per-category color
-   ============================================================ */
+.tool {
+    display: block;
+}
 
-.tool-card {
-    position: relative;
+.tool[hidden] { display: none; }
+
+.tool__link {
     display: grid;
-    grid-template-columns: 28px 1fr;
-    column-gap: var(--space-3);
-    align-items: start;
-    padding: var(--space-4) var(--space-4);
-    background-color: var(--surface-1);
-    color: var(--text-primary);
-    border-right: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
+    grid-template-columns: minmax(0, 13rem) 1fr;
+    column-gap: var(--space-5);
+    padding: var(--space-3) var(--space-3);
+    margin: 0 calc(var(--space-3) * -1);
+    border-radius: var(--radius-sm);
+    color: var(--text);
     transition: background-color var(--duration-fast) var(--ease-out);
 }
 
-.tool-card[hidden] { display: none; }
-
-.tool-card:hover {
-    background-color: var(--surface-2);
+.tool__link:hover {
+    background-color: var(--bg-secondary);
+    text-decoration: none;
 }
 
-.tool-card:focus-visible {
-    outline: 1px solid var(--text-primary);
+.tool__link:focus-visible {
+    outline: 1px solid var(--text);
     outline-offset: -1px;
-    z-index: 1;
 }
 
-.tool-card__icon {
-    width: 22px;
-    height: 22px;
-    display: grid;
-    place-items: center;
-    color: var(--text-muted);
-    font-size: 0.95rem;
-    margin-top: 2px;
-    transition: color var(--duration-fast) var(--ease-out);
-}
-
-.tool-card:hover .tool-card__icon {
-    color: var(--accent);
-}
-
-.tool-card__body { min-width: 0; }
-
-.tool-card__title {
+.tool__name {
     font-family: var(--font-mono);
     font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 var(--space-1);
-    line-height: 1.3;
-    overflow-wrap: break-word;
+    font-weight: 500;
+    color: var(--text);
 }
 
-.tool-card__desc {
-    font-family: var(--font-sans);
-    font-size: var(--text-xs);
+.tool__link:hover .tool__name { color: var(--accent); }
+
+.tool__desc {
+    font-size: var(--text-sm);
     color: var(--text-secondary);
     line-height: var(--leading-normal);
-    margin: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
 }
 
 /* No results */
 .no-results-message {
-    padding: var(--space-9) var(--space-5);
-    text-align: center;
+    padding: var(--space-7) 0;
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     color: var(--text-muted);
-    border: 1px dashed var(--border-color);
-    border-radius: var(--radius-md);
 }
 
 .no-results-message::before {
-    content: '$ ';
-    color: var(--accent);
+    content: '// ';
+    color: var(--text-muted);
 }
 
 /* ============================================================
-   Tool page layout
+   Tool page
    ============================================================ */
 
 .tool-page-shell {
@@ -365,28 +289,53 @@
 
 .tool-container {
     flex: 1 0 auto;
+    width: 100%;
+    max-width: 880px;
+    margin: 0 auto;
     padding: var(--space-7) var(--space-5) var(--space-9);
 }
 
 .tool-container .container {
-    max-width: 980px;
+    max-width: none;
+    padding: 0;
 }
 
 .tool-header {
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-3);
 }
 
 .tool-header h1 {
     font-size: var(--text-2xl);
+    font-weight: 700;
+    letter-spacing: -0.02em;
     margin-bottom: var(--space-2);
 }
 
 .tool-description {
-    max-width: 720px;
+    max-width: 640px;
     margin: 0 0 var(--space-7);
     color: var(--text-secondary);
     font-size: var(--text-sm);
     line-height: var(--leading-relaxed);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    margin-bottom: var(--space-5);
+}
+
+.back-link:hover {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.back-link::before {
+    content: '←';
 }
 
 /* ============================================================
@@ -396,22 +345,14 @@
 .app-footer,
 footer {
     flex-shrink: 0;
-    padding: var(--space-5);
-    border-top: 1px solid var(--border-color);
-    background-color: var(--bg-primary);
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: var(--space-7) var(--space-5);
+    border-top: 1px solid var(--border);
     color: var(--text-muted);
     font-family: var(--font-mono);
     font-size: var(--text-xs);
-}
-
-.app-footer__inner {
-    max-width: 1100px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: var(--space-2);
 }
 
 .app-footer p,
@@ -427,46 +368,35 @@ footer a {
 
 .app-footer a:hover,
 footer a:hover {
-    color: var(--text-primary);
+    color: var(--text);
 }
 
-/* Legacy footer .container override */
 footer .container {
-    text-align: center;
+    padding: 0;
+    max-width: none;
 }
 
-/* Legacy tools-grid alias (still used by some pages) */
+/* Legacy tools-grid alias (unused on the new homepage) */
 .tools-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--space-4);
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
 }
 
 /* ============================================================
    Responsive
    ============================================================ */
 
-@media (max-width: 768px) {
-    .top-bar {
-        padding: var(--space-3) var(--space-4);
-        gap: var(--space-2);
-    }
-    .top-bar__search { max-width: none; }
-    .content {
-        padding: var(--space-5) var(--space-4) var(--space-7);
-    }
-    .tool-container {
-        padding: var(--space-5) var(--space-4) var(--space-7);
-    }
-    .tool-grid {
+@media (max-width: 640px) {
+    .tool__link {
         grid-template-columns: 1fr;
+        row-gap: var(--space-1);
     }
-    .app-footer__inner {
-        justify-content: center;
-        text-align: center;
+    .top-bar,
+    .page,
+    .app-footer,
+    footer {
+        padding-left: var(--space-4);
+        padding-right: var(--space-4);
     }
-}
-
-@media (max-width: 480px) {
-    .top-bar__back span { display: none; }
 }
