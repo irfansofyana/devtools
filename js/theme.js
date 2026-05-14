@@ -1,84 +1,66 @@
 /**
- * Enhanced theme switcher functionality for Devtools
- * Handles light/dark theme preferences and persistence with smooth transitions
+ * Devtools — theme switcher.
+ * - Persists choice in localStorage (key: Devtools-theme).
+ * - Falls back to prefers-color-scheme.
+ * - Updates aria-pressed and aria-label on the toggle button so screen
+ *   readers describe state rather than reading raw emoji.
+ * - Respects prefers-reduced-motion (no spin animation).
  */
-document.addEventListener('DOMContentLoaded', () => {
-    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+(function () {
+    const STORAGE_KEY = 'Devtools-theme';
     const root = document.documentElement;
-    
-    // Check for saved theme preference or use preferred color scheme
-    const savedTheme = localStorage.getItem('Devtools-theme');
-    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    // Set initial theme without transition (on page load)
-    root.style.transition = 'none';
-    if (savedTheme) {
-        root.setAttribute('data-theme', savedTheme);
-    } else if (prefersDarkScheme) {
-        root.setAttribute('data-theme', 'dark');
+
+    // Apply initial theme as early as possible to avoid FOUC.
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const initial = saved || (prefersDark ? 'dark' : 'light');
+        root.setAttribute('data-theme', initial);
+    } catch (_) {
+        // ignore — storage might be unavailable
     }
-    
-    // Force a reflow to ensure the transition: none is applied
-    // before we remove it to allow transitions again
-    root.offsetHeight;
-    root.style.transition = '';
-    
-    // Add animation class to theme toggle button
-    themeToggleBtn.classList.add('theme-toggle-animated');
-    
-    // Toggle theme when button is clicked with animation
-    themeToggleBtn.addEventListener('click', () => {
-        // Add animation class to button
-        themeToggleBtn.classList.add('theme-toggle-spin');
-        
-        // Get current theme and determine new theme
-        const currentTheme = root.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        // Apply a subtle fade effect to the whole page during transition
-        document.body.classList.add('theme-transitioning');
-        
-        // Set the new theme after a small delay for visual effect
-        setTimeout(() => {
-            root.setAttribute('data-theme', newTheme);
-            localStorage.setItem('Devtools-theme', newTheme);
-            
-            // Remove the fade effect after the transition completes
-            setTimeout(() => {
-                document.body.classList.remove('theme-transitioning');
-            }, 300);
-            
-            // Remove the spin animation class after it completes
-            setTimeout(() => {
-                themeToggleBtn.classList.remove('theme-toggle-spin');
-            }, 500);
-        }, 50);
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('theme-toggle-btn');
+        if (!btn) return;
+
+        const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!prefersReduced) {
+            btn.style.transition = 'transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+        }
+
+        updateButtonState(btn, root.getAttribute('data-theme'));
+
+        btn.addEventListener('click', () => {
+            const current = root.getAttribute('data-theme') || 'light';
+            const next = current === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            try { localStorage.setItem(STORAGE_KEY, next); } catch (_) { /* ignore */ }
+            updateButtonState(btn, next);
+
+            if (!prefersReduced) {
+                btn.style.transform = 'rotate(360deg)';
+                setTimeout(() => { btn.style.transform = ''; }, 400);
+            }
+        });
+
+        // Follow OS theme if user hasn't explicitly chosen.
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            try {
+                if (localStorage.getItem(STORAGE_KEY)) return;
+            } catch (_) { /* ignore */ }
+            const next = e.matches ? 'dark' : 'light';
+            root.setAttribute('data-theme', next);
+            updateButtonState(btn, next);
+        });
     });
-    
-    // Add theme transition styles dynamically
-    const style = document.createElement('style');
-    style.textContent = `
-        .theme-toggle-animated {
-            transition: transform 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-        }
-        
-        .theme-toggle-spin {
-            transform: rotate(180deg);
-        }
-        
-        .theme-transitioning {
-            transition: opacity 0.3s ease;
-            opacity: 0.92;
-        }
-    `;
-    document.head.appendChild(style);
-    
-    // Listen for system theme changes
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-        if (!localStorage.getItem('Devtools-theme')) {
-            // Only auto-switch if user hasn't manually set a preference
-            const newTheme = e.matches ? 'dark' : 'light';
-            root.setAttribute('data-theme', newTheme);
-        }
-    });
-});
+
+    function updateButtonState(btn, theme) {
+        const isDark = theme === 'dark';
+        btn.setAttribute('aria-pressed', String(isDark));
+        btn.setAttribute('aria-label',
+            isDark ? 'Switch to light theme' : 'Switch to dark theme');
+        btn.setAttribute('title',
+            isDark ? 'Switch to light theme' : 'Switch to dark theme');
+    }
+})();
