@@ -1,213 +1,118 @@
 /* ============================================================
-   Devtools — Theme (colour palette + theme-driven styling)
+   Devtools — theme (palette only)
+   One accent. Three surfaces. Real contrast. No gradients.
    ============================================================ */
 
 :root {
-    /* Neutral scale — light */
-    --neutral-50: #f8fafc;
-    --neutral-100: #f1f5f9;
-    --neutral-200: #e2e8f0;
-    --neutral-300: #cbd5e1;
-    --neutral-400: #94a3b8;
-    --neutral-500: #64748b;
-    --neutral-600: #475569;
-    --neutral-700: #334155;
-    --neutral-800: #1e293b;
-    --neutral-900: #0f172a;
-
     /* Surfaces */
-    --bg-primary: var(--neutral-50);
+    --bg-primary: #fafaf9;
     --bg-secondary: #ffffff;
-    --bg-tertiary: var(--neutral-100);
+    --bg-tertiary: #f4f4f2;
     --surface-1: #ffffff;
-    --surface-2: var(--neutral-50);
-    --surface-3: var(--neutral-100);
-    --surface-raised: #ffffff;
+    --surface-2: #f4f4f2;
+    --surface-3: #eceae6;
 
     /* Text */
-    --text-primary: var(--neutral-900);
-    --text-secondary: var(--neutral-600);
-    --text-muted: var(--neutral-500);
-    --text-on-accent: #ffffff;
+    --text-primary: #0a0a0a;
+    --text-secondary: #525252;
+    --text-muted: #8a8a87;
 
-    /* Borders */
-    --border-color: var(--neutral-200);
-    --border-strong: var(--neutral-300);
+    /* Border */
+    --border-color: #e7e5e0;
+    --border-strong: #d4d2cd;
 
-    /* Accent (brand) */
-    --accent-primary: #3b82f6;
-    --accent-secondary: #2563eb;
-    --accent-strong: #1d4ed8;
-    --accent-soft: rgba(59, 130, 246, 0.18);
-    --accent-bg: rgba(59, 130, 246, 0.08);
-    --primary-color: var(--accent-primary);          /* legacy */
-    --primary-color-rgb: 59, 130, 246;                /* legacy */
+    /* Accent — a single warm sharp color (not Tailwind blue) */
+    --accent: #ff5b1f;        /* deliberate vermilion */
+    --accent-hover: #e64d12;
+    --accent-on: #ffffff;
+    --accent-soft: rgba(255, 91, 31, 0.10);
+
+    /* Legacy aliases used by tool pages */
+    --accent-primary: var(--accent);
+    --accent-secondary: var(--accent-hover);
+    --primary-color: var(--accent);
+    --primary-color-rgb: 255, 91, 31;
 
     /* Semantic */
-    --success: #16a34a;
-    --success-bg: #dcfce7;
+    --success: #15803d;
+    --success-bg: #ecfccb;
     --success-text: #166534;
-    --warning: #d97706;
-    --warning-bg: #fef3c7;
-    --warning-text: #92400e;
-    --danger: #dc2626;
+    --danger: #b91c1c;
     --error-bg: #fee2e2;
-    --error-text: #b91c1c;
-    --info: #0284c7;
-    --info-bg: #e0f2fe;
-    --info-text: #075985;
+    --error-text: #991b1b;
 
-    /* Category accents — each tool category gets a hue */
-    --cat-text: #f97316;       /* orange */
-    --cat-encoding: #10b981;   /* emerald */
-    --cat-data: #6366f1;       /* indigo */
-    --cat-web: #06b6d4;        /* cyan */
-    --cat-crypto: #ef4444;     /* red */
-    --cat-time: #f59e0b;       /* amber */
-    --cat-visual: #ec4899;     /* pink */
-    --cat-api: #8b5cf6;        /* violet */
-    --cat-network: #14b8a6;    /* teal */
-    --cat-other: var(--neutral-400);
-
-    /* Inputs / forms */
+    /* Inputs */
     --input-bg: #ffffff;
-    --input-border: var(--neutral-200);
-    --input-border-hover: var(--neutral-300);
-    --input-border-focus: var(--accent-primary);
+    --input-border: #d4d2cd;
+    --input-border-hover: #a8a6a0;
+    --input-border-focus: var(--accent);
+    --input-border-focus: var(--text-primary);
 
-    /* Buttons (legacy gradients kept as fallback) */
-    --button-bg: var(--accent-primary);
-    --button-bg-hover: var(--accent-secondary);
+    /* Buttons (legacy) */
+    --button-bg: var(--text-primary);
     --button-text: #ffffff;
-    --button-hover: var(--accent-secondary);
+    --button-hover: #262626;
 
-    /* Code blocks */
-    --code-bg: var(--neutral-100);
-    --code-text: var(--neutral-800);
+    /* Code */
+    --code-bg: #f4f4f2;
+    --code-text: var(--text-primary);
 
-    /* Header / sidebar */
-    --header-bg: rgba(255, 255, 255, 0.85);
-    --header-border: var(--neutral-200);
-    --sidebar-bg: #ffffff;
-    --sidebar-border: var(--neutral-200);
-
-    /* Scrollbar */
-    --scrollbar-track: transparent;
-    --scrollbar-thumb: var(--neutral-300);
-    --scrollbar-thumb-hover: var(--neutral-400);
-
-    /* Selection */
-    --selection-bg: rgba(59, 130, 246, 0.22);
-    --selection-text: var(--neutral-900);
+    /* Selection / scrollbar */
+    --selection-bg: var(--text-primary);
+    --selection-text: var(--bg-primary);
 }
-
-/* ============================================================
-   Dark theme
-   ============================================================ */
 
 [data-theme="dark"] {
-    --neutral-50: #f8fafc;
-    --neutral-100: #e2e8f0;
-    --neutral-200: #cbd5e1;
-    --neutral-300: #94a3b8;
-    --neutral-400: #64748b;
-    --neutral-500: #475569;
-    --neutral-600: #334155;
-    --neutral-700: #1e293b;
-    --neutral-800: #0f172a;
-    --neutral-900: #020617;
+    --bg-primary: #0d0d0c;
+    --bg-secondary: #121211;
+    --bg-tertiary: #1a1a18;
+    --surface-1: #121211;
+    --surface-2: #1a1a18;
+    --surface-3: #232320;
 
-    --bg-primary: #0b0f17;
-    --bg-secondary: #11151f;
-    --bg-tertiary: #161b27;
-    --surface-1: #11151f;
-    --surface-2: #161b27;
-    --surface-3: #1c2230;
-    --surface-raised: #1a1f2c;
+    --text-primary: #f5f5f1;
+    --text-secondary: #a8a6a0;
+    --text-muted: #6f6e69;
 
-    --text-primary: #f1f5f9;
-    --text-secondary: #b8c0cc;
-    --text-muted: #8a93a3;
-    --text-on-accent: #ffffff;
+    --border-color: #232320;
+    --border-strong: #34332e;
 
-    --border-color: #232a38;
-    --border-strong: #2e3647;
+    --accent: #ff7042;
+    --accent-hover: #ff8a62;
+    --accent-on: #0d0d0c;
+    --accent-soft: rgba(255, 112, 66, 0.12);
 
-    --accent-primary: #60a5fa;
-    --accent-secondary: #3b82f6;
-    --accent-strong: #2563eb;
-    --accent-soft: rgba(96, 165, 250, 0.22);
-    --accent-bg: rgba(96, 165, 250, 0.10);
-    --primary-color: var(--accent-primary);
-    --primary-color-rgb: 96, 165, 250;
+    --accent-primary: var(--accent);
+    --accent-secondary: var(--accent-hover);
+    --primary-color: var(--accent);
+    --primary-color-rgb: 255, 112, 66;
 
-    --success: #22c55e;
-    --success-bg: rgba(34, 197, 94, 0.12);
+    --success: #4ade80;
+    --success-bg: rgba(74, 222, 128, 0.12);
     --success-text: #86efac;
-    --warning: #f59e0b;
-    --warning-bg: rgba(245, 158, 11, 0.12);
-    --warning-text: #fcd34d;
-    --danger: #ef4444;
-    --error-bg: rgba(239, 68, 68, 0.12);
+    --danger: #f87171;
+    --error-bg: rgba(248, 113, 113, 0.12);
     --error-text: #fca5a5;
-    --info: #38bdf8;
-    --info-bg: rgba(56, 189, 248, 0.12);
-    --info-text: #7dd3fc;
 
-    /* Category accents tweaked for dark mode */
-    --cat-text: #fb923c;
-    --cat-encoding: #34d399;
-    --cat-data: #818cf8;
-    --cat-web: #22d3ee;
-    --cat-crypto: #f87171;
-    --cat-time: #fbbf24;
-    --cat-visual: #f472b6;
-    --cat-api: #a78bfa;
-    --cat-network: #2dd4bf;
-    --cat-other: #64748b;
+    --input-bg: #121211;
+    --input-border: #2a2a26;
+    --input-border-hover: #3a3935;
+    --input-border-focus: var(--text-primary);
 
-    --input-bg: #161b27;
-    --input-border: #2a3142;
-    --input-border-hover: #3a4356;
-    --input-border-focus: var(--accent-primary);
+    --button-bg: var(--text-primary);
+    --button-text: #0d0d0c;
+    --button-hover: #e7e5e0;
 
-    --button-bg: var(--accent-primary);
-    --button-bg-hover: var(--accent-secondary);
-    --button-text: #0b0f17;
-    --button-hover: var(--accent-secondary);
+    --code-bg: #1a1a18;
+    --code-text: var(--text-primary);
 
-    --code-bg: #161b27;
-    --code-text: #e6edf6;
-
-    --header-bg: rgba(11, 15, 23, 0.85);
-    --header-border: #1f2533;
-    --sidebar-bg: #11151f;
-    --sidebar-border: #1f2533;
-
-    --scrollbar-track: transparent;
-    --scrollbar-thumb: #2a3142;
-    --scrollbar-thumb-hover: #3a4356;
-
-    --selection-bg: rgba(96, 165, 250, 0.32);
-    --selection-text: #ffffff;
+    --selection-bg: var(--accent);
+    --selection-text: var(--accent-on);
 }
 
-/* ============================================================
-   Base theme application
-   ============================================================ */
-
-body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-}
-
-a {
-    color: var(--accent-primary);
-}
-
-a:hover {
-    color: var(--accent-secondary);
-}
+/* Theme application */
+a { color: var(--accent); }
+a:hover { color: var(--accent-hover); }
 
 hr {
     border: 0;
@@ -215,16 +120,15 @@ hr {
     margin: var(--space-6) 0;
 }
 
-/* Form element theming */
+/* Native form element baseline */
 textarea, input[type="text"], input[type="number"], input[type="search"],
 input[type="password"], input[type="email"], input[type="url"], select {
     background-color: var(--input-bg);
     border: 1px solid var(--input-border);
     color: var(--text-primary);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     padding: var(--space-2) var(--space-3);
-    transition: border-color var(--duration-fast) var(--ease-out),
-                box-shadow var(--duration-fast) var(--ease-out);
+    transition: border-color var(--duration-fast) var(--ease-out);
 }
 
 textarea:hover, input[type="text"]:hover, input[type="number"]:hover,
@@ -236,16 +140,17 @@ input[type="email"]:hover, input[type="url"]:hover, select:hover {
 textarea:focus, input[type="text"]:focus, input[type="number"]:focus,
 input[type="search"]:focus, input[type="password"]:focus,
 input[type="email"]:focus, input[type="url"]:focus, select:focus {
-    border-color: var(--input-border-focus);
-    box-shadow: var(--focus-ring);
-    outline: none;
+    border-color: var(--text-primary);
+    box-shadow: none;
+    outline: 1px solid var(--text-primary);
+    outline-offset: -1px;
 }
 
 textarea {
     font-family: var(--font-mono);
     line-height: var(--leading-normal);
     resize: vertical;
-    min-height: 150px;
+    min-height: 160px;
     padding: var(--space-3);
 }
 
@@ -257,8 +162,8 @@ pre, code {
 }
 
 code {
-    padding: 0.1em 0.4em;
-    font-size: 0.9em;
+    padding: 0.1em 0.35em;
+    font-size: 0.92em;
 }
 
 pre {

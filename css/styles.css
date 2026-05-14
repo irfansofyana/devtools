@@ -1,105 +1,79 @@
 /* ============================================================
-   Devtools — Base styles & design tokens
-   This file contains only design tokens, resets, and base
-   typography. Layout lives in layout.css, components in
-   components.css, theme colours in theme.css.
+   Devtools — base styles & design tokens
+   Terminal-flavoured: mono-forward, dense, minimal chrome.
    ============================================================ */
 
 :root {
-    /* Fonts */
-    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+    /* Fonts — mono is the primary identity */
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+    --font-display: var(--font-mono);
+    --font-body: var(--font-sans);
+    --font-primary: var(--font-sans); /* legacy alias */
 
-    /* Type scale */
+    /* Type scale (tighter) */
     --text-xs: 0.75rem;     /* 12 */
-    --text-sm: 0.875rem;    /* 14 */
-    --text-base: 1rem;      /* 16 */
-    --text-md: 1.0625rem;   /* 17 */
-    --text-lg: 1.25rem;     /* 20 */
-    --text-xl: 1.5rem;      /* 24 */
-    --text-2xl: 2rem;       /* 32 */
-    --text-3xl: 2.5rem;     /* 40 */
-    --text-4xl: 3rem;       /* 48 */
+    --text-sm: 0.8125rem;   /* 13 */
+    --text-base: 0.9375rem; /* 15 */
+    --text-md: 1rem;        /* 16 */
+    --text-lg: 1.125rem;    /* 18 */
+    --text-xl: 1.375rem;    /* 22 */
+    --text-2xl: 1.75rem;    /* 28 */
+    --text-3xl: 2.25rem;    /* 36 */
     --leading-tight: 1.25;
-    --leading-normal: 1.55;
-    --leading-relaxed: 1.7;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.65;
 
-    /* Spacing scale (4px base) */
+    /* Spacing (4px base, denser scale) */
     --space-0: 0;
-    --space-1: 0.25rem;     /* 4 */
-    --space-2: 0.5rem;      /* 8 */
-    --space-3: 0.75rem;     /* 12 */
-    --space-4: 1rem;        /* 16 */
-    --space-5: 1.25rem;     /* 20 */
-    --space-6: 1.5rem;      /* 24 */
-    --space-7: 2rem;        /* 32 */
-    --space-8: 2.5rem;      /* 40 */
-    --space-9: 3rem;        /* 48 */
-    --space-10: 4rem;       /* 64 */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-7: 2rem;
+    --space-8: 2.5rem;
+    --space-9: 3rem;
+    --space-10: 4rem;
 
-    /* Legacy spacing aliases (keep existing tools working) */
+    /* Legacy aliases */
     --spacing-xs: var(--space-1);
     --spacing-sm: var(--space-2);
     --spacing-md: var(--space-4);
-    --spacing-lg: var(--space-6);
-    --spacing-xl: var(--space-7);
-    --spacing-xxl: var(--space-9);
+    --spacing-lg: var(--space-5);
+    --spacing-xl: var(--space-6);
+    --spacing-xxl: var(--space-8);
 
-    /* Radius scale */
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 14px;
-    --radius-xl: 20px;
-    --radius-pill: 999px;
-    --border-radius: var(--radius-md); /* legacy alias */
+    /* Radius — sharper. Just three. */
+    --radius-sm: 3px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --border-radius: var(--radius-md); /* legacy */
 
-    /* Shadow scale */
-    --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-    --shadow-md: 0 4px 8px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04);
-    --shadow-lg: 0 12px 24px rgba(15, 23, 42, 0.08), 0 4px 8px rgba(15, 23, 42, 0.04);
-    --shadow-xl: 0 24px 48px rgba(15, 23, 42, 0.12), 0 8px 16px rgba(15, 23, 42, 0.06);
+    /* Shadows — keep only two */
+    --shadow-sm: 0 1px 0 rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
 
     /* Motion */
-    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-    --duration-fast: 120ms;
-    --duration-base: 200ms;
-    --duration-slow: 320ms;
-    --transition-speed: var(--duration-base); /* legacy alias */
+    --ease-out: cubic-bezier(0.2, 0, 0, 1);
+    --duration-fast: 100ms;
+    --duration-base: 160ms;
+    --transition-speed: var(--duration-base);
 
     /* Focus ring */
-    --focus-ring: 0 0 0 3px var(--accent-soft, rgba(59, 130, 246, 0.35));
-
-    /* Breakpoints (exposed for JS) */
-    --bp-sm: 480px;
-    --bp-md: 768px;
-    --bp-lg: 1024px;
-    --bp-xl: 1280px;
+    --focus-ring: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent);
 }
 
 /* ============================================================
    Reset
    ============================================================ */
 
-*, *::before, *::after {
-    box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
 
-* {
-    margin: 0;
-    padding: 0;
-}
-
-html {
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-}
-
-html, body {
-    height: 100%;
-}
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html, body { height: 100%; }
 
 body {
     font-family: var(--font-body);
@@ -110,58 +84,32 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    transition: background-color var(--duration-base) var(--ease-out),
-                color var(--duration-base) var(--ease-out);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out);
 }
 
-a {
-    color: inherit;
-    text-decoration: none;
-    transition: color var(--duration-fast) var(--ease-out);
-}
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; font-size: inherit; border: 0; background: transparent; color: inherit; }
+input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
+ul { list-style: none; }
+img, svg { display: block; max-width: 100%; }
 
-button {
-    cursor: pointer;
-    font-family: inherit;
-    font-size: inherit;
-    border: 0;
-    background: transparent;
-    color: inherit;
-}
-
-input, textarea, select {
-    font-family: inherit;
-    font-size: inherit;
-    color: inherit;
-}
-
-ul {
-    list-style: none;
-}
-
-img, svg {
-    display: block;
-    max-width: 100%;
-}
-
-/* Skip link for accessibility */
+/* Skip link */
 .skip-link {
     position: absolute;
     top: -40px;
     left: var(--space-4);
-    padding: var(--space-2) var(--space-4);
-    background: var(--accent-primary);
-    color: #fff;
-    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+    background: var(--accent);
+    color: var(--accent-on);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    border-radius: var(--radius-sm);
     z-index: 1000;
-    transition: top var(--duration-fast) var(--ease-out);
 }
-
-.skip-link:focus {
-    top: var(--space-2);
-    outline: none;
-    box-shadow: var(--focus-ring);
-}
+.skip-link:focus { top: var(--space-2); outline: none; }
 
 /* ============================================================
    Typography
@@ -172,103 +120,66 @@ h1, h2, h3, h4, h5, h6 {
     line-height: var(--leading-tight);
     color: var(--text-primary);
     letter-spacing: -0.01em;
-    font-weight: 700;
+    font-weight: 600;
 }
 
-h1 { font-size: var(--text-3xl); }
-h2 { font-size: var(--text-2xl); }
-h3 { font-size: var(--text-lg); font-weight: 600; }
-h4 { font-size: var(--text-md); font-weight: 600; }
-h5 { font-size: var(--text-base); font-weight: 600; }
-h6 { font-size: var(--text-sm); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+h1 { font-size: var(--text-2xl); }
+h2 { font-size: var(--text-xl); }
+h3 { font-size: var(--text-lg); }
+h4 { font-size: var(--text-md); }
+h5 { font-size: var(--text-base); }
+h6 { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.08em; }
 
-p {
-    color: var(--text-secondary);
-}
+p { color: var(--text-secondary); }
 
-code, pre {
+code, pre, kbd, samp {
     font-family: var(--font-mono);
-    font-size: 0.95em;
 }
 
 ::selection {
-    background-color: var(--selection-bg);
-    color: var(--selection-text);
+    background-color: var(--accent);
+    color: var(--accent-on);
 }
 
-/* ============================================================
-   Scrollbar
-   ============================================================ */
-
-::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--scrollbar-track);
-}
-
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb);
-    border-radius: var(--radius-pill);
-    border: 2px solid var(--scrollbar-track);
+    background: var(--border-color);
+    border-radius: 5px;
+    border: 2px solid var(--bg-primary);
 }
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover);
-}
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
 
 /* ============================================================
-   Utility classes
+   Utility classes (kept small)
    ============================================================ */
 
 .hidden { display: none !important; }
 .sr-only {
     position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
     overflow: hidden;
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
 }
+.text-mono { font-family: var(--font-mono); }
+.text-muted { color: var(--text-muted); }
 
-.flex { display: flex; }
-.flex-column { flex-direction: column; }
-.justify-between { justify-content: space-between; }
-.align-center { align-items: center; }
-.text-center { text-align: center; }
-.text-muted { color: var(--text-secondary); }
-
-.mt-1 { margin-top: var(--space-2); }
-.mt-2 { margin-top: var(--space-4); }
-.mt-3 { margin-top: var(--space-6); }
-.mt-4 { margin-top: var(--space-7); }
-.mb-1 { margin-bottom: var(--space-2); }
-.mb-2 { margin-bottom: var(--space-4); }
-.mb-3 { margin-bottom: var(--space-6); }
-.mb-4 { margin-bottom: var(--space-7); }
-
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
     }
 }
 
-/* ============================================================
-   Container (legacy — used on tool pages without app-shell)
-   ============================================================ */
-
+/* Container — used by tool pages */
 .container {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 0 var(--space-4);
+    padding: 0 var(--space-5);
 }

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Devtools - A comprehensive collection of web-based tools for developers">
-    <meta name="theme-color" content="#0b0f17">
-    <title>Devtools — Developer Tools</title>
+    <meta name="description" content="A collection of fast, offline-friendly developer utilities.">
+    <meta name="theme-color" content="#0d0d0c">
+    <title>devtools</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/layout.css">
@@ -15,387 +15,392 @@
     <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <meta property="og:title" content="Devtools — Developer Tools">
-    <meta property="og:description" content="A comprehensive collection of web-based tools for developers">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://irfansofyana.github.io/Devtools/">
 </head>
 <body>
-    <a class="skip-link" href="#main-content">Skip to content</a>
+    <a class="skip-link" href="#tools">Skip to content</a>
 
-    <div class="app-shell">
-        <aside class="sidebar" id="sidebar" aria-label="Primary navigation">
-            <a class="sidebar__brand" href="index.html">
-                <span class="sidebar__brand-mark" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                </span>
-                Devtools
-            </a>
-
-            <div class="sidebar__section">
-                <div class="sidebar__heading">Browse</div>
-                <nav class="sidebar__nav" id="category-nav" aria-label="Categories">
-                    <!-- Populated by js/search.js -->
-                </nav>
-            </div>
-
-            <div class="sidebar__footer">
-                <div class="sidebar__footer-links">
-                    <a class="btn btn--ghost btn--icon-sm" href="https://github.com/irfansofyana/Devtools" target="_blank" rel="noopener" aria-label="GitHub repository">
-                        <i class="fab fa-github" aria-hidden="true"></i>
-                    </a>
-                    <a class="btn btn--ghost btn--icon-sm" href="https://github.com/irfansofyana/Devtools/issues" target="_blank" rel="noopener" aria-label="Report an issue">
-                        <i class="fas fa-comment-dots" aria-hidden="true"></i>
-                    </a>
-                </div>
-                <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark and light theme" aria-pressed="false">
-                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                </button>
-            </div>
-        </aside>
-
-        <div class="sidebar-scrim" id="sidebar-scrim" aria-hidden="true"></div>
-
-        <div class="app-main">
-            <header class="top-bar">
-                <button class="top-bar__menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">
-                    <i class="fas fa-bars" aria-hidden="true"></i>
-                </button>
-                <div class="top-bar__title">All Tools</div>
-                <div class="top-bar__search">
-                    <i class="fas fa-search top-bar__search-icon" aria-hidden="true"></i>
-                    <input type="search" id="tool-search" class="top-bar__search-input" placeholder="Search tools…" aria-label="Search tools" autocomplete="off">
-                    <button type="button" id="search-clear" class="top-bar__search-clear hidden" aria-label="Clear search">
-                        <i class="fas fa-times" aria-hidden="true"></i>
-                    </button>
-                    <span class="top-bar__search-kbd"><kbd class="kbd">⌘</kbd> <kbd class="kbd">K</kbd></span>
-                </div>
-                <div class="top-bar__actions"></div>
-            </header>
-
-            <main class="content" id="main-content">
-                <div class="content__inner">
-                    <section class="hero-strip">
-                        <div>
-                            <h1 class="hero-strip__title">Developer Tools</h1>
-                            <p class="hero-strip__subtitle">A collection of fast, offline-friendly utilities for everyday developer tasks.</p>
-                        </div>
-                        <div class="hero-strip__meta">
-                            <span id="tool-count">36 tools</span> · Built by
-                            <a href="https://github.com/irfansofyana" target="_blank" rel="noopener">irfansofyana</a>
-                        </div>
-                    </section>
-
-                    <div class="tool-grid" id="tools-grid">
-                        <a href="tools/api-mock-generator.html" class="tool-card" data-category="api">
-                            <div class="tool-card__icon"><i class="fas fa-vial" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">API Mock Data Generator</h3>
-                                <p class="tool-card__desc">Generate realistic mock data for API testing</p>
-                                <span class="chip tool-card__chip" data-category="api">API</span>
-                            </div>
-                        </a>
-                        <a href="tools/ascii-art-generator.html" class="tool-card" data-category="visual">
-                            <div class="tool-card__icon"><i class="fas fa-font" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">ASCII Art Generator</h3>
-                                <p class="tool-card__desc">Generate ASCII art from text with multiple fonts and styles</p>
-                                <span class="chip tool-card__chip" data-category="visual">Visual</span>
-                            </div>
-                        </a>
-                        <a href="tools/ascii-hex-converter.html" class="tool-card" data-category="encoding">
-                            <div class="tool-card__icon"><i class="fas fa-exchange-alt" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">ASCII ⇄ HEX Converter</h3>
-                                <p class="tool-card__desc">Convert between ASCII text and hexadecimal representation</p>
-                                <span class="chip tool-card__chip" data-category="encoding">Encoding</span>
-                            </div>
-                        </a>
-                        <a href="tools/backslash-escape-unescape.html" class="tool-card" data-category="text">
-                            <div class="tool-card__icon"><i class="fas fa-backspace" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Backslash Escape/Unescape</h3>
-                                <p class="tool-card__desc">Escape and unescape backslashes in text</p>
-                                <span class="chip tool-card__chip" data-category="text">Text</span>
-                            </div>
-                        </a>
-                        <a href="tools/base64-encoder-decoder.html" class="tool-card" data-category="encoding">
-                            <div class="tool-card__icon"><i class="fas fa-exchange-alt" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Base64 Encoder/Decoder</h3>
-                                <p class="tool-card__desc">Encode and decode text or files using Base64 encoding</p>
-                                <span class="chip tool-card__chip" data-category="encoding">Encoding</span>
-                            </div>
-                        </a>
-                        <a href="tools/color-converter.html" class="tool-card" data-category="visual">
-                            <div class="tool-card__icon"><i class="fas fa-palette" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Color Converter</h3>
-                                <p class="tool-card__desc">Convert between HEX, RGB, and HSL color formats</p>
-                                <span class="chip tool-card__chip" data-category="visual">Visual</span>
-                            </div>
-                        </a>
-                        <a href="tools/crontab-generator.html" class="tool-card" data-category="time">
-                            <div class="tool-card__icon"><i class="fas fa-clock" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Crontab Generator</h3>
-                                <p class="tool-card__desc">Create crontab expressions visually with human-readable descriptions</p>
-                                <span class="chip tool-card__chip" data-category="time">Time</span>
-                            </div>
-                        </a>
-                        <a href="tools/csv-json-converter.html" class="tool-card" data-category="data format">
-                            <div class="tool-card__icon"><i class="fas fa-file-code" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">CSV ⇄ JSON Converter</h3>
-                                <p class="tool-card__desc">Convert between CSV and JSON data formats</p>
-                                <span class="chip tool-card__chip" data-category="data format">Data</span>
-                            </div>
-                        </a>
-                        <a href="tools/csv-visualizer.html" class="tool-card" data-category="data format">
-                            <div class="tool-card__icon"><i class="fas fa-table" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">CSV Visualizer</h3>
-                                <p class="tool-card__desc">Visualize CSV data as HTML tables with export options</p>
-                                <span class="chip tool-card__chip" data-category="data format">Data</span>
-                            </div>
-                        </a>
-                        <a href="tools/curl-constructor.html" class="tool-card" data-category="web">
-                            <div class="tool-card__icon"><i class="fas fa-terminal" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">CURL Constructor</h3>
-                                <p class="tool-card__desc">Build CURL commands for terminal execution with customizable options</p>
-                                <span class="chip tool-card__chip" data-category="web">Web</span>
-                            </div>
-                        </a>
-                        <a href="tools/hash-generator.html" class="tool-card" data-category="crypto">
-                            <div class="tool-card__icon"><i class="fas fa-hashtag" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Hash Generator</h3>
-                                <p class="tool-card__desc">Generate MD5, SHA-1, SHA-256, and SHA-512 hashes</p>
-                                <span class="chip tool-card__chip" data-category="crypto">Crypto</span>
-                            </div>
-                        </a>
-                        <a href="tools/json-formatter.html" class="tool-card" data-category="data format">
-                            <div class="tool-card__icon"><i class="fas fa-code" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">JSON Beautifier/Minifier</h3>
-                                <p class="tool-card__desc">Format and compress JSON with syntax highlighting</p>
-                                <span class="chip tool-card__chip" data-category="data format">Data</span>
-                            </div>
-                        </a>
-                        <a href="tools/json-to-protobuf.html" class="tool-card" data-category="data format">
-                            <div class="tool-card__icon"><i class="fas fa-cube" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">JSON to Protobuf</h3>
-                                <p class="tool-card__desc">Generate Protocol Buffer definitions from JSON examples</p>
-                                <span class="chip tool-card__chip" data-category="data format">Data</span>
-                            </div>
-                        </a>
-                        <a href="tools/json-yaml-explorer.html" class="tool-card" data-category="data format">
-                            <div class="tool-card__icon"><i class="fas fa-project-diagram" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">JSON/YAML Explorer</h3>
-                                <p class="tool-card__desc">Visualize and explore JSON and YAML data with interactive tree view</p>
-                                <span class="chip tool-card__chip" data-category="data format">Data</span>
-                            </div>
-                        </a>
-                        <a href="tools/json-yaml-converter.html" class="tool-card" data-category="data format">
-                            <div class="tool-card__icon"><i class="fas fa-sync-alt" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">JSON ⇄ YAML Converter</h3>
-                                <p class="tool-card__desc">Convert between JSON and YAML formats with validation</p>
-                                <span class="chip tool-card__chip" data-category="data format">Data</span>
-                            </div>
-                        </a>
-                        <a href="tools/jwt-decoder.html" class="tool-card" data-category="web">
-                            <div class="tool-card__icon"><i class="fas fa-key" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">JWT Decoder</h3>
-                                <p class="tool-card__desc">Decode and inspect JSON Web Tokens (JWT)</p>
-                                <span class="chip tool-card__chip" data-category="web">Web</span>
-                            </div>
-                        </a>
-                        <a href="tools/line-sort-dedupe.html" class="tool-card" data-category="text">
-                            <div class="tool-card__icon"><i class="fas fa-sort-alpha-down" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Line Sort/Dedupe</h3>
-                                <p class="tool-card__desc">Sort lines alphabetically and remove duplicates</p>
-                                <span class="chip tool-card__chip" data-category="text">Text</span>
-                            </div>
-                        </a>
-                        <a href="tools/markdown-preview.html" class="tool-card" data-category="visual">
-                            <div class="tool-card__icon"><i class="fab fa-markdown" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Markdown Preview</h3>
-                                <p class="tool-card__desc">Preview Markdown with live rendering</p>
-                                <span class="chip tool-card__chip" data-category="visual">Visual</span>
-                            </div>
-                        </a>
-                        <a href="tools/mermaid-diagram-editor.html" class="tool-card" data-category="visual">
-                            <div class="tool-card__icon"><i class="fas fa-project-diagram" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Mermaid Diagram Editor</h3>
-                                <p class="tool-card__desc">Create diagrams with Mermaid syntax and live preview</p>
-                                <span class="chip tool-card__chip" data-category="visual">Visual</span>
-                            </div>
-                        </a>
-                        <a href="tools/ocr-tool.html" class="tool-card" data-category="visual">
-                            <div class="tool-card__icon"><i class="fas fa-eye" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">OCR Tool</h3>
-                                <p class="tool-card__desc">Extract text from images and PDFs using offline OCR</p>
-                                <span class="chip tool-card__chip" data-category="visual">Visual</span>
-                            </div>
-                        </a>
-                        <a href="tools/qr-code-tool.html" class="tool-card" data-category="visual">
-                            <div class="tool-card__icon"><i class="fas fa-qrcode" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">QR Code Reader/Generator</h3>
-                                <p class="tool-card__desc">Generate QR codes from text or URLs, and scan QR codes from images</p>
-                                <span class="chip tool-card__chip" data-category="visual">Visual</span>
-                            </div>
-                        </a>
-                        <a href="tools/password-generator.html" class="tool-card" data-category="crypto">
-                            <div class="tool-card__icon"><i class="fas fa-lock" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Random Password Generator</h3>
-                                <p class="tool-card__desc">Generate secure random passwords with customizable options</p>
-                                <span class="chip tool-card__chip" data-category="crypto">Crypto</span>
-                            </div>
-                        </a>
-                        <a href="tools/string-generator.html" class="tool-card" data-category="text">
-                            <div class="tool-card__icon"><i class="fas fa-random" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Random String Generator</h3>
-                                <p class="tool-card__desc">Generate random strings with patterns and custom options</p>
-                                <span class="chip tool-card__chip" data-category="text">Text</span>
-                            </div>
-                        </a>
-                        <a href="tools/secret-share.html" class="tool-card" data-category="crypto">
-                            <div class="tool-card__icon"><i class="fas fa-user-secret" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Secret Share</h3>
-                                <p class="tool-card__desc">Securely share encrypted messages with password protection</p>
-                                <span class="chip tool-card__chip" data-category="crypto">Crypto</span>
-                            </div>
-                        </a>
-                        <a href="tools/regex-tester.html" class="tool-card" data-category="api">
-                            <div class="tool-card__icon"><i class="fas fa-search" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Regular Expression Tester</h3>
-                                <p class="tool-card__desc">Test and validate regular expressions with live results</p>
-                                <span class="chip tool-card__chip" data-category="api">API</span>
-                            </div>
-                        </a>
-                        <a href="tools/string-case-converter.html" class="tool-card" data-category="text">
-                            <div class="tool-card__icon"><i class="fas fa-font" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">String Case Converter</h3>
-                                <p class="tool-card__desc">Convert between camelCase, snake_case, kebab-case and more</p>
-                                <span class="chip tool-card__chip" data-category="text">Text</span>
-                            </div>
-                        </a>
-                        <a href="tools/text-diff.html" class="tool-card" data-category="text">
-                            <div class="tool-card__icon"><i class="fas fa-columns" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Text Diff Utility</h3>
-                                <p class="tool-card__desc">Compare two text blocks and highlight differences</p>
-                                <span class="chip tool-card__chip" data-category="text">Text</span>
-                            </div>
-                        </a>
-                        <a href="tools/timestamp-converter.html" class="tool-card" data-category="time">
-                            <div class="tool-card__icon"><i class="fas fa-calendar-alt" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Timestamp Converter</h3>
-                                <p class="tool-card__desc">Convert between various timestamp formats and human-readable dates</p>
-                                <span class="chip tool-card__chip" data-category="time">Time</span>
-                            </div>
-                        </a>
-                        <a href="tools/url-encoder-decoder.html" class="tool-card" data-category="encoding">
-                            <div class="tool-card__icon"><i class="fas fa-link" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">URL Encoder/Decoder</h3>
-                                <p class="tool-card__desc">Encode and decode URLs and URL components</p>
-                                <span class="chip tool-card__chip" data-category="encoding">Encoding</span>
-                            </div>
-                        </a>
-                        <a href="tools/url-parser.html" class="tool-card" data-category="web">
-                            <div class="tool-card__icon"><i class="fas fa-sitemap" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">URL Parser</h3>
-                                <p class="tool-card__desc">Parse and extract components from URLs</p>
-                                <span class="chip tool-card__chip" data-category="web">Web</span>
-                            </div>
-                        </a>
-                        <a href="tools/url-to-markdown.html" class="tool-card" data-category="web">
-                            <div class="tool-card__icon"><i class="fas fa-file-alt" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">URL to Markdown</h3>
-                                <p class="tool-card__desc">Scrape URL content and convert to Markdown format</p>
-                                <span class="chip tool-card__chip" data-category="web">Web</span>
-                            </div>
-                        </a>
-                        <a href="tools/uuid-generator.html" class="tool-card" data-category="crypto">
-                            <div class="tool-card__icon"><i class="fas fa-fingerprint" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">UUID Generator</h3>
-                                <p class="tool-card__desc">Generate random UUIDs in version 4 format</p>
-                                <span class="chip tool-card__chip" data-category="crypto">Crypto</span>
-                            </div>
-                        </a>
-                        <a href="tools/vim-editor.html" class="tool-card" data-category="text">
-                            <div class="tool-card__icon"><i class="fas fa-keyboard" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Vim-Style Code Editor</h3>
-                                <p class="tool-card__desc">Browser-based text editor with Vim key bindings</p>
-                                <span class="chip tool-card__chip" data-category="text">Text</span>
-                            </div>
-                        </a>
-                        <a href="tools/ip-lookup.html" class="tool-card" data-category="network">
-                            <div class="tool-card__icon"><i class="fas fa-globe" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">IP Address Lookup</h3>
-                                <p class="tool-card__desc">Get detailed information about any IP address including geolocation, ISP, and network details</p>
-                                <span class="chip tool-card__chip" data-category="network">Network</span>
-                            </div>
-                        </a>
-                        <a href="tools/ssl-checker.html" class="tool-card" data-category="network">
-                            <div class="tool-card__icon"><i class="fas fa-shield-alt" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">SSL/TLS Certificate Checker</h3>
-                                <p class="tool-card__desc">Analyze SSL/TLS certificates for any domain and check their security status</p>
-                                <span class="chip tool-card__chip" data-category="network">Network</span>
-                            </div>
-                        </a>
-                        <a href="tools/subnet-calculator.html" class="tool-card" data-category="network">
-                            <div class="tool-card__icon"><i class="fas fa-network-wired" aria-hidden="true"></i></div>
-                            <div class="tool-card__body">
-                                <h3 class="tool-card__title">Subnet Calculator</h3>
-                                <p class="tool-card__desc">Calculate subnet information, IP ranges, and network details from CIDR notation</p>
-                                <span class="chip tool-card__chip" data-category="network">Network</span>
-                            </div>
-                        </a>
-                    </div>
-
-                    <div id="no-results-message" class="no-results-message hidden">
-                        <div class="empty-state__icon"><i class="fas fa-search" aria-hidden="true"></i></div>
-                        <div class="empty-state__title">No tools match your search</div>
-                        <div>Try a different keyword or pick a different category.</div>
-                    </div>
-                </div>
-            </main>
-
-            <footer class="app-footer">
-                <p>&copy; <span id="current-year">2025</span> Devtools — open-source on
-                    <a href="https://github.com/irfansofyana/Devtools" target="_blank" rel="noopener">GitHub</a> ·
-                    <a href="https://github.com/irfansofyana/Devtools/issues" target="_blank" rel="noopener">Report issues</a>
-                </p>
-            </footer>
+    <header class="top-bar">
+        <a href="index.html" class="brand">devtools</a>
+        <div class="top-bar__search">
+            <i class="fas fa-search top-bar__search-icon" aria-hidden="true"></i>
+            <input type="search" id="tool-search" class="top-bar__search-input" placeholder="search" aria-label="Search tools" autocomplete="off" spellcheck="false">
+            <button type="button" id="search-clear" class="top-bar__search-clear hidden" aria-label="Clear search">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
         </div>
-    </div>
+        <div class="top-bar__actions">
+            <a class="theme-toggle-btn" href="https://github.com/irfansofyana/Devtools" target="_blank" rel="noopener" aria-label="GitHub repository">
+                <i class="fab fa-github" aria-hidden="true"></i>
+            </a>
+            <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark and light theme" aria-pressed="false">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="content" id="tools">
+        <div class="content__inner">
+            <p class="intro">
+                <span class="intro__prompt">$</span><span class="intro__count" id="tool-count">36</span> developer tools — offline, single-file, no tracking.
+            </p>
+
+            <section class="section" data-category="text">
+                <header class="section__header">
+                    <span class="section__index">01</span>
+                    <h2 class="section__title">Text</h2>
+                    <span class="section__count">6</span>
+                </header>
+                <div class="tool-grid">
+                    <a href="tools/string-case-converter.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-font" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">String Case Converter</h3>
+                            <p class="tool-card__desc">Convert between camelCase, snake_case, kebab-case and more</p>
+                        </div>
+                    </a>
+                    <a href="tools/line-sort-dedupe.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-sort-alpha-down" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Line Sort &amp; Dedupe</h3>
+                            <p class="tool-card__desc">Sort lines alphabetically and remove duplicates</p>
+                        </div>
+                    </a>
+                    <a href="tools/backslash-escape-unescape.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-backspace" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Backslash Escape</h3>
+                            <p class="tool-card__desc">Escape and unescape backslashes in text</p>
+                        </div>
+                    </a>
+                    <a href="tools/string-generator.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-random" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Random String Generator</h3>
+                            <p class="tool-card__desc">Generate random strings with patterns and custom options</p>
+                        </div>
+                    </a>
+                    <a href="tools/text-diff.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-columns" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Text Diff</h3>
+                            <p class="tool-card__desc">Compare two text blocks and highlight differences</p>
+                        </div>
+                    </a>
+                    <a href="tools/vim-editor.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-keyboard" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Vim-Style Editor</h3>
+                            <p class="tool-card__desc">Browser-based text editor with Vim key bindings</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <section class="section" data-category="encoding">
+                <header class="section__header">
+                    <span class="section__index">02</span>
+                    <h2 class="section__title">Encoding</h2>
+                    <span class="section__count">3</span>
+                </header>
+                <div class="tool-grid">
+                    <a href="tools/base64-encoder-decoder.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-exchange-alt" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Base64 Encoder</h3>
+                            <p class="tool-card__desc">Encode and decode text or files using Base64</p>
+                        </div>
+                    </a>
+                    <a href="tools/url-encoder-decoder.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-link" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">URL Encoder</h3>
+                            <p class="tool-card__desc">Encode and decode URLs and URL components</p>
+                        </div>
+                    </a>
+                    <a href="tools/ascii-hex-converter.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-exchange-alt" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">ASCII / HEX</h3>
+                            <p class="tool-card__desc">Convert between ASCII text and hexadecimal</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <section class="section" data-category="data">
+                <header class="section__header">
+                    <span class="section__index">03</span>
+                    <h2 class="section__title">Data</h2>
+                    <span class="section__count">6</span>
+                </header>
+                <div class="tool-grid">
+                    <a href="tools/json-formatter.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-code" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">JSON Formatter</h3>
+                            <p class="tool-card__desc">Beautify and minify JSON with syntax highlighting</p>
+                        </div>
+                    </a>
+                    <a href="tools/json-yaml-converter.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-sync-alt" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">JSON ↔ YAML</h3>
+                            <p class="tool-card__desc">Convert between JSON and YAML with validation</p>
+                        </div>
+                    </a>
+                    <a href="tools/csv-json-converter.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-file-code" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">CSV ↔ JSON</h3>
+                            <p class="tool-card__desc">Convert between CSV and JSON data formats</p>
+                        </div>
+                    </a>
+                    <a href="tools/csv-visualizer.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-table" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">CSV Visualizer</h3>
+                            <p class="tool-card__desc">Visualize CSV data as HTML tables with export</p>
+                        </div>
+                    </a>
+                    <a href="tools/json-to-protobuf.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-cube" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">JSON → Protobuf</h3>
+                            <p class="tool-card__desc">Generate Protocol Buffer definitions from JSON</p>
+                        </div>
+                    </a>
+                    <a href="tools/json-yaml-explorer.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-project-diagram" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">JSON/YAML Explorer</h3>
+                            <p class="tool-card__desc">Interactive tree view for JSON and YAML</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <section class="section" data-category="web">
+                <header class="section__header">
+                    <span class="section__index">04</span>
+                    <h2 class="section__title">Web</h2>
+                    <span class="section__count">4</span>
+                </header>
+                <div class="tool-grid">
+                    <a href="tools/url-parser.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-sitemap" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">URL Parser</h3>
+                            <p class="tool-card__desc">Parse and extract components from URLs</p>
+                        </div>
+                    </a>
+                    <a href="tools/curl-constructor.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-terminal" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">cURL Constructor</h3>
+                            <p class="tool-card__desc">Build cURL commands with customizable options</p>
+                        </div>
+                    </a>
+                    <a href="tools/jwt-decoder.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-key" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">JWT Decoder</h3>
+                            <p class="tool-card__desc">Decode and inspect JSON Web Tokens</p>
+                        </div>
+                    </a>
+                    <a href="tools/url-to-markdown.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-file-alt" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">URL → Markdown</h3>
+                            <p class="tool-card__desc">Scrape URL content and convert to Markdown</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <section class="section" data-category="crypto">
+                <header class="section__header">
+                    <span class="section__index">05</span>
+                    <h2 class="section__title">Crypto</h2>
+                    <span class="section__count">4</span>
+                </header>
+                <div class="tool-grid">
+                    <a href="tools/hash-generator.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-hashtag" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Hash Generator</h3>
+                            <p class="tool-card__desc">MD5, SHA-1, SHA-256, SHA-512 hashes</p>
+                        </div>
+                    </a>
+                    <a href="tools/uuid-generator.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-fingerprint" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">UUID Generator</h3>
+                            <p class="tool-card__desc">Generate random UUIDs in version 4 format</p>
+                        </div>
+                    </a>
+                    <a href="tools/password-generator.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-lock" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Password Generator</h3>
+                            <p class="tool-card__desc">Generate secure random passwords</p>
+                        </div>
+                    </a>
+                    <a href="tools/secret-share.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-user-secret" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Secret Share</h3>
+                            <p class="tool-card__desc">Share encrypted messages with password protection</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <section class="section" data-category="time">
+                <header class="section__header">
+                    <span class="section__index">06</span>
+                    <h2 class="section__title">Time</h2>
+                    <span class="section__count">2</span>
+                </header>
+                <div class="tool-grid">
+                    <a href="tools/timestamp-converter.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-calendar-alt" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Timestamp Converter</h3>
+                            <p class="tool-card__desc">Convert between timestamp formats and dates</p>
+                        </div>
+                    </a>
+                    <a href="tools/crontab-generator.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-clock" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Crontab Generator</h3>
+                            <p class="tool-card__desc">Build crontab expressions with human-readable preview</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <section class="section" data-category="visual">
+                <header class="section__header">
+                    <span class="section__index">07</span>
+                    <h2 class="section__title">Visual</h2>
+                    <span class="section__count">6</span>
+                </header>
+                <div class="tool-grid">
+                    <a href="tools/color-converter.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-palette" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Color Converter</h3>
+                            <p class="tool-card__desc">Convert between HEX, RGB, and HSL formats</p>
+                        </div>
+                    </a>
+                    <a href="tools/qr-code-tool.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-qrcode" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">QR Code Tool</h3>
+                            <p class="tool-card__desc">Generate and read QR codes from text or images</p>
+                        </div>
+                    </a>
+                    <a href="tools/markdown-preview.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fab fa-markdown" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Markdown Preview</h3>
+                            <p class="tool-card__desc">Preview Markdown with live rendering</p>
+                        </div>
+                    </a>
+                    <a href="tools/mermaid-diagram-editor.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-project-diagram" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Mermaid Editor</h3>
+                            <p class="tool-card__desc">Create diagrams with Mermaid syntax and live preview</p>
+                        </div>
+                    </a>
+                    <a href="tools/ocr-tool.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-eye" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">OCR Tool</h3>
+                            <p class="tool-card__desc">Extract text from images and PDFs offline</p>
+                        </div>
+                    </a>
+                    <a href="tools/ascii-art-generator.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-font" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">ASCII Art</h3>
+                            <p class="tool-card__desc">Generate ASCII art from text with multiple fonts</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <section class="section" data-category="api">
+                <header class="section__header">
+                    <span class="section__index">08</span>
+                    <h2 class="section__title">API</h2>
+                    <span class="section__count">2</span>
+                </header>
+                <div class="tool-grid">
+                    <a href="tools/api-mock-generator.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-vial" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">API Mock Data</h3>
+                            <p class="tool-card__desc">Generate realistic mock data for API testing</p>
+                        </div>
+                    </a>
+                    <a href="tools/regex-tester.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-search" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Regex Tester</h3>
+                            <p class="tool-card__desc">Test and validate regular expressions live</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <section class="section" data-category="network">
+                <header class="section__header">
+                    <span class="section__index">09</span>
+                    <h2 class="section__title">Network</h2>
+                    <span class="section__count">3</span>
+                </header>
+                <div class="tool-grid">
+                    <a href="tools/ip-lookup.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-globe" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">IP Lookup</h3>
+                            <p class="tool-card__desc">Geolocation, ISP, and network details for any IP</p>
+                        </div>
+                    </a>
+                    <a href="tools/ssl-checker.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-shield-alt" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">SSL/TLS Checker</h3>
+                            <p class="tool-card__desc">Analyze certificates and security status for any domain</p>
+                        </div>
+                    </a>
+                    <a href="tools/subnet-calculator.html" class="tool-card">
+                        <span class="tool-card__icon"><i class="fas fa-network-wired" aria-hidden="true"></i></span>
+                        <div class="tool-card__body">
+                            <h3 class="tool-card__title">Subnet Calculator</h3>
+                            <p class="tool-card__desc">Compute subnet ranges from CIDR notation</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <div id="no-results-message" class="no-results-message hidden">
+                no tools match your search
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="app-footer__inner">
+            <p>&copy; <span id="current-year">2025</span> devtools · <a href="https://github.com/irfansofyana/Devtools" target="_blank" rel="noopener">source</a> · <a href="https://github.com/irfansofyana/Devtools/issues" target="_blank" rel="noopener">issues</a></p>
+            <p>built by <a href="https://github.com/irfansofyana" target="_blank" rel="noopener">irfansofyana</a></p>
+        </div>
+    </footer>
 
     <script src="js/theme.js"></script>
     <script src="js/main.js"></script>

@@ -26,14 +26,19 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * On tool pages, mirror the page <h1> into the top-bar title slot
- * so the sticky header always shows the current tool name.
+ * On tool pages, slugify the page <h1> into the top-bar breadcrumb slot.
+ * (e.g. "JSON Beautifier/Minifier" -> "json-beautifier-minifier")
  */
 function populateToolPageTitle() {
-    const slot = document.querySelector('.tool-page-shell .top-bar__title');
+    const slot = document.getElementById('tool-crumb');
     if (!slot || slot.textContent.trim()) return;
     const h1 = document.querySelector('.tool-header h1, main h1');
-    if (h1) slot.textContent = h1.textContent.trim();
+    if (!h1) return;
+    slot.textContent = h1.textContent
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
 }
 
 /**
