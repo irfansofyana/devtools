@@ -75,6 +75,15 @@ test('Batch 2 pages expose the requested core capabilities', () => {
     assert.match(jsonDiffPage, /function applyPatch/);
 });
 
+test('SQL formatter uses a real SQL editor and formatter library', () => {
+    const sqlPage = read('tools/sql-formatter.html');
+
+    assert.match(sqlPage, /codemirror\/5\.65\.13\/codemirror\.min\.css/);
+    assert.match(sqlPage, /mode\/sql\/sql\.min\.js/);
+    assert.match(sqlPage, /CodeMirror\.fromTextArea/);
+    assert.match(sqlPage, /sql-formatter@15\.8\.1\/\+esm/);
+});
+
 test('workbench CSS isolates embedded JSONEditor from global form and table styles', () => {
     const workbenchCss = read('css/workbench.css');
 
