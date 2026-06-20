@@ -793,6 +793,82 @@ th {
     letter-spacing: 0.08em;
 }
 
+.jsoneditor,
+.jsoneditor *,
+.jsoneditor *::before,
+.jsoneditor *::after {
+    box-sizing: content-box;
+}
+
+.jsoneditor .jsoneditor-navigation-bar,
+.jsoneditor .jsoneditor-statusbar {
+    box-sizing: border-box;
+}
+
+.jsoneditor input,
+.jsoneditor input:not([type]),
+.jsoneditor input[type="text"],
+.jsoneditor input[type="search"],
+.jsoneditor select,
+.jsoneditor textarea {
+    min-height: 0;
+    height: auto;
+    width: auto;
+    padding: inherit;
+    border-color: inherit;
+    border-radius: 0;
+    background: inherit;
+    color: inherit;
+    box-shadow: none;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    transition: none;
+}
+
+.jsoneditor .jsoneditor-search input {
+    width: 120px;
+}
+
+.jsoneditor input:focus,
+.jsoneditor input:not([type]):focus,
+.jsoneditor input[type="text"]:focus,
+.jsoneditor input[type="search"]:focus,
+.jsoneditor select:focus,
+.jsoneditor textarea:focus {
+    outline: 0 !important;
+    outline-offset: 0 !important;
+    border-color: inherit !important;
+}
+
+.jsoneditor table {
+    width: auto;
+    min-width: 0;
+    border-collapse: separate;
+}
+
+.jsoneditor table.jsoneditor-tree {
+    width: 100%;
+}
+
+.jsoneditor th,
+.jsoneditor td {
+    position: static;
+    padding: 0;
+    border-bottom: 0;
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+    letter-spacing: 0;
+    text-align: left;
+    text-transform: none;
+    vertical-align: top;
+}
+
+.jsoneditor td.jsoneditor-separator {
+    padding: 3px 0;
+}
+
 pre,
 code,
 .highlighted-content,

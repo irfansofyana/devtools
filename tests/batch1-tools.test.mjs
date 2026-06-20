@@ -74,3 +74,12 @@ test('Batch 2 pages expose the requested core capabilities', () => {
     assert.match(jsonDiffPage, /function createPatch/);
     assert.match(jsonDiffPage, /function applyPatch/);
 });
+
+test('workbench CSS isolates embedded JSONEditor from global form and table styles', () => {
+    const workbenchCss = read('css/workbench.css');
+
+    assert.match(workbenchCss, /\.jsoneditor/);
+    assert.match(workbenchCss, /\.jsoneditor input/);
+    assert.match(workbenchCss, /\.jsoneditor table/);
+    assert.match(workbenchCss, /\.jsoneditor td/);
+});
