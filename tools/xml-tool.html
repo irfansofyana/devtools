@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Format, validate, and convert XML and JSON">
+    <title>XML Tool | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="tool-page-shell">
+    <header class="top-bar">
+        <a href="../index.html" class="top-bar__brand">devtools</a>
+        <div class="top-bar__spacer"></div>
+        <div class="top-bar__actions">
+            <a class="icon-btn" href="https://github.com/irfansofyana/Devtools" target="_blank" rel="noopener" aria-label="GitHub repository">
+                <i class="fab fa-github" aria-hidden="true"></i>
+            </a>
+            <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark and light theme" aria-pressed="false">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <a href="../index.html" class="back-link">all tools</a>
+                <div class="tool-header"><h1>XML Formatter/Validator</h1></div>
+                <div class="tool-description">
+                    <p>Format XML, validate parser errors, convert XML into JSON, or turn JSON objects back into XML for integrations and payload inspection.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    <div class="success-message hidden" id="success-message"></div>
+
+                    <div class="options-group">
+                        <label>Mode:</label>
+                        <div class="options-controls">
+                            <label><input type="radio" name="mode" value="format" checked> Format XML</label>
+                            <label><input type="radio" name="mode" value="validate"> Validate XML</label>
+                            <label><input type="radio" name="mode" value="xml-json"> XML to JSON</label>
+                            <label><input type="radio" name="mode" value="json-xml"> JSON to XML</label>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="root-name">Root element for JSON to XML:</label>
+                        <input id="root-name" type="text" value="root" spellcheck="false">
+                    </div>
+
+                    <div class="preview-container">
+                        <div class="input-group">
+                            <label for="input-data">Input:</label>
+                            <textarea id="input-data" spellcheck="false" placeholder="<user id=&quot;1&quot;><name>Ada</name></user>"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="load-xml-sample">XML Sample</button>
+                                <button class="secondary" id="load-json-sample">JSON Sample</button>
+                                <button class="secondary" id="clear-input">Clear</button>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="output-data">Output:</label>
+                            <textarea id="output-data" readonly spellcheck="false" aria-label="XML tool output"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" data-copy="output-data">Copy</button>
+                                <button class="secondary" id="swap-output">Use as Input</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button class="primary" id="run-btn">Run XML Tool</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer><div class="container"><p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p></div></footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('input-data');
+            const output = document.getElementById('output-data');
+            const rootName = document.getElementById('root-name');
+            const error = document.getElementById('error-message');
+            const success = document.getElementById('success-message');
+
+            function selectedMode() {
+                return document.querySelector('input[name="mode"]:checked').value;
+            }
+
+            function setStatus(kind, message) {
+                error.classList.add('hidden');
+                success.classList.add('hidden');
+                const target = kind === 'error' ? error : success;
+                target.textContent = message;
+                target.classList.remove('hidden');
+            }
+
+            function parseXML(value) {
+                const doc = new DOMParser().parseFromString(value, 'application/xml');
+                const parserError = doc.querySelector('parsererror');
+                if (parserError) {
+                    throw new Error(parserError.textContent.trim().replace(/\s+/g, ' '));
+                }
+                return doc;
+            }
+
+            function validateXML(value) {
+                const doc = parseXML(value);
+                return `Valid XML. Root element: <${doc.documentElement.nodeName}>`;
+            }
+
+            function formatXML(value) {
+                const doc = parseXML(value);
+                const serialized = new XMLSerializer().serializeToString(doc);
+                const lines = serialized.replace(/>\s*</g, '>\n<').split('\n');
+                let indent = 0;
+                return lines.map((line) => {
+                    const trimmed = line.trim();
+                    if (/^<\//.test(trimmed)) indent = Math.max(indent - 1, 0);
+                    const result = `${'  '.repeat(indent)}${trimmed}`;
+                    if (/^<[^!?/][^>]*[^/]>(?!.*<\/[^>]+>$)/.test(trimmed)) indent++;
+                    return result;
+                }).join('\n');
+            }
+
+            function elementToValue(element) {
+                const result = {};
+                [...element.attributes].forEach((attr) => {
+                    result[`@${attr.name}`] = attr.value;
+                });
+
+                const childElements = [...element.children];
+                const text = [...element.childNodes]
+                    .filter((node) => node.nodeType === Node.TEXT_NODE)
+                    .map((node) => node.nodeValue.trim())
+                    .filter(Boolean)
+                    .join(' ');
+
+                childElements.forEach((child) => {
+                    const value = elementToValue(child);
+                    if (Object.prototype.hasOwnProperty.call(result, child.nodeName)) {
+                        if (!Array.isArray(result[child.nodeName])) result[child.nodeName] = [result[child.nodeName]];
+                        result[child.nodeName].push(value);
+                    } else {
+                        result[child.nodeName] = value;
+                    }
+                });
+
+                if (text) result['#text'] = text;
+                const keys = Object.keys(result);
+                if (keys.length === 1 && keys[0] === '#text') return text;
+                return result;
+            }
+
+            function xmlToJSON(value) {
+                const doc = parseXML(value);
+                return JSON.stringify({ [doc.documentElement.nodeName]: elementToValue(doc.documentElement) }, null, 2);
+            }
+
+            function escapeXML(value) {
+                return String(value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&apos;');
+            }
+
+            function valueToXML(name, value, depth = 0) {
+                const pad = '  '.repeat(depth);
+                if (Array.isArray(value)) {
+                    return value.map((item) => valueToXML(name, item, depth)).join('\n');
+                }
+                if (value === null || typeof value !== 'object') {
+                    return `${pad}<${name}>${escapeXML(value ?? '')}</${name}>`;
+                }
+
+                const attrs = Object.entries(value)
+                    .filter(([key]) => key.startsWith('@'))
+                    .map(([key, attrValue]) => ` ${key.slice(1)}="${escapeXML(attrValue)}"`)
+                    .join('');
+                const text = Object.prototype.hasOwnProperty.call(value, '#text') ? escapeXML(value['#text']) : '';
+                const children = Object.entries(value)
+                    .filter(([key]) => !key.startsWith('@') && key !== '#text')
+                    .map(([key, childValue]) => valueToXML(key, childValue, depth + 1))
+                    .join('\n');
+
+                if (!children) return `${pad}<${name}${attrs}>${text}</${name}>`;
+                return `${pad}<${name}${attrs}>${text ? text : ''}\n${children}\n${pad}</${name}>`;
+            }
+
+            function jsonToXML(value) {
+                const parsed = JSON.parse(value);
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && Object.keys(parsed).length === 1) {
+                    const [name, data] = Object.entries(parsed)[0];
+                    return valueToXML(name, data);
+                }
+                return valueToXML(rootName.value.trim() || 'root', parsed);
+            }
+
+            function run() {
+                try {
+                    const mode = selectedMode();
+                    if (mode === 'format') {
+                        output.value = formatXML(input.value);
+                        setStatus('success', 'XML formatted successfully.');
+                    } else if (mode === 'validate') {
+                        output.value = validateXML(input.value);
+                        setStatus('success', output.value);
+                    } else if (mode === 'xml-json') {
+                        output.value = xmlToJSON(input.value);
+                        setStatus('success', 'XML converted to JSON.');
+                    } else {
+                        output.value = jsonToXML(input.value);
+                        setStatus('success', 'JSON converted to XML.');
+                    }
+                } catch (err) {
+                    output.value = '';
+                    setStatus('error', err.message);
+                }
+            }
+
+            document.getElementById('run-btn').addEventListener('click', run);
+            document.getElementById('load-xml-sample').addEventListener('click', () => {
+                input.value = '<user id="42"><name>Ada Lovelace</name><roles><role>admin</role><role>editor</role></roles></user>';
+                document.querySelector('input[value="format"]').checked = true;
+                run();
+            });
+            document.getElementById('load-json-sample').addEventListener('click', () => {
+                input.value = JSON.stringify({ user: { '@id': '42', name: 'Ada Lovelace', roles: { role: ['admin', 'editor'] } } }, null, 2);
+                document.querySelector('input[value="json-xml"]').checked = true;
+                run();
+            });
+            document.getElementById('clear-input').addEventListener('click', () => {
+                input.value = '';
+                output.value = '';
+                input.focus();
+            });
+            document.getElementById('swap-output').addEventListener('click', () => {
+                input.value = output.value;
+                output.value = '';
+                input.focus();
+            });
+        });
+    </script>
+</body>
+</html>

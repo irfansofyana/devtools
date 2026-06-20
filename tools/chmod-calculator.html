@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Calculate chmod permissions">
+    <title>chmod Calculator | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .chmod-grid {
+            display: grid;
+            grid-template-columns: minmax(120px, 1fr) repeat(3, minmax(72px, 96px));
+            gap: var(--space-2);
+            align-items: center;
+            overflow-x: auto;
+        }
+
+        .chmod-grid > div {
+            min-height: 42px;
+            display: grid;
+            place-items: center;
+            padding: var(--space-2);
+            border: 1px solid var(--border);
+            border-radius: var(--panel-radius);
+            background: var(--surface-2);
+        }
+
+        .chmod-grid .chmod-head,
+        .chmod-grid .chmod-row-label {
+            color: var(--text-muted);
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .chmod-output {
+            font-size: clamp(1.3rem, 4vw, 2.5rem);
+            line-height: 1;
+        }
+
+        @media (max-width: 560px) {
+            .chmod-grid {
+                grid-template-columns: minmax(96px, 1fr) repeat(3, minmax(64px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body class="tool-page-shell">
+    <header class="top-bar">
+        <a href="../index.html" class="top-bar__brand">devtools</a>
+        <div class="top-bar__spacer"></div>
+        <div class="top-bar__actions">
+            <a class="icon-btn" href="https://github.com/irfansofyana/Devtools" target="_blank" rel="noopener" aria-label="GitHub repository">
+                <i class="fab fa-github" aria-hidden="true"></i>
+            </a>
+            <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark and light theme" aria-pressed="false">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <a href="../index.html" class="back-link">all tools</a>
+                <div class="tool-header"><h1>chmod Calculator</h1></div>
+                <div class="tool-description">
+                    <p>Build Unix file permissions from read, write, execute, and special bits, then copy the numeric or symbolic chmod form.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="options-group">
+                        <label>Permissions:</label>
+                        <div class="chmod-grid" id="chmod-grid">
+                            <div></div>
+                            <div class="chmod-head">Owner</div>
+                            <div class="chmod-head">Group</div>
+                            <div class="chmod-head">Other</div>
+                            <div class="chmod-row-label">Read</div>
+                            <div><input type="checkbox" data-role="owner" data-bit="4" checked aria-label="Owner read"></div>
+                            <div><input type="checkbox" data-role="group" data-bit="4" checked aria-label="Group read"></div>
+                            <div><input type="checkbox" data-role="other" data-bit="4" checked aria-label="Other read"></div>
+                            <div class="chmod-row-label">Write</div>
+                            <div><input type="checkbox" data-role="owner" data-bit="2" checked aria-label="Owner write"></div>
+                            <div><input type="checkbox" data-role="group" data-bit="2" aria-label="Group write"></div>
+                            <div><input type="checkbox" data-role="other" data-bit="2" aria-label="Other write"></div>
+                            <div class="chmod-row-label">Execute</div>
+                            <div><input type="checkbox" data-role="owner" data-bit="1" checked aria-label="Owner execute"></div>
+                            <div><input type="checkbox" data-role="group" data-bit="1" checked aria-label="Group execute"></div>
+                            <div><input type="checkbox" data-role="other" data-bit="1" checked aria-label="Other execute"></div>
+                        </div>
+                    </div>
+
+                    <div class="options-group">
+                        <label>Special bits:</label>
+                        <div class="options-controls">
+                            <label><input type="checkbox" id="setuid"> Setuid</label>
+                            <label><input type="checkbox" id="setgid"> Setgid</label>
+                            <label><input type="checkbox" id="sticky"> Sticky</label>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="numeric-input">Numeric mode:</label>
+                        <div class="input-with-button">
+                            <input id="numeric-input" type="text" inputmode="numeric" pattern="[0-7]{3,4}" value="755" aria-label="Numeric chmod mode">
+                            <button class="secondary" id="apply-numeric">Apply</button>
+                        </div>
+                        <div class="input-controls">
+                            <button class="secondary preset" data-mode="644">644</button>
+                            <button class="secondary preset" data-mode="664">664</button>
+                            <button class="secondary preset" data-mode="755">755</button>
+                            <button class="secondary preset" data-mode="775">775</button>
+                            <button class="secondary preset" data-mode="600">600</button>
+                        </div>
+                    </div>
+
+                    <div class="result-container" id="result-container">
+                        <h3>Result:</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Numeric</div>
+                                <div class="info-value chmod-output" id="numeric-output">755</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Symbolic</div>
+                                <div class="info-value chmod-output" id="symbolic-output">rwxr-xr-x</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Command</div>
+                                <div class="info-value" id="command-output">chmod 755 file</div>
+                            </div>
+                        </div>
+                        <div class="input-controls">
+                            <button class="secondary" data-copy="numeric-output">Copy Numeric</button>
+                            <button class="secondary" data-copy="symbolic-output">Copy Symbolic</button>
+                            <button class="secondary" data-copy="command-output">Copy Command</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer><div class="container"><p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p></div></footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const numericInput = document.getElementById('numeric-input');
+            const numericOutput = document.getElementById('numeric-output');
+            const symbolicOutput = document.getElementById('symbolic-output');
+            const commandOutput = document.getElementById('command-output');
+            const roles = ['owner', 'group', 'other'];
+            const specialIds = ['setuid', 'setgid', 'sticky'];
+
+            function roleValue(role) {
+                return [...document.querySelectorAll(`[data-role="${role}"]`)]
+                    .filter((input) => input.checked)
+                    .reduce((sum, input) => sum + Number(input.dataset.bit), 0);
+            }
+
+            function specialValue() {
+                return specialIds.reduce((sum, id, index) => {
+                    return sum + (document.getElementById(id).checked ? [4, 2, 1][index] : 0);
+                }, 0);
+            }
+
+            function bitChar(value, bit, char, specialChar, hasSpecial) {
+                if (bit === 1 && hasSpecial) return value & bit ? specialChar : specialChar.toUpperCase();
+                return value & bit ? char : '-';
+            }
+
+            function update() {
+                const values = roles.map(roleValue);
+                const special = specialValue();
+                const numeric = `${special ? special : ''}${values.join('')}`;
+                const symbolic = values.map((value, index) => {
+                    const specialChar = index === 2 ? 't' : 's';
+                    const hasSpecial = Boolean(special & [4, 2, 1][index]);
+                    return [
+                        bitChar(value, 4, 'r', specialChar, false),
+                        bitChar(value, 2, 'w', specialChar, false),
+                        bitChar(value, 1, 'x', specialChar, hasSpecial),
+                    ].join('');
+                }).join('');
+
+                numericInput.value = numeric;
+                numericOutput.textContent = numeric;
+                symbolicOutput.textContent = symbolic;
+                commandOutput.textContent = `chmod ${numeric} file`;
+            }
+
+            function applyNumeric(mode) {
+                const clean = mode.trim();
+                if (!/^[0-7]{3,4}$/.test(clean)) return;
+                const padded = clean.padStart(4, '0');
+                const digits = padded.split('').map(Number);
+                specialIds.forEach((id, index) => {
+                    document.getElementById(id).checked = Boolean(digits[0] & [4, 2, 1][index]);
+                });
+                roles.forEach((role, index) => {
+                    document.querySelectorAll(`[data-role="${role}"]`).forEach((input) => {
+                        input.checked = Boolean(digits[index + 1] & Number(input.dataset.bit));
+                    });
+                });
+                update();
+            }
+
+            document.querySelectorAll('input[type="checkbox"]').forEach((input) => input.addEventListener('change', update));
+            document.getElementById('apply-numeric').addEventListener('click', () => applyNumeric(numericInput.value));
+            numericInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') applyNumeric(numericInput.value);
+            });
+            document.querySelectorAll('.preset').forEach((button) => {
+                button.addEventListener('click', () => applyNumeric(button.dataset.mode));
+            });
+            update();
+        });
+    </script>
+</body>
+</html>

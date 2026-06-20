@@ -11,7 +11,6 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/favicon-32x32.png" type="image/png" sizes="32x32">
-    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -37,7 +36,7 @@
     <main class="page" id="tools">
         <section class="intro">
             <h1>Developer tools</h1>
-            <p>A small collection of <span id="tool-count">36</span> offline-friendly utilities — text, encoding, data, web, crypto. Press <code>/</code> or <code>⌘K</code> to search.</p>
+            <p>A small collection of <span id="tool-count">43</span> offline-friendly utilities — text, encoding, data, web, crypto. Press <code>/</code> or <code>⌘K</code> to search.</p>
         </section>
 
         <div class="search">
@@ -65,6 +64,7 @@
             <ul class="tool-list">
                 <li class="tool"><a href="tools/base64-encoder-decoder.html" class="tool__link"><span class="tool__name">base64</span><span class="tool__desc">Encode and decode Base64 (text or files)</span></a></li>
                 <li class="tool"><a href="tools/url-encoder-decoder.html" class="tool__link"><span class="tool__name">url-encode</span><span class="tool__desc">Encode and decode URLs and URL components</span></a></li>
+                <li class="tool"><a href="tools/html-entity-encoder-decoder.html" class="tool__link"><span class="tool__name">html-entities</span><span class="tool__desc">Encode and decode HTML entities</span></a></li>
                 <li class="tool"><a href="tools/ascii-hex-converter.html" class="tool__link"><span class="tool__name">ascii-hex</span><span class="tool__desc">Convert between ASCII text and hexadecimal</span></a></li>
             </ul>
         </section>
@@ -73,9 +73,13 @@
             <h2 class="section__title">Data</h2>
             <ul class="tool-list">
                 <li class="tool"><a href="tools/json-formatter.html" class="tool__link"><span class="tool__name">json-formatter</span><span class="tool__desc">Beautify and minify JSON with syntax highlighting</span></a></li>
+                <li class="tool"><a href="tools/json-diff-patch.html" class="tool__link"><span class="tool__name">json-diff</span><span class="tool__desc">Structural JSON diff and JSON Patch generation</span></a></li>
+                <li class="tool"><a href="tools/json-escape-unescape.html" class="tool__link"><span class="tool__name">json-escape</span><span class="tool__desc">Escape and unescape JSON string content</span></a></li>
                 <li class="tool"><a href="tools/json-yaml-converter.html" class="tool__link"><span class="tool__name">json-yaml</span><span class="tool__desc">Convert between JSON and YAML with validation</span></a></li>
+                <li class="tool"><a href="tools/xml-tool.html" class="tool__link"><span class="tool__name">xml-tool</span><span class="tool__desc">Format, validate, and convert XML and JSON</span></a></li>
                 <li class="tool"><a href="tools/csv-json-converter.html" class="tool__link"><span class="tool__name">csv-json</span><span class="tool__desc">Convert between CSV and JSON</span></a></li>
                 <li class="tool"><a href="tools/csv-visualizer.html" class="tool__link"><span class="tool__name">csv-visualizer</span><span class="tool__desc">Visualize CSV data as HTML tables</span></a></li>
+                <li class="tool"><a href="tools/sql-formatter.html" class="tool__link"><span class="tool__name">sql-formatter</span><span class="tool__desc">Format and minify SQL queries</span></a></li>
                 <li class="tool"><a href="tools/json-to-protobuf.html" class="tool__link"><span class="tool__name">json-to-protobuf</span><span class="tool__desc">Generate .proto definitions from JSON examples</span></a></li>
                 <li class="tool"><a href="tools/json-yaml-explorer.html" class="tool__link"><span class="tool__name">json-yaml-explorer</span><span class="tool__desc">Interactive tree view for JSON and YAML</span></a></li>
             </ul>
@@ -95,9 +99,17 @@
             <h2 class="section__title">Crypto</h2>
             <ul class="tool-list">
                 <li class="tool"><a href="tools/hash-generator.html" class="tool__link"><span class="tool__name">hash</span><span class="tool__desc">MD5, SHA-1, SHA-256, SHA-512 hashes</span></a></li>
-                <li class="tool"><a href="tools/uuid-generator.html" class="tool__link"><span class="tool__name">uuid</span><span class="tool__desc">Generate random UUIDs (v4)</span></a></li>
+                <li class="tool"><a href="tools/hmac-generator.html" class="tool__link"><span class="tool__name">hmac</span><span class="tool__desc">Generate and verify HMAC signatures</span></a></li>
+                <li class="tool"><a href="tools/uuid-generator.html" class="tool__link"><span class="tool__name">uuid</span><span class="tool__desc">Generate UUID v4, UUID v7, and ULID values</span></a></li>
                 <li class="tool"><a href="tools/password-generator.html" class="tool__link"><span class="tool__name">password</span><span class="tool__desc">Generate secure random passwords</span></a></li>
                 <li class="tool"><a href="tools/secret-share.html" class="tool__link"><span class="tool__name">secret-share</span><span class="tool__desc">Share encrypted messages with password protection</span></a></li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2 class="section__title">System</h2>
+            <ul class="tool-list">
+                <li class="tool"><a href="tools/chmod-calculator.html" class="tool__link"><span class="tool__name">chmod</span><span class="tool__desc">Calculate Unix permission modes and commands</span></a></li>
             </ul>
         </section>
 

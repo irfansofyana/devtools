@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Compare JSON structures and generate JSON Patch operations">
+    <title>JSON Diff/Patch | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diff-list {
+            display: grid;
+            gap: var(--space-2);
+            max-height: 360px;
+            overflow: auto;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .diff-list li {
+            display: grid;
+            grid-template-columns: minmax(84px, auto) minmax(0, 1fr);
+            gap: var(--space-3);
+            padding: var(--space-3);
+            border: 1px solid var(--border);
+            border-radius: var(--panel-radius);
+            background: var(--surface-2);
+        }
+
+        .diff-op {
+            color: var(--accent);
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .diff-path {
+            overflow-wrap: anywhere;
+        }
+    </style>
+</head>
+<body class="tool-page-shell">
+    <header class="top-bar">
+        <a href="../index.html" class="top-bar__brand">devtools</a>
+        <div class="top-bar__spacer"></div>
+        <div class="top-bar__actions">
+            <a class="icon-btn" href="https://github.com/irfansofyana/Devtools" target="_blank" rel="noopener" aria-label="GitHub repository">
+                <i class="fab fa-github" aria-hidden="true"></i>
+            </a>
+            <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark and light theme" aria-pressed="false">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <a href="../index.html" class="back-link">all tools</a>
+                <div class="tool-header"><h1>JSON Diff / JSON Patch</h1></div>
+                <div class="tool-description">
+                    <p>Compare two JSON documents structurally, generate JSON Patch operations, and apply the patch back to the left document for quick verification.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+
+                    <div class="preview-container">
+                        <div class="input-group">
+                            <label for="left-json">Original JSON:</label>
+                            <textarea id="left-json" spellcheck="false" placeholder='{"name":"Ada","active":true}'></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label for="right-json">Target JSON:</label>
+                            <textarea id="right-json" spellcheck="false" placeholder='{"name":"Ada","active":false}'></textarea>
+                        </div>
+                    </div>
+
+                    <div class="input-controls">
+                        <button class="primary" id="compare-btn">Compare JSON</button>
+                        <button class="secondary" id="apply-btn">Apply Patch</button>
+                        <button class="secondary" id="load-sample">Load Sample</button>
+                        <button class="secondary" id="clear-input">Clear</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Structural Diff:</h3>
+                        <ul class="diff-list" id="diff-list"></ul>
+                    </div>
+
+                    <div class="preview-container">
+                        <div class="input-group result-container hidden" id="patch-container">
+                            <label for="patch-output">JSON Patch:</label>
+                            <textarea id="patch-output" readonly spellcheck="false" aria-label="JSON Patch output"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" data-copy="patch-output">Copy Patch</button>
+                            </div>
+                        </div>
+                        <div class="input-group result-container hidden" id="applied-container">
+                            <label for="applied-output">Applied Result:</label>
+                            <textarea id="applied-output" readonly spellcheck="false" aria-label="Applied JSON output"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" data-copy="applied-output">Copy Result</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer><div class="container"><p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p></div></footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const leftInput = document.getElementById('left-json');
+            const rightInput = document.getElementById('right-json');
+            const patchOutput = document.getElementById('patch-output');
+            const appliedOutput = document.getElementById('applied-output');
+            const diffList = document.getElementById('diff-list');
+            const resultContainer = document.getElementById('result-container');
+            const patchContainer = document.getElementById('patch-container');
+            const appliedContainer = document.getElementById('applied-container');
+            const error = document.getElementById('error-message');
+            let lastPatch = [];
+
+            function parseJSON(value, label) {
+                try {
+                    return JSON.parse(value);
+                } catch (err) {
+                    throw new Error(`${label} is invalid JSON: ${err.message}`);
+                }
+            }
+
+            function kind(value) {
+                if (Array.isArray(value)) return 'array';
+                if (value === null) return 'null';
+                return typeof value;
+            }
+
+            function isObject(value) {
+                return value && typeof value === 'object' && !Array.isArray(value);
+            }
+
+            function pointer(path) {
+                if (!path.length) return '';
+                return `/${path.map((part) => String(part).replace(/~/g, '~0').replace(/\//g, '~1')).join('/')}`;
+            }
+
+            function sameValue(left, right) {
+                return JSON.stringify(left) === JSON.stringify(right);
+            }
+
+            function diffValues(left, right, path = []) {
+                const changes = [];
+                if (sameValue(left, right)) return changes;
+
+                if (kind(left) !== kind(right)) {
+                    changes.push({ op: 'replace', path: pointer(path), before: left, after: right });
+                    return changes;
+                }
+
+                if (Array.isArray(left)) {
+                    const sharedLength = Math.min(left.length, right.length);
+                    for (let i = 0; i < sharedLength; i++) {
+                        changes.push(...diffValues(left[i], right[i], [...path, i]));
+                    }
+                    for (let i = left.length - 1; i >= right.length; i--) {
+                        changes.push({ op: 'remove', path: pointer([...path, i]), before: left[i] });
+                    }
+                    for (let i = left.length; i < right.length; i++) {
+                        changes.push({ op: 'add', path: pointer([...path, i]), after: right[i] });
+                    }
+                    return changes;
+                }
+
+                if (isObject(left)) {
+                    const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+                    [...keys].sort().forEach((key) => {
+                        if (!Object.prototype.hasOwnProperty.call(left, key)) {
+                            changes.push({ op: 'add', path: pointer([...path, key]), after: right[key] });
+                        } else if (!Object.prototype.hasOwnProperty.call(right, key)) {
+                            changes.push({ op: 'remove', path: pointer([...path, key]), before: left[key] });
+                        } else {
+                            changes.push(...diffValues(left[key], right[key], [...path, key]));
+                        }
+                    });
+                    return changes;
+                }
+
+                changes.push({ op: 'replace', path: pointer(path), before: left, after: right });
+                return changes;
+            }
+
+            function createPatch(left, right) {
+                return diffValues(left, right).map((change) => {
+                    if (change.op === 'remove') return { op: 'remove', path: change.path || '' };
+                    return { op: change.op, path: change.path || '', value: change.after };
+                });
+            }
+
+            function pathParts(path) {
+                if (!path) return [];
+                return path.slice(1).split('/').map((part) => part.replace(/~1/g, '/').replace(/~0/g, '~'));
+            }
+
+            function applyPatch(documentValue, patch) {
+                let root = structuredClone(documentValue);
+                patch.forEach((operation) => {
+                    const parts = pathParts(operation.path);
+                    if (!parts.length) {
+                        if (operation.op === 'remove') root = null;
+                        else root = structuredClone(operation.value);
+                        return;
+                    }
+                    const key = parts.pop();
+                    const parent = parts.reduce((value, part) => value[part], root);
+                    if (Array.isArray(parent)) {
+                        const index = key === '-' ? parent.length : Number(key);
+                        if (operation.op === 'remove') parent.splice(index, 1);
+                        else if (operation.op === 'add') parent.splice(index, 0, structuredClone(operation.value));
+                        else parent[index] = structuredClone(operation.value);
+                    } else if (operation.op === 'remove') {
+                        delete parent[key];
+                    } else {
+                        parent[key] = structuredClone(operation.value);
+                    }
+                });
+                return root;
+            }
+
+            function renderDiff(changes) {
+                diffList.innerHTML = '';
+                if (!changes.length) {
+                    const item = document.createElement('li');
+                    item.innerHTML = '<span class="diff-op">equal</span><span class="diff-path">No structural changes.</span>';
+                    diffList.appendChild(item);
+                    return;
+                }
+                changes.forEach((change) => {
+                    const item = document.createElement('li');
+                    const before = change.before === undefined ? '' : ` before=${JSON.stringify(change.before)}`;
+                    const after = change.after === undefined ? '' : ` after=${JSON.stringify(change.after)}`;
+                    item.innerHTML = `<span class="diff-op">${change.op}</span><span class="diff-path">${change.path || '/'}${before}${after}</span>`;
+                    diffList.appendChild(item);
+                });
+            }
+
+            function compare() {
+                try {
+                    error.classList.add('hidden');
+                    const left = parseJSON(leftInput.value, 'Original JSON');
+                    const right = parseJSON(rightInput.value, 'Target JSON');
+                    const changes = diffValues(left, right);
+                    lastPatch = createPatch(left, right);
+                    renderDiff(changes);
+                    patchOutput.value = JSON.stringify(lastPatch, null, 2);
+                    resultContainer.classList.remove('hidden');
+                    patchContainer.classList.remove('hidden');
+                    return { left, right };
+                } catch (err) {
+                    error.textContent = err.message;
+                    error.classList.remove('hidden');
+                    throw err;
+                }
+            }
+
+            function runApplyPatch() {
+                try {
+                    const { left } = compare();
+                    const applied = applyPatch(left, lastPatch);
+                    appliedOutput.value = JSON.stringify(applied, null, 2);
+                    appliedContainer.classList.remove('hidden');
+                } catch (_) {
+                    appliedOutput.value = '';
+                    appliedContainer.classList.add('hidden');
+                }
+            }
+
+            document.getElementById('compare-btn').addEventListener('click', compare);
+            document.getElementById('apply-btn').addEventListener('click', runApplyPatch);
+            document.getElementById('load-sample').addEventListener('click', () => {
+                leftInput.value = JSON.stringify({ name: 'Ada', active: true, roles: ['admin'], profile: { city: 'London' } }, null, 2);
+                rightInput.value = JSON.stringify({ name: 'Ada Lovelace', active: false, roles: ['admin', 'editor'], profile: { city: 'London', year: 1843 } }, null, 2);
+                runApplyPatch();
+            });
+            document.getElementById('clear-input').addEventListener('click', () => {
+                leftInput.value = '';
+                rightInput.value = '';
+                patchOutput.value = '';
+                appliedOutput.value = '';
+                diffList.innerHTML = '';
+                resultContainer.classList.add('hidden');
+                patchContainer.classList.add('hidden');
+                appliedContainer.classList.add('hidden');
+                leftInput.focus();
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Format and minify SQL queries with a real SQL editor">
+    <title>SQL Formatter/Minifier | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/eclipse.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body.sql-tool .preview-container {
+            align-items: stretch;
+        }
+
+        body.sql-tool .sql-editor-shell {
+            overflow: hidden;
+            border: 1px solid var(--input-border);
+            border-radius: var(--panel-radius);
+            background: var(--input-bg);
+        }
+
+        body.sql-tool .CodeMirror {
+            height: clamp(280px, 42vh, 460px);
+            min-height: clamp(280px, 42vh, 460px) !important;
+            font-family: var(--font-mono);
+            font-size: 0.92rem;
+            font-variant-ligatures: none;
+            font-feature-settings: "liga" 0, "calt" 0;
+            line-height: 1.55;
+        }
+
+        body.sql-tool .CodeMirror-gutters {
+            border-right-color: var(--border);
+        }
+
+        body.sql-tool .CodeMirror-readonly .CodeMirror-cursor {
+            display: none;
+        }
+
+        body.sql-tool .formatter-status {
+            color: var(--text-muted);
+            font-size: var(--text-xs);
+        }
+    </style>
+</head>
+<body class="tool-page-shell sql-tool">
+    <header class="top-bar">
+        <a href="../index.html" class="top-bar__brand">devtools</a>
+        <div class="top-bar__spacer"></div>
+        <div class="top-bar__actions">
+            <a class="icon-btn" href="https://github.com/irfansofyana/Devtools" target="_blank" rel="noopener" aria-label="GitHub repository">
+                <i class="fab fa-github" aria-hidden="true"></i>
+            </a>
+            <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark and light theme" aria-pressed="false">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <a href="../index.html" class="back-link">all tools</a>
+                <div class="tool-header"><h1>SQL Formatter/Minifier</h1></div>
+                <div class="tool-description">
+                    <p>Edit SQL with syntax highlighting, then format it with the sql-formatter library or compress it for logs and generated commands.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+
+                    <div class="options-group">
+                        <label>Formatter Options:</label>
+                        <div class="options-controls">
+                            <label>
+                                <select id="dialect-option">
+                                    <option value="postgresql" selected>PostgreSQL</option>
+                                    <option value="sql">Standard SQL</option>
+                                    <option value="mysql">MySQL</option>
+                                    <option value="sqlite">SQLite</option>
+                                    <option value="bigquery">BigQuery</option>
+                                    <option value="transactsql">T-SQL</option>
+                                </select>
+                                Dialect
+                            </label>
+                            <label>
+                                <select id="keyword-case">
+                                    <option value="upper" selected>Uppercase keywords</option>
+                                    <option value="lower">Lowercase keywords</option>
+                                    <option value="preserve">Preserve case</option>
+                                </select>
+                                Keywords
+                            </label>
+                            <label>
+                                <select id="indent-size">
+                                    <option value="2" selected>2 spaces</option>
+                                    <option value="4">4 spaces</option>
+                                    <option value="8">8 spaces</option>
+                                </select>
+                                Indent
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="preview-container">
+                        <div class="input-group">
+                            <label for="input-sql">Input SQL:</label>
+                            <div class="sql-editor-shell">
+                                <textarea id="input-sql" spellcheck="false" placeholder="select id, email from users where active = true order by created_at desc"></textarea>
+                            </div>
+                            <div class="input-controls">
+                                <button class="secondary" id="load-sample">Load Sample</button>
+                                <button class="secondary" id="clear-input">Clear</button>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="output-sql">Output:</label>
+                            <div class="sql-editor-shell">
+                                <textarea id="output-sql" readonly spellcheck="false" aria-label="Formatted SQL output"></textarea>
+                            </div>
+                            <div class="input-controls">
+                                <button class="secondary" id="copy-output">Copy</button>
+                                <button class="secondary" id="swap-output">Use as Input</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button class="primary" id="format-btn">Format SQL</button>
+                        <button class="secondary" id="minify-btn">Minify SQL</button>
+                        <span class="formatter-status" id="formatter-status">Loading formatter...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer><div class="container"><p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p></div></footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/sql/sql.min.js"></script>
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script type="module">
+        import { format as formatWithLibrary } from 'https://cdn.jsdelivr.net/npm/sql-formatter@15.8.1/+esm';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputTextArea = document.getElementById('input-sql');
+            const outputTextArea = document.getElementById('output-sql');
+            const dialectOption = document.getElementById('dialect-option');
+            const keywordCase = document.getElementById('keyword-case');
+            const indentSize = document.getElementById('indent-size');
+            const error = document.getElementById('error-message');
+            const status = document.getElementById('formatter-status');
+
+            const editorTheme = document.documentElement.dataset.theme === 'dark' ? 'dracula' : 'eclipse';
+            const inputEditor = CodeMirror.fromTextArea(inputTextArea, {
+                mode: 'text/x-sql',
+                theme: editorTheme,
+                lineNumbers: true,
+                lineWrapping: true,
+                indentUnit: 2,
+                tabSize: 2,
+                viewportMargin: Infinity,
+            });
+            const outputEditor = CodeMirror.fromTextArea(outputTextArea, {
+                mode: 'text/x-sql',
+                theme: editorTheme,
+                lineNumbers: true,
+                lineWrapping: true,
+                readOnly: true,
+                cursorBlinkRate: -1,
+                viewportMargin: Infinity,
+            });
+            outputEditor.getWrapperElement().classList.add('CodeMirror-readonly');
+
+            function showErrorMessage(message) {
+                error.textContent = message;
+                error.classList.remove('hidden');
+                error.classList.add('alert', 'alert--error');
+            }
+
+            function clearError() {
+                error.classList.add('hidden');
+                error.textContent = '';
+            }
+
+            function formatterOptions() {
+                const selectedCase = keywordCase.value;
+                const options = {
+                    language: dialectOption.value,
+                    tabWidth: Number(indentSize.value),
+                };
+                if (selectedCase !== 'preserve') options.keywordCase = selectedCase;
+                return options;
+            }
+
+            function setOutput(value) {
+                outputEditor.setValue(value);
+                outputTextArea.value = value;
+            }
+
+            function formatSQL(sql) {
+                return formatWithLibrary(sql, formatterOptions()).trim();
+            }
+
+            function minifySQL(sql) {
+                let output = '';
+                let quote = '';
+                let lineComment = false;
+                let blockComment = false;
+                let pendingSpace = false;
+                const compoundOperators = ['!~*', '->>', '#>>', '>=', '<=', '<>', '!=', '||', '&&', '::', '->', '=>', '~*', '!~', '#>'];
+
+                for (let i = 0; i < sql.length; i++) {
+                    const char = sql[i];
+                    const next = sql[i + 1];
+
+                    if (lineComment) {
+                        if (char === '\n') {
+                            lineComment = false;
+                            pendingSpace = true;
+                        }
+                        continue;
+                    }
+
+                    if (blockComment) {
+                        if (char === '*' && next === '/') {
+                            blockComment = false;
+                            i++;
+                            pendingSpace = true;
+                        }
+                        continue;
+                    }
+
+                    if (quote) {
+                        output += char;
+                        if (char === quote) {
+                            if (sql[i + 1] === quote) {
+                                output += sql[++i];
+                            } else {
+                                quote = '';
+                            }
+                        }
+                        continue;
+                    }
+
+                    if (char === '-' && next === '-') {
+                        lineComment = true;
+                        i++;
+                        continue;
+                    }
+
+                    if (char === '/' && next === '*') {
+                        blockComment = true;
+                        i++;
+                        continue;
+                    }
+
+                    if (char === "'" || char === '"' || char === '`') {
+                        if (pendingSpace && output && !/[(,=<>+\-*/%]\s?$/.test(output)) output += ' ';
+                        pendingSpace = false;
+                        quote = char;
+                        output += char;
+                        continue;
+                    }
+
+                    if (/\s/.test(char)) {
+                        pendingSpace = true;
+                        continue;
+                    }
+
+                    if (/[(),;]/.test(char)) {
+                        output = output.trimEnd() + char;
+                        pendingSpace = char === ',';
+                        continue;
+                    }
+
+                    const compoundOperator = compoundOperators.find((operator) => sql.startsWith(operator, i));
+                    if (compoundOperator) {
+                        output = `${output.trimEnd()} ${compoundOperator} `;
+                        i += compoundOperator.length - 1;
+                        pendingSpace = false;
+                        continue;
+                    }
+
+                    if (/[=<>+\-*/%]/.test(char)) {
+                        output = `${output.trimEnd()} ${char} `;
+                        pendingSpace = false;
+                        continue;
+                    }
+
+                    if (pendingSpace && output && !output.endsWith(' ') && !output.endsWith('(')) output += ' ';
+                    output += char;
+                    pendingSpace = false;
+                }
+
+                return output.replace(/\s+/g, ' ').trim();
+            }
+
+            function run(mode) {
+                try {
+                    clearError();
+                    const input = inputEditor.getValue();
+                    const output = mode === 'minify' ? minifySQL(input) : formatSQL(input);
+                    setOutput(output);
+                } catch (err) {
+                    showErrorMessage(err.message);
+                }
+            }
+
+            document.getElementById('format-btn').addEventListener('click', () => run('format'));
+            document.getElementById('minify-btn').addEventListener('click', () => run('minify'));
+            document.getElementById('load-sample').addEventListener('click', () => {
+                inputEditor.setValue("select u.id, u.email, count(o.id) as order_count from users u left join orders o on o.user_id = u.id where u.active = true and o.created_at >= '2026-01-01' group by u.id, u.email order by order_count desc limit 20;");
+                run('format');
+            });
+            document.getElementById('clear-input').addEventListener('click', () => {
+                inputEditor.setValue('');
+                setOutput('');
+                inputEditor.focus();
+            });
+            document.getElementById('swap-output').addEventListener('click', () => {
+                inputEditor.setValue(outputEditor.getValue());
+                setOutput('');
+                inputEditor.focus();
+            });
+            document.getElementById('copy-output').addEventListener('click', () => {
+                const value = outputEditor.getValue();
+                navigator.clipboard.writeText(value).then(() => {
+                    const btn = document.getElementById('copy-output');
+                    const original = btn.textContent;
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => { btn.textContent = original; }, 1600);
+                }).catch((err) => showErrorMessage(`Copy failed: ${err.message}`));
+            });
+            [dialectOption, keywordCase, indentSize].forEach((control) => {
+                control.addEventListener('change', () => {
+                    if (outputEditor.getValue()) run('format');
+                });
+            });
+
+            status.textContent = 'Formatter ready';
+            window.formatSQL = formatSQL;
+            window.minifySQL = minifySQL;
+        });
+    </script>
+</body>
+</html>

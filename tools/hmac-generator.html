@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Generate and verify HMAC signatures">
+    <title>HMAC Generator/Verifier | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="tool-page-shell">
+    <header class="top-bar">
+        <a href="../index.html" class="top-bar__brand">devtools</a>
+        <div class="top-bar__spacer"></div>
+        <div class="top-bar__actions">
+            <a class="icon-btn" href="https://github.com/irfansofyana/Devtools" target="_blank" rel="noopener" aria-label="GitHub repository">
+                <i class="fab fa-github" aria-hidden="true"></i>
+            </a>
+            <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark and light theme" aria-pressed="false">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <a href="../index.html" class="back-link">all tools</a>
+                <div class="tool-header"><h1>HMAC Generator/Verifier</h1></div>
+                <div class="tool-description">
+                    <p>Create HMAC signatures with SHA algorithms and compare an expected signature without sending secrets anywhere.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+                    <div class="success-message hidden" id="success-message"></div>
+
+                    <div class="options-group">
+                        <label>Options:</label>
+                        <div class="options-controls">
+                            <label>
+                                <select id="algorithm">
+                                    <option value="SHA-256">SHA-256</option>
+                                    <option value="SHA-384">SHA-384</option>
+                                    <option value="SHA-512">SHA-512</option>
+                                </select>
+                                Algorithm
+                            </label>
+                            <label>
+                                <select id="encoding">
+                                    <option value="hex">Hex</option>
+                                    <option value="base64">Base64</option>
+                                </select>
+                                Output
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="secret">Secret key:</label>
+                        <input id="secret" type="password" autocomplete="off" placeholder="shared-secret">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="message">Message:</label>
+                        <textarea id="message" spellcheck="false" placeholder="Payload to sign..."></textarea>
+                        <div class="input-controls">
+                            <button class="secondary" id="load-sample">Load Sample</button>
+                            <button class="secondary" id="clear-input">Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="expected">Expected signature (optional):</label>
+                        <input id="expected" type="text" spellcheck="false" placeholder="Paste signature to verify">
+                    </div>
+
+                    <div class="text-center">
+                        <button class="primary" id="generate-btn">Generate HMAC</button>
+                    </div>
+
+                    <div class="result-container hidden" id="result-container">
+                        <h3>Signature:</h3>
+                        <div class="input-group">
+                            <textarea id="result-text" readonly spellcheck="false" aria-label="Generated HMAC signature"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="copy-result" data-copy="result-text">Copy</button>
+                                <button class="secondary" id="use-expected">Use as Expected</button>
+                            </div>
+                        </div>
+                        <div class="info-grid" id="verification-grid"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer><div class="container"><p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p></div></footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const secret = document.getElementById('secret');
+            const message = document.getElementById('message');
+            const expected = document.getElementById('expected');
+            const algorithm = document.getElementById('algorithm');
+            const encoding = document.getElementById('encoding');
+            const result = document.getElementById('result-text');
+            const resultContainer = document.getElementById('result-container');
+            const verificationGrid = document.getElementById('verification-grid');
+            const error = document.getElementById('error-message');
+
+            const encoder = new TextEncoder();
+
+            function toHex(buffer) {
+                return [...new Uint8Array(buffer)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+            }
+
+            function toBase64(buffer) {
+                let binary = '';
+                new Uint8Array(buffer).forEach((byte) => {
+                    binary += String.fromCharCode(byte);
+                });
+                return btoa(binary);
+            }
+
+            function normalizeSignature(value) {
+                return value.trim().replace(/^sha(256|384|512)=/i, '').replace(/\s+/g, '');
+            }
+
+            function timingSafeEqual(a, b) {
+                const left = normalizeSignature(a);
+                const right = normalizeSignature(b);
+                let diff = left.length ^ right.length;
+                const length = Math.max(left.length, right.length);
+                for (let i = 0; i < length; i++) {
+                    diff |= (left.charCodeAt(i) || 0) ^ (right.charCodeAt(i) || 0);
+                }
+                return diff === 0;
+            }
+
+            async function sign() {
+                if (!window.crypto?.subtle) throw new Error('Web Crypto is not available in this browser context');
+                const key = await crypto.subtle.importKey(
+                    'raw',
+                    encoder.encode(secret.value),
+                    { name: 'HMAC', hash: algorithm.value },
+                    false,
+                    ['sign']
+                );
+                const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message.value));
+                return encoding.value === 'hex' ? toHex(signature) : toBase64(signature);
+            }
+
+            async function generate() {
+                try {
+                    error.classList.add('hidden');
+                    if (!secret.value) throw new Error('Enter a secret key');
+                    if (!message.value) throw new Error('Enter a message');
+                    result.value = await sign();
+                    verificationGrid.innerHTML = '';
+
+                    if (expected.value.trim()) {
+                        const ok = timingSafeEqual(result.value, expected.value);
+                        const item = document.createElement('div');
+                        item.className = 'info-item';
+                        item.innerHTML = `<div class="info-label">Verification</div><div class="info-value">${ok ? 'Match' : 'Does not match'}</div>`;
+                        verificationGrid.appendChild(item);
+                    }
+
+                    resultContainer.classList.remove('hidden');
+                } catch (err) {
+                    error.textContent = err.message;
+                    error.classList.remove('hidden');
+                }
+            }
+
+            document.getElementById('generate-btn').addEventListener('click', generate);
+            document.getElementById('use-expected').addEventListener('click', () => {
+                expected.value = result.value;
+                generate();
+            });
+            document.getElementById('load-sample').addEventListener('click', () => {
+                secret.value = 'devtools-secret';
+                message.value = '{"event":"deploy","ok":true}';
+                generate();
+            });
+            document.getElementById('clear-input').addEventListener('click', () => {
+                secret.value = '';
+                message.value = '';
+                expected.value = '';
+                result.value = '';
+                resultContainer.classList.add('hidden');
+            });
+            [algorithm, encoding, expected].forEach((el) => el.addEventListener('change', generate));
+        });
+    </script>
+</body>
+</html>
