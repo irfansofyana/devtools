@@ -84,6 +84,16 @@ test('SQL formatter uses a real SQL editor and formatter library', () => {
     assert.match(sqlPage, /sql-formatter@15\.8\.1\/\+esm/);
 });
 
+test('JSON formatter output uses a local JSON viewer palette', () => {
+    const jsonPage = read('tools/json-formatter.html');
+
+    assert.match(jsonPage, /class="tool-page-shell json-tool"/);
+    assert.match(jsonPage, /json-output-shell/);
+    assert.match(jsonPage, /json-output-meta/);
+    assert.match(jsonPage, /--json-property/);
+    assert.doesNotMatch(jsonPage, /themes\/prism(?:-dark)?\.min\.css/);
+});
+
 test('workbench CSS isolates embedded JSONEditor from global form and table styles', () => {
     const workbenchCss = read('css/workbench.css');
 

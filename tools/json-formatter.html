@@ -13,12 +13,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
     <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-    <!-- Prism.js for syntax highlighting -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-dark.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="tool-page-shell">
+<body class="tool-page-shell json-tool">
     <header class="top-bar">
         <a href="../index.html" class="top-bar__brand">devtools</a>
         <div class="top-bar__spacer"></div>
@@ -85,11 +82,12 @@
                     <div class="result-container hidden" id="result-container">
                         <div class="input-group">
                             <label for="json-output">Result:</label>
-                            <div class="output-wrapper">
+                            <div class="output-wrapper json-output-shell" role="region" aria-label="Formatted JSON output">
                                 <pre id="json-output-wrapper"><code id="json-output" class="language-json"></code></pre>
                             </div>
+                            <p class="json-output-meta" id="json-output-meta" aria-live="polite"></p>
                             <div class="input-controls">
-                                <button class="secondary" id="copy-btn" data-copy="json-output">Copy to Clipboard</button>
+                                <button class="secondary" id="copy-btn">Copy to Clipboard</button>
                                 <button class="secondary" id="download-btn">Download</button>
                             </div>
                         </div>
@@ -124,6 +122,7 @@
             const copyBtn = document.getElementById('copy-btn');
             const downloadBtn = document.getElementById('download-btn');
             const resultContainer = document.getElementById('result-container');
+            const outputMeta = document.getElementById('json-output-meta');
             const errorMessage = document.getElementById('error-message');
             const indentSize = document.getElementById('indent-size');
             const sortKeys = document.getElementById('sort-keys');
@@ -153,16 +152,7 @@
                     const spaces = parseInt(indentSize.value) || 2;
                     const beautified = JSON.stringify(jsonObj, null, spaces);
                     
-                    // Display result with syntax highlighting
-                    jsonOutput.textContent = beautified;
-                    Prism.highlightElement(jsonOutput);
-                    
-                    // Show result container
-                    resultContainer.classList.remove('hidden');
-                    errorMessage.classList.add('hidden');
-                    
-                    // Update download button
-                    updateDownloadButton(beautified, 'beautified.json');
+                    renderOutput(beautified, 'beautified.json', 'Beautified');
                 } catch (error) {
                     showError(`Error: ${error.message}`, 'error-message');
                 }
@@ -183,19 +173,23 @@
                     // Stringify without indentation
                     const minified = JSON.stringify(jsonObj);
                     
-                    // Display result with syntax highlighting
-                    jsonOutput.textContent = minified;
-                    Prism.highlightElement(jsonOutput);
-                    
-                    // Show result container
-                    resultContainer.classList.remove('hidden');
-                    errorMessage.classList.add('hidden');
-                    
-                    // Update download button
-                    updateDownloadButton(minified, 'minified.json');
+                    renderOutput(minified, 'minified.json', 'Minified');
                 } catch (error) {
                     showError(`Error: ${error.message}`, 'error-message');
                 }
+            }
+
+            function renderOutput(content, filename, mode) {
+                jsonOutput.textContent = content;
+                Prism.highlightElement(jsonOutput);
+
+                const lineCount = content ? content.split('\n').length : 0;
+                const charCount = content.length.toLocaleString();
+                outputMeta.textContent = `${mode} - ${lineCount.toLocaleString()} line${lineCount === 1 ? '' : 's'} - ${charCount} chars`;
+
+                resultContainer.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+                updateDownloadButton(content, filename);
             }
             
             // Sort object keys recursively
@@ -254,6 +248,7 @@
                 jsonInput.value = '';
                 resultContainer.classList.add('hidden');
                 errorMessage.classList.add('hidden');
+                outputMeta.textContent = '';
             });
             
             loadSampleBtn.addEventListener('click', () => {
@@ -304,14 +299,10 @@
                     });
             });
             
-            // Update theme for Prism.js when theme changes
+            // Re-highlight output when theme changes so Prism token classes stay current.
             const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                     if (mutation.attributeName === 'data-theme') {
-                        const theme = document.documentElement.getAttribute('data-theme');
-                        const prismTheme = theme === 'dark' ? 'prism-dark' : 'prism';
-                        
-                        // Re-highlight code with new theme
                         if (jsonOutput.textContent) {
                             Prism.highlightElement(jsonOutput);
                         }
@@ -324,17 +315,94 @@
     </script>
     
     <style>
-        .output-wrapper {
-            max-height: 500px;
+        body.json-tool {
+            --json-surface: #fbfcfb;
+            --json-gutter: #f1f4f3;
+            --json-border: #d7dfdc;
+            --json-text: #1b2424;
+            --json-muted: #7b8785;
+            --json-property: #0f6f86;
+            --json-string: #167342;
+            --json-number: #8a5a00;
+            --json-literal: #9a3f62;
+            --json-punctuation: #65706e;
+        }
+
+        [data-theme="dark"] body.json-tool {
+            --json-surface: #0b1114;
+            --json-gutter: #11191d;
+            --json-border: #26353b;
+            --json-text: #d8e5e4;
+            --json-muted: #819195;
+            --json-property: #7ec7ff;
+            --json-string: #9be7ac;
+            --json-number: #ffd37d;
+            --json-literal: #ff9db7;
+            --json-punctuation: #a7b4b6;
+        }
+
+        body.json-tool .json-output-shell {
+            max-height: min(58vh, 680px);
             overflow: auto;
-            background-color: var(--code-bg);
-            border-radius: var(--border-radius);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--json-border) !important;
+            border-radius: var(--panel-radius);
+            background:
+                linear-gradient(90deg, var(--json-gutter) 0 3.25rem, transparent 3.25rem),
+                var(--json-surface) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
         }
         
-        #json-output-wrapper {
+        body.json-tool #json-output-wrapper {
             margin: 0;
-            padding: 1rem;
+            padding: 1.35rem 1.4rem 1.35rem 3.85rem;
+            border: 0 !important;
+            border-radius: 0;
+            background: transparent !important;
+            color: var(--json-text) !important;
+            box-shadow: none;
+            tab-size: 2;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        body.json-tool #json-output {
+            display: block;
+            background: transparent !important;
+            color: var(--json-text) !important;
+            border-radius: 0;
+            font-size: 0.95rem;
+            font-variant-ligatures: none;
+            font-feature-settings: "liga" 0, "calt" 0;
+            line-height: 1.65;
+            text-shadow: none;
+        }
+
+        body.json-tool #json-output .token.property {
+            color: var(--json-property) !important;
+        }
+
+        body.json-tool #json-output .token.string {
+            color: var(--json-string) !important;
+        }
+
+        body.json-tool #json-output .token.number {
+            color: var(--json-number) !important;
+        }
+
+        body.json-tool #json-output .token.boolean,
+        body.json-tool #json-output .token.null {
+            color: var(--json-literal) !important;
+        }
+
+        body.json-tool #json-output .token.punctuation,
+        body.json-tool #json-output .token.operator {
+            color: var(--json-punctuation) !important;
+        }
+
+        body.json-tool .json-output-meta {
+            margin: 0.75rem 0 0;
+            color: var(--text-muted);
+            font-size: var(--text-xs);
         }
         
         .options-group {
@@ -364,24 +432,21 @@
             color: var(--text-primary);
         }
         
-        /* Prism theme overrides for dark mode */
-        [data-theme="dark"] .token.punctuation {
-            color: #e1e4e8;
-        }
-        
-        [data-theme="dark"] .token.property,
-        [data-theme="dark"] .token.string {
-            color: #85e89d;
-        }
-        
-        [data-theme="dark"] .token.number,
-        [data-theme="dark"] .token.boolean {
-            color: #79b8ff;
-        }
-        
-        [data-theme="dark"] .token.operator,
-        [data-theme="dark"] .token.keyword {
-            color: #f97583;
+        @media (max-width: 640px) {
+            body.json-tool .json-output-shell {
+                max-height: 52vh;
+                background:
+                    linear-gradient(90deg, var(--json-gutter) 0 2.5rem, transparent 2.5rem),
+                    var(--json-surface) !important;
+            }
+
+            body.json-tool #json-output-wrapper {
+                padding: 1rem 1rem 1rem 3rem;
+            }
+
+            body.json-tool #json-output {
+                font-size: 0.86rem;
+            }
         }
     </style>
 </body>
