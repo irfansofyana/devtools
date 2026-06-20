@@ -2,10 +2,38 @@
  * Devtools — shared utilities.
  */
 document.addEventListener('DOMContentLoaded', () => {
+    loadWorkbenchStyles();
     const yearEl = document.getElementById('current-year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
     initCopyToClipboard();
+    enhanceToolShell();
 });
+
+function loadWorkbenchStyles() {
+    if (document.querySelector('link[data-workbench-styles]')) return;
+    const script = document.querySelector('script[src$="js/main.js"], script[src$="../js/main.js"]');
+    const href = script?.src
+        ? new URL('../css/workbench.css', script.src).href
+        : `${location.pathname.includes('/tools/') ? '../' : ''}css/workbench.css`;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    link.dataset.workbenchStyles = 'true';
+    document.head.appendChild(link);
+}
+
+function enhanceToolShell() {
+    if (!document.body.classList.contains('tool-page-shell')) return;
+    document.body.dataset.workbench = 'tool';
+
+    document.querySelectorAll('.tool-content > .input-group, .tool-content > .options-group, .tool-content > .input-section').forEach((el) => {
+        el.classList.add('workbench-panel');
+    });
+
+    document.querySelectorAll('.tool-content > .result-container, .tool-content > [id$="result-container"], .tool-content > [id$="-result"]').forEach((el) => {
+        el.classList.add('workbench-panel', 'workbench-panel--result');
+    });
+}
 
 function initCopyToClipboard() {
     document.addEventListener('click', (e) => {

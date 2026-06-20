@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Format and minify SQL queries">
+    <title>SQL Formatter/Minifier | Devtools</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="tool-page-shell">
+    <header class="top-bar">
+        <a href="../index.html" class="top-bar__brand">devtools</a>
+        <div class="top-bar__spacer"></div>
+        <div class="top-bar__actions">
+            <a class="icon-btn" href="https://github.com/irfansofyana/Devtools" target="_blank" rel="noopener" aria-label="GitHub repository">
+                <i class="fab fa-github" aria-hidden="true"></i>
+            </a>
+            <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark and light theme" aria-pressed="false">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="tool-container">
+            <div class="container">
+                <a href="../index.html" class="back-link">all tools</a>
+                <div class="tool-header"><h1>SQL Formatter/Minifier</h1></div>
+                <div class="tool-description">
+                    <p>Format SQL into readable clauses or compress it into a single-line query for migrations, logs, dashboards, and quick debugging.</p>
+                </div>
+
+                <div class="tool-content">
+                    <div class="error-message hidden" id="error-message"></div>
+
+                    <div class="options-group">
+                        <label>Options:</label>
+                        <div class="options-controls">
+                            <label><input type="checkbox" id="uppercase-keywords" checked> Uppercase keywords</label>
+                            <label>
+                                <select id="indent-size">
+                                    <option value="2">2 spaces</option>
+                                    <option value="4" selected>4 spaces</option>
+                                    <option value="8">8 spaces</option>
+                                </select>
+                                Indent
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="preview-container">
+                        <div class="input-group">
+                            <label for="input-sql">Input SQL:</label>
+                            <textarea id="input-sql" spellcheck="false" placeholder="select id, email from users where active = true order by created_at desc"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" id="load-sample">Load Sample</button>
+                                <button class="secondary" id="clear-input">Clear</button>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="output-sql">Output:</label>
+                            <textarea id="output-sql" readonly spellcheck="false" aria-label="Formatted SQL output"></textarea>
+                            <div class="input-controls">
+                                <button class="secondary" data-copy="output-sql">Copy</button>
+                                <button class="secondary" id="swap-output">Use as Input</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button class="primary" id="format-btn">Format SQL</button>
+                        <button class="secondary" id="minify-btn">Minify SQL</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer><div class="container"><p>&copy; <span id="current-year">2025</span> Devtools. All rights reserved.</p></div></footer>
+
+    <script src="../js/theme.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('input-sql');
+            const output = document.getElementById('output-sql');
+            const uppercaseKeywords = document.getElementById('uppercase-keywords');
+            const indentSize = document.getElementById('indent-size');
+            const error = document.getElementById('error-message');
+
+            const keywords = new Set([
+                'select', 'from', 'where', 'group', 'by', 'order', 'having', 'limit', 'offset',
+                'join', 'inner', 'left', 'right', 'full', 'outer', 'cross', 'on', 'and', 'or',
+                'insert', 'into', 'values', 'update', 'set', 'delete', 'create', 'alter', 'drop',
+                'table', 'view', 'index', 'with', 'as', 'union', 'all', 'distinct', 'case', 'when',
+                'then', 'else', 'end', 'is', 'not', 'null', 'in', 'exists', 'between', 'like',
+                'returning', 'constraint', 'primary', 'foreign', 'key', 'references'
+            ]);
+            const clauseBreaks = new Set(['select', 'from', 'where', 'group by', 'order by', 'having', 'limit', 'offset', 'values', 'returning', 'set']);
+            const joinBreaks = new Set(['join', 'inner join', 'left join', 'right join', 'full join', 'outer join', 'cross join', 'left outer join', 'right outer join', 'full outer join']);
+
+            function tokenizeSQL(sql) {
+                const tokens = [];
+                let token = '';
+                let quote = '';
+
+                function flush() {
+                    if (token) {
+                        tokens.push(token);
+                        token = '';
+                    }
+                }
+
+                for (let i = 0; i < sql.length; i++) {
+                    const char = sql[i];
+                    const next = sql[i + 1];
+
+                    if (quote) {
+                        token += char;
+                        if (char === quote) {
+                            if (sql[i + 1] === quote) {
+                                token += sql[++i];
+                            } else {
+                                flush();
+                                quote = '';
+                            }
+                        }
+                        continue;
+                    }
+
+                    if ((char === '-' && next === '-') || (char === '/' && next === '*')) {
+                        flush();
+                        const isLineComment = char === '-';
+                        let comment = char + next;
+                        i++;
+                        while (i + 1 < sql.length) {
+                            i++;
+                            comment += sql[i];
+                            if (isLineComment && sql[i] === '\n') break;
+                            if (!isLineComment && sql[i] === '*' && sql[i + 1] === '/') {
+                                comment += sql[++i];
+                                break;
+                            }
+                        }
+                        tokens.push(comment.trim());
+                        continue;
+                    }
+
+                    if (char === "'" || char === '"' || char === '`') {
+                        flush();
+                        quote = char;
+                        token = char;
+                        continue;
+                    }
+
+                    if (/\s/.test(char)) {
+                        flush();
+                        continue;
+                    }
+
+                    if (/[(),;=<>+\-*/%]/.test(char)) {
+                        flush();
+                        tokens.push(char);
+                        continue;
+                    }
+
+                    token += char;
+                }
+                flush();
+                return tokens;
+            }
+
+            function formatToken(token) {
+                const lower = token.toLowerCase();
+                return uppercaseKeywords.checked && keywords.has(lower) ? lower.toUpperCase() : token;
+            }
+
+            function lineIndent(level) {
+                return ' '.repeat(Number(indentSize.value) * Math.max(level, 0));
+            }
+
+            function formatSQL(sql) {
+                const tokens = tokenizeSQL(sql);
+                const lines = [];
+                let current = '';
+                let indent = 0;
+
+                function pushLine() {
+                    const trimmed = current.trim();
+                    if (trimmed) lines.push(lineIndent(indent) + trimmed);
+                    current = '';
+                }
+
+                for (let i = 0; i < tokens.length; i++) {
+                    const token = tokens[i];
+                    const lower = token.toLowerCase();
+                    const nextLower = tokens[i + 1]?.toLowerCase();
+                    let phrase = lower;
+                    if ((lower === 'group' || lower === 'order') && nextLower === 'by') phrase = `${lower} by`;
+                    if (['inner', 'left', 'right', 'full', 'outer', 'cross'].includes(lower)) {
+                        const next = nextLower === 'outer' ? tokens[i + 2]?.toLowerCase() : nextLower;
+                        if (next === 'join') phrase = nextLower === 'outer' ? `${lower} outer join` : `${lower} join`;
+                    }
+
+                    if (clauseBreaks.has(phrase) || joinBreaks.has(phrase)) {
+                        pushLine();
+                        current += formatToken(token);
+                        if (phrase.includes(' ')) {
+                            current += ` ${formatToken(tokens[++i])}`;
+                            if (phrase.endsWith('outer join')) current += ` ${formatToken(tokens[++i])}`;
+                        }
+                        continue;
+                    }
+
+                    if (lower === 'and' || lower === 'or') {
+                        pushLine();
+                        current += formatToken(token);
+                        continue;
+                    }
+
+                    if (token === '(') {
+                        current += ' (';
+                        indent++;
+                        pushLine();
+                        continue;
+                    }
+
+                    if (token === ')') {
+                        pushLine();
+                        indent--;
+                        current += ')';
+                        continue;
+                    }
+
+                    if (token === ',') {
+                        current += ',';
+                        pushLine();
+                        continue;
+                    }
+
+                    if (token === ';') {
+                        current += ';';
+                        pushLine();
+                        continue;
+                    }
+
+                    if (/^[=<>+\-*/%]$/.test(token)) {
+                        current = `${current.trim()} ${token}`;
+                        continue;
+                    }
+
+                    current += `${current && !current.endsWith(' ') ? ' ' : ''}${formatToken(token)}`;
+                }
+                pushLine();
+                return lines.join('\n').replace(/\(\n\s+/g, '(\n').trim();
+            }
+
+            function minifySQL(sql) {
+                let result = '';
+                tokenizeSQL(sql)
+                    .filter((token) => !token.startsWith('--') && !token.startsWith('/*'))
+                    .forEach((token) => {
+                        const value = formatToken(token);
+                        if (value === ',') {
+                            result = `${result.trimEnd()}, `;
+                        } else if (value === ';') {
+                            result = `${result.trimEnd()};`;
+                        } else if (value === ')') {
+                            result = `${result.trimEnd()})`;
+                        } else if (value === '(') {
+                            result = `${result.trimEnd()} (`;
+                        } else if (/^[=<>+\-*/%]$/.test(value)) {
+                            result = `${result.trimEnd()} ${value} `;
+                        } else {
+                            result += `${result && !result.endsWith(' ') && !result.endsWith('(') ? ' ' : ''}${value}`;
+                        }
+                    });
+                return result.replace(/\s+/g, ' ').trim();
+            }
+
+            function run(mode) {
+                try {
+                    error.classList.add('hidden');
+                    output.value = mode === 'minify' ? minifySQL(input.value) : formatSQL(input.value);
+                } catch (err) {
+                    error.textContent = err.message;
+                    error.classList.remove('hidden');
+                }
+            }
+
+            document.getElementById('format-btn').addEventListener('click', () => run('format'));
+            document.getElementById('minify-btn').addEventListener('click', () => run('minify'));
+            document.getElementById('load-sample').addEventListener('click', () => {
+                input.value = "select u.id, u.email, count(o.id) as order_count from users u left join orders o on o.user_id = u.id where u.active = true and o.created_at >= '2026-01-01' group by u.id, u.email order by order_count desc limit 20;";
+                run('format');
+            });
+            document.getElementById('clear-input').addEventListener('click', () => {
+                input.value = '';
+                output.value = '';
+                input.focus();
+            });
+            document.getElementById('swap-output').addEventListener('click', () => {
+                input.value = output.value;
+                output.value = '';
+                input.focus();
+            });
+        });
+    </script>
+</body>
+</html>

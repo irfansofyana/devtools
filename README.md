@@ -27,37 +27,44 @@ Devtools is designed to streamline common development tasks by providing a suite
 3. **ASCII <> HEX Converter** - Convert between ASCII text and hexadecimal representation
 4. **Backslash Escape/Unescape** - Escape and unescape backslashes in text
 5. **Base64 Encoder/Decoder** - Encode and decode text or files using Base64 encoding with file upload/download support
-6. **Color Converter** - Convert between HEX, RGB, and HSL color formats
-7. **Crontab Generator** - Create crontab expressions visually with human-readable descriptions
-8. **CSV <> JSON Converter** - Convert between CSV and JSON data formats
-9. **CSV Visualizer** - Visualize CSV data as HTML tables with export options
-10. **CURL Constructor** - Build CURL commands for terminal execution with customizable options
-11. **Hash Generator** - Generate MD5, SHA-1, SHA-256, and SHA-512 hashes
-12. **IP Address Lookup** - Get detailed information about any IP address including geolocation, ISP, and network details
-13. **JSON Beautifier/Minifier** - Format and compress JSON with syntax highlighting
-14. **JSON to Protobuf** - Generate Protocol Buffer definitions from JSON examples
-15. **JSON <-> YAML Converter** - Two-way conversion between JSON and YAML formats with validation
-16. **JSON/YAML Explorer** - Visualize and explore JSON and YAML data with interactive tree view
-17. **JWT Decoder** - Decode and inspect JSON Web Tokens (JWT)
-18. **Line Sort/Dedupe** - Sort lines alphabetically and remove duplicates
-19. **Markdown Preview** - Preview Markdown with live rendering
-20. **Mermaid Diagram Editor** - Create diagrams with Mermaid syntax and live preview
-21. **OCR Tool** - Extract text from images and PDFs using offline OCR
-22. **QR Code Reader/Generator** - Generate QR codes from text or URLs, and scan QR codes from images
-23. **Random Password Generator** - Generate secure random passwords with customizable options
-24. **Random String Generator** - Generate random strings with patterns and custom options
-25. **Regular Expression Tester** - Test and validate regular expressions with live results
-26. **Secret Share** - Securely share encrypted messages with password protection
-27. **SSL/TLS Certificate Checker** - Analyze SSL/TLS certificates for any domain and check their security status
-28. **String Case Converter** - Convert between camelCase, snake_case, kebab-case and more
-29. **Subnet Calculator** - Calculate subnet information, IP ranges, and network details from CIDR notation
-30. **Text Diff Utility** - Compare two text blocks and highlight differences
-31. **Timestamp Converter** - Convert between various timestamp formats and human-readable dates
-32. **URL Encoder/Decoder** - Encode and decode URLs and URL components
-33. **URL Parser** - Parse and extract components from URLs
-34. **URL to Markdown** - Scrape URL content and convert to Markdown format
-35. **UUID Generator** - Generate random UUIDs in version 4 format
-36. **Vim-Style Code Editor** - In-browser text editor with Vim key bindings, syntax highlighting, and advanced features
+6. **chmod Calculator** - Calculate Unix permission modes and copy chmod commands
+7. **Color Converter** - Convert between HEX, RGB, and HSL color formats
+8. **Crontab Generator** - Create crontab expressions visually with human-readable descriptions
+9. **CSV <> JSON Converter** - Convert between CSV and JSON data formats
+10. **CSV Visualizer** - Visualize CSV data as HTML tables with export options
+11. **CURL Constructor** - Build CURL commands for terminal execution with customizable options
+12. **Hash Generator** - Generate MD5, SHA-1, SHA-256, and SHA-512 hashes
+13. **HMAC Generator/Verifier** - Generate and verify SHA-based HMAC signatures
+14. **HTML Entity Encoder/Decoder** - Encode and decode HTML entities
+15. **IP Address Lookup** - Get detailed information about any IP address including geolocation, ISP, and network details
+16. **JSON Beautifier/Minifier** - Format and compress JSON with syntax highlighting
+17. **JSON Diff / JSON Patch** - Compare JSON structures and generate JSON Patch operations
+18. **JSON Escape/Unescape** - Escape and unescape JSON string content
+19. **JSON to Protobuf** - Generate Protocol Buffer definitions from JSON examples
+20. **JSON <-> YAML Converter** - Two-way conversion between JSON and YAML formats with validation
+21. **JSON/YAML Explorer** - Visualize and explore JSON and YAML data with interactive tree view
+22. **JWT Decoder** - Decode and inspect JSON Web Tokens (JWT)
+23. **Line Sort/Dedupe** - Sort lines alphabetically and remove duplicates
+24. **Markdown Preview** - Preview Markdown with live rendering
+25. **Mermaid Diagram Editor** - Create diagrams with Mermaid syntax and live preview
+26. **OCR Tool** - Extract text from images and PDFs using offline OCR
+27. **QR Code Reader/Generator** - Generate QR codes from text or URLs, and scan QR codes from images
+28. **Random Password Generator** - Generate secure random passwords with customizable options
+29. **Random String Generator** - Generate random strings with patterns and custom options
+30. **Regular Expression Tester** - Test and validate regular expressions with live results
+31. **Secret Share** - Securely share encrypted messages with password protection
+32. **SQL Formatter/Minifier** - Format and minify SQL queries
+33. **SSL/TLS Certificate Checker** - Analyze SSL/TLS certificates for any domain and check their security status
+34. **String Case Converter** - Convert between camelCase, snake_case, kebab-case and more
+35. **Subnet Calculator** - Calculate subnet information, IP ranges, and network details from CIDR notation
+36. **Text Diff Utility** - Compare two text blocks and highlight differences
+37. **Timestamp Converter** - Convert between various timestamp formats and human-readable dates
+38. **URL Encoder/Decoder** - Encode and decode URLs and URL components
+39. **URL Parser** - Parse and extract components from URLs
+40. **URL to Markdown** - Scrape URL content and convert to Markdown format
+41. **UUID & ULID Generator** - Generate UUID v4, UUID v7, and ULID values
+42. **Vim-Style Code Editor** - In-browser text editor with Vim key bindings, syntax highlighting, and advanced features
+43. **XML Formatter/Validator** - Format, validate, and convert XML and JSON
 
 ## ✨ Features
 
@@ -122,7 +129,7 @@ devtools/
 │   ├── main.js        # Core utilities (clipboard, error handling, file downloads)
 │   ├── search.js      # Tool search and category filtering system
 │   └── theme.js       # Dark/light theme switcher with persistence
-├── tools/             # Individual tool HTML pages (36 tools)
+├── tools/             # Individual tool HTML pages (43 tools)
 ├── index.html         # Main homepage with tool navigation
 ├── CLAUDE.md          # Claude Code guidance and project context
 ├── CONTRIBUTING.md    # Contribution guidelines
