@@ -94,6 +94,17 @@ test('JSON formatter output uses a local JSON viewer palette', () => {
     assert.doesNotMatch(jsonPage, /themes\/prism(?:-dark)?\.min\.css/);
 });
 
+test('Mermaid editor uses CodeMirror and a large preview workspace', () => {
+    const mermaidPage = read('tools/mermaid-diagram-editor.html');
+
+    assert.match(mermaidPage, /class="tool-page-shell mermaid-tool"/);
+    assert.match(mermaidPage, /codemirror\/5\.65\.13\/codemirror\.min\.css/);
+    assert.match(mermaidPage, /CodeMirror\.fromTextArea/);
+    assert.match(mermaidPage, /CodeMirror\.defineSimpleMode\('mermaid'/);
+    assert.match(mermaidPage, /mermaid-workspace/);
+    assert.match(mermaidPage, /radial-gradient\(var\(--border\) 1px, transparent 1px\)/);
+});
+
 test('workbench CSS isolates embedded JSONEditor from global form and table styles', () => {
     const workbenchCss = read('css/workbench.css');
 
