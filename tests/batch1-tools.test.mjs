@@ -102,6 +102,10 @@ test('Mermaid editor uses CodeMirror and a large preview workspace', () => {
     assert.match(mermaidPage, /CodeMirror\.fromTextArea/);
     assert.match(mermaidPage, /CodeMirror\.defineSimpleMode\('mermaid'/);
     assert.match(mermaidPage, /mermaid-workspace/);
+    assert.match(mermaidPage, /id="workspace-divider"/);
+    assert.match(mermaidPage, /setWorkspaceSplit/);
+    assert.match(mermaidPage, /id="copy-image-btn"/);
+    assert.match(mermaidPage, /ClipboardItem/);
     assert.match(mermaidPage, /radial-gradient\(var\(--border\) 1px, transparent 1px\)/);
 });
 

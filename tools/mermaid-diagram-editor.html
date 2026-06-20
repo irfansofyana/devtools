@@ -21,6 +21,7 @@
     <style>
         body.mermaid-tool {
             --tool-max: min(1680px, calc(100vw - 48px));
+            --mermaid-editor-width: 36%;
         }
 
         body.mermaid-tool .container {
@@ -47,12 +48,54 @@
 
         body.mermaid-tool .mermaid-workspace {
             display: grid;
-            grid-template-columns: minmax(340px, 0.42fr) minmax(0, 1fr);
-            gap: var(--space-4);
+            grid-template-columns: minmax(320px, var(--mermaid-editor-width)) 14px minmax(0, 1fr);
+            gap: var(--space-3);
             min-height: clamp(620px, 72vh, 860px);
             padding: 0 !important;
             border: 0 !important;
             background: transparent !important;
+        }
+
+        body.mermaid-tool .workspace-divider {
+            min-width: 14px;
+            width: 14px;
+            padding: 0;
+            border: 0;
+            border-radius: var(--panel-radius);
+            background: transparent;
+            cursor: col-resize;
+            position: relative;
+        }
+
+        body.mermaid-tool .workspace-divider::before {
+            content: "";
+            position: absolute;
+            inset: 0 5px;
+            border-radius: 999px;
+            background: var(--border);
+            transition: background-color 120ms ease, box-shadow 120ms ease;
+        }
+
+        body.mermaid-tool .workspace-divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 42px;
+            border-radius: 999px;
+            background:
+                radial-gradient(circle, var(--text-secondary) 1px, transparent 1.5px)
+                center / 4px 8px repeat-y;
+            transform: translate(-50%, -50%);
+            opacity: 0.75;
+        }
+
+        body.mermaid-tool .workspace-divider:hover::before,
+        body.mermaid-tool .workspace-divider:focus-visible::before,
+        body.mermaid-tool .workspace-divider.is-dragging::before {
+            background: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
         }
 
         body.mermaid-tool .mermaid-editor-panel,
@@ -232,6 +275,10 @@
                 min-height: 0;
             }
 
+            body.mermaid-tool .workspace-divider {
+                display: none;
+            }
+
             body.mermaid-tool .CodeMirror {
                 min-height: 360px !important;
             }
@@ -307,6 +354,19 @@
                             </div>
                             <div id="error-display" class="error-display"></div>
                         </div>
+
+                        <button
+                            class="workspace-divider"
+                            id="workspace-divider"
+                            type="button"
+                            role="separator"
+                            aria-label="Resize editor and preview panels"
+                            aria-orientation="vertical"
+                            aria-valuemin="24"
+                            aria-valuemax="68"
+                            aria-valuenow="36"
+                            title="Drag to resize editor and preview"
+                        ></button>
                         
                         <div class="preview-panel">
                             <div class="preview-heading"><h2>Preview</h2></div>
@@ -324,6 +384,7 @@
                         <button class="secondary" id="copy-svg-btn">Copy SVG</button>
                         <button class="secondary" id="download-svg-btn">Download SVG</button>
                         <button class="secondary" id="download-png-btn">Download PNG</button>
+                        <button class="secondary" id="copy-image-btn">Copy Image</button>
                         <button class="secondary" id="copy-code-btn">Copy Code</button>
                     </div>
                 </div>
@@ -373,12 +434,15 @@
             const copySvgBtn = document.getElementById('copy-svg-btn');
             const downloadSvgBtn = document.getElementById('download-svg-btn');
             const downloadPngBtn = document.getElementById('download-png-btn');
+            const copyImageBtn = document.getElementById('copy-image-btn');
             const copyCodeBtn = document.getElementById('copy-code-btn');
             const zoomInBtn = document.getElementById('zoom-in-btn');
             const zoomOutBtn = document.getElementById('zoom-out-btn');
             const zoomResetBtn = document.getElementById('zoom-reset-btn');
             const zoomLevelDisplay = document.getElementById('zoom-level');
             const previewPanel = document.querySelector('.preview-panel');
+            const workspace = document.querySelector('.mermaid-workspace');
+            const workspaceDivider = document.getElementById('workspace-divider');
             
             // Template buttons
             const flowchartBtn = document.getElementById('flowchart-btn');
@@ -402,6 +466,9 @@
             });
             let renderTimer;
             let renderVersion = 0;
+            const SPLIT_STORAGE_KEY = 'Devtools-mermaid-editor-width';
+            const MIN_SPLIT = 24;
+            const MAX_SPLIT = 68;
 
             function mermaidTheme() {
                 return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
@@ -432,12 +499,45 @@
                 });
             }
 
+            function clampSplit(value) {
+                return Math.min(MAX_SPLIT, Math.max(MIN_SPLIT, value));
+            }
+
+            function setWorkspaceSplit(value, persist = true) {
+                const split = clampSplit(value);
+                document.body.style.setProperty('--mermaid-editor-width', `${split}%`);
+                workspaceDivider.setAttribute('aria-valuenow', String(Math.round(split)));
+                workspaceDivider.setAttribute('aria-valuetext', `Editor ${Math.round(split)} percent`);
+                if (persist) {
+                    try { localStorage.setItem(SPLIT_STORAGE_KEY, String(split)); } catch (_) { /* ignore */ }
+                }
+                window.requestAnimationFrame(() => mermaidEditor.refresh());
+            }
+
+            function restoreWorkspaceSplit() {
+                try {
+                    const rawStored = localStorage.getItem(SPLIT_STORAGE_KEY);
+                    if (rawStored !== null) {
+                        const stored = Number(rawStored);
+                        if (Number.isFinite(stored)) setWorkspaceSplit(stored, false);
+                    }
+                } catch (_) {
+                    // ignore storage failures
+                }
+            }
+
+            function splitFromPointer(clientX) {
+                const rect = workspace.getBoundingClientRect();
+                return ((clientX - rect.left) / rect.width) * 100;
+            }
+
             function scheduleRender() {
                 window.clearTimeout(renderTimer);
                 renderTimer = window.setTimeout(renderDiagram, 250);
             }
 
             initializeMermaid();
+            restoreWorkspaceSplit();
             
             // Render the diagram
             function renderDiagram() {
@@ -512,39 +612,67 @@
                 downloadBlob(blob, 'diagram.svg');
             }
             
-            // Download PNG
-            function downloadPng() {
+            function svgToPngBlob() {
                 const svgElement = mermaidOutput.querySelector('svg');
                 if (!svgElement) {
                     showError('No diagram to download');
-                    return;
+                    return Promise.reject(new Error('No diagram to export'));
                 }
                 
-                // Create a canvas element
-                const canvas = document.createElement('canvas');
-                const svgRect = svgElement.getBoundingClientRect();
-                canvas.width = svgRect.width;
-                canvas.height = svgRect.height;
-                const ctx = canvas.getContext('2d');
-                
-                // Create an image from the SVG
-                const image = new Image();
-                const svgData = new XMLSerializer().serializeToString(svgElement);
-                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-                const url = URL.createObjectURL(svgBlob);
-                
-                image.onload = function() {
-                    // Draw the image on the canvas
-                    ctx.drawImage(image, 0, 0);
-                    URL.revokeObjectURL(url);
-                    
-                    // Convert canvas to PNG and download
-                    canvas.toBlob(function(blob) {
-                        downloadBlob(blob, 'diagram.png');
-                    }, 'image/png');
-                };
-                
-                image.src = url;
+                return new Promise((resolve, reject) => {
+                    const canvas = document.createElement('canvas');
+                    const svgRect = svgElement.getBoundingClientRect();
+                    const scale = Math.max(window.devicePixelRatio || 1, 2);
+                    const width = Math.max(1, Math.ceil(svgRect.width));
+                    const height = Math.max(1, Math.ceil(svgRect.height));
+                    canvas.width = Math.ceil(width * scale);
+                    canvas.height = Math.ceil(height * scale);
+                    canvas.style.width = `${width}px`;
+                    canvas.style.height = `${height}px`;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = document.documentElement.getAttribute('data-theme') === 'dark' ? '#0b1114' : '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    const image = new Image();
+                    const svgData = new XMLSerializer().serializeToString(svgElement);
+                    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                    const url = URL.createObjectURL(svgBlob);
+
+                    image.onload = () => {
+                        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                        URL.revokeObjectURL(url);
+                        canvas.toBlob((blob) => {
+                            if (blob) resolve(blob);
+                            else reject(new Error('Could not create PNG image'));
+                        }, 'image/png');
+                    };
+                    image.onerror = () => {
+                        URL.revokeObjectURL(url);
+                        reject(new Error('Could not render diagram image'));
+                    };
+                    image.src = url;
+                });
+            }
+
+            // Download PNG
+            function downloadPng() {
+                svgToPngBlob()
+                    .then((blob) => downloadBlob(blob, 'diagram.png'))
+                    .catch((err) => showError(err.message));
+            }
+
+            function copyImage() {
+                if (!navigator.clipboard || typeof ClipboardItem === 'undefined') {
+                    showError('Copying images is not supported in this browser');
+                    return;
+                }
+
+                svgToPngBlob()
+                    .then((blob) => navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]))
+                    .then(() => showNotification('PNG image copied to clipboard'))
+                    .catch((err) => showError(`Failed to copy image: ${err.message}`));
             }
             
             // Copy code to clipboard
@@ -717,7 +845,51 @@
             copySvgBtn.addEventListener('click', copySvg);
             downloadSvgBtn.addEventListener('click', downloadSvg);
             downloadPngBtn.addEventListener('click', downloadPng);
+            copyImageBtn.addEventListener('click', copyImage);
             copyCodeBtn.addEventListener('click', copyCode);
+
+            workspaceDivider.addEventListener('pointerdown', (event) => {
+                event.preventDefault();
+                workspaceDivider.classList.add('is-dragging');
+                workspaceDivider.setPointerCapture(event.pointerId);
+                setWorkspaceSplit(splitFromPointer(event.clientX));
+            });
+
+            workspaceDivider.addEventListener('pointermove', (event) => {
+                if (!workspaceDivider.classList.contains('is-dragging')) return;
+                setWorkspaceSplit(splitFromPointer(event.clientX));
+            });
+
+            workspaceDivider.addEventListener('pointerup', (event) => {
+                workspaceDivider.classList.remove('is-dragging');
+                if (workspaceDivider.hasPointerCapture(event.pointerId)) {
+                    workspaceDivider.releasePointerCapture(event.pointerId);
+                }
+            });
+
+            workspaceDivider.addEventListener('pointercancel', (event) => {
+                workspaceDivider.classList.remove('is-dragging');
+                if (workspaceDivider.hasPointerCapture(event.pointerId)) {
+                    workspaceDivider.releasePointerCapture(event.pointerId);
+                }
+            });
+
+            workspaceDivider.addEventListener('keydown', (event) => {
+                const current = Number(workspaceDivider.getAttribute('aria-valuenow')) || 36;
+                if (event.key === 'ArrowLeft') {
+                    event.preventDefault();
+                    setWorkspaceSplit(current - (event.shiftKey ? 5 : 2));
+                } else if (event.key === 'ArrowRight') {
+                    event.preventDefault();
+                    setWorkspaceSplit(current + (event.shiftKey ? 5 : 2));
+                } else if (event.key === 'Home') {
+                    event.preventDefault();
+                    setWorkspaceSplit(MIN_SPLIT);
+                } else if (event.key === 'End') {
+                    event.preventDefault();
+                    setWorkspaceSplit(MAX_SPLIT);
+                }
+            });
             
             flowchartBtn.addEventListener('click', loadFlowchartTemplate);
             sequenceBtn.addEventListener('click', loadSequenceTemplate);
