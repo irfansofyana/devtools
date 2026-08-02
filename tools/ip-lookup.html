@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../css/theme.css">
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/workbench.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;500;600&display=swap">
@@ -15,6 +16,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="tool-page-shell">
+    <a class="skip-link" href="#main-content">Skip to tool</a>
     <header class="top-bar">
         <a href="../index.html" class="top-bar__brand" aria-label="tools home"><img src="../assets/logo.svg" alt="" width="24" height="24"><span>tools.</span></a>
         <div class="top-bar__spacer"></div>
@@ -22,14 +24,14 @@
             <a class="icon-btn" href="https://github.com/irfansofyana/tools" target="_blank" rel="noopener" aria-label="GitHub repository">
                 <i class="fab fa-github" aria-hidden="true"></i>
             </a>
-            <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark and light theme" aria-pressed="false">
+            <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark and light theme" aria-pressed="false">
                 <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
                 <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             </button>
         </div>
     </header>
 
-    <main>
+    <main id="main-content">
         <section class="tool-container">
             <div class="container">
                 <a href="../index.html" class="back-link">all tools</a>
@@ -37,7 +39,7 @@
                     <h1>IP Address Lookup</h1>
                 </div>
                 <div class="tool-description">
-                    <p>Get detailed information about any IP address including geolocation, ISP, and network details</p>
+                    <p>Look up approximate geolocation and network ownership for a public IP. Queries are sent to ipapi.is; risk signals appear only when the service reports them.</p>
                 </div>
 
                 <div class="tool-content">
@@ -46,15 +48,15 @@
                     <label for="ip-input">IP Address:</label>
                     <div class="input-with-button">
                         <input type="text" id="ip-input" placeholder="Enter IP address (e.g., 8.8.8.8)" autocomplete="off">
-                        <button onclick="lookupIP()" class="btn primary">Lookup</button>
+                        <button type="button" onclick="lookupIP()" class="btn primary">Lookup</button>
                     </div>
                 </div>
                 <div class="form-group">
-                    <button onclick="getMyIP()" class="btn secondary">Get My IP</button>
+                    <button type="button" onclick="getMyIP()" class="btn secondary">Get My IP</button>
                 </div>
             </div>
 
-            <div id="loading" class="loading" style="display: none;">
+            <div id="loading" class="loading" role="status" aria-live="polite" style="display: none;">
                 <div class="spinner"></div>
                 <p>Looking up IP address...</p>
             </div>
@@ -119,7 +121,7 @@
                     </div>
 
                     <div class="info-card">
-                        <h4>Security & Privacy</h4>
+                        <h4>Security &amp; Privacy</h4>
                         <div class="info-item">
                             <span class="label">Proxy:</span>
                             <span id="proxy" class="value"></span>
@@ -136,20 +138,29 @@
                 </div>
 
                 <div class="action-buttons">
-                    <button onclick="copyResults()" class="btn secondary" data-copy>Copy Results</button>
-                    <button onclick="exportResults()" class="btn secondary">Export JSON</button>
+                    <button type="button" onclick="copyResults()" class="btn secondary" data-copy>Copy Results</button>
+                    <button type="button" onclick="exportResults()" class="btn secondary">Export JSON</button>
                 </div>
             </div>
 
-                    <div id="error" class="error-message" style="display: none;"></div>
+                    <div id="error" class="error-message" role="alert" style="display: none;"></div>
                 </div>
             </div>
         </section>
     </main>
 
-    <script src="../js/main.js"></script>
+    <footer class="app-footer">
+        <p>
+            &copy; <span id="current-year">2025</span> ·
+            <a href="https://github.com/irfansofyana/tools" target="_blank" rel="noopener">source</a> ·
+            <a href="https://github.com/irfansofyana/tools/issues" target="_blank" rel="noopener">report an issue</a> ·
+            <a href="../index.html">all tools</a>
+        </p>
+    </footer>
+
     <script src="../js/theme.js"></script>
     <script src="../js/main.js"></script>
+    <script src="../js/ip-lookup-service.js"></script>
     <script>
         let currentResults = null;
 
@@ -172,16 +183,9 @@
             hideResults();
 
             try {
-                const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,lat,lon,timezone,isp,org,as,query,proxy,hosting`);
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    displayResults(data);
-                } else {
-                    showError(data.message || 'Failed to lookup IP address');
-                }
+                displayResults(await IPLookupService.lookup(ip));
             } catch (error) {
-                showError('Network error: Unable to lookup IP address');
+                showError(`IP lookup failed: ${error.message}`);
             } finally {
                 showLoading(false);
             }
@@ -193,17 +197,11 @@
             hideResults();
 
             try {
-                const response = await fetch('http://ip-api.com/json/?fields=status,message,country,countryCode,region,regionName,city,lat,lon,timezone,isp,org,as,query,proxy,hosting');
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    document.getElementById('ip-input').value = data.query;
-                    displayResults(data);
-                } else {
-                    showError(data.message || 'Failed to get your IP address');
-                }
+                const data = await IPLookupService.lookup();
+                document.getElementById('ip-input').value = data.query;
+                displayResults(data);
             } catch (error) {
-                showError('Network error: Unable to get your IP address');
+                showError(`IP lookup failed: ${error.message}`);
             } finally {
                 showLoading(false);
             }
@@ -219,18 +217,25 @@
             document.getElementById('country').textContent = `${data.country} (${data.countryCode})`;
             document.getElementById('region').textContent = data.regionName;
             document.getElementById('city').textContent = data.city;
-            document.getElementById('coordinates').textContent = `${data.lat}, ${data.lon}`;
+            document.getElementById('coordinates').textContent = data.lat === null || data.lon === null
+                ? 'Not reported'
+                : `${data.lat}, ${data.lon}`;
             document.getElementById('timezone').textContent = data.timezone;
             
             document.getElementById('isp').textContent = data.isp;
             document.getElementById('organization').textContent = data.org;
             document.getElementById('asn').textContent = data.as;
             
-            document.getElementById('proxy').textContent = data.proxy ? 'Yes' : 'No';
-            document.getElementById('vpn').textContent = data.proxy ? 'Possible' : 'No';
-            document.getElementById('hosting').textContent = data.hosting ? 'Yes' : 'No';
+            document.getElementById('proxy').textContent = formatRiskSignal(data.proxy);
+            document.getElementById('vpn').textContent = formatRiskSignal(data.vpn);
+            document.getElementById('hosting').textContent = formatRiskSignal(data.hosting);
 
             document.getElementById('results').style.display = 'block';
+        }
+
+        function formatRiskSignal(value) {
+            if (value === null) return 'Not reported';
+            return value ? 'Yes' : 'No';
         }
 
         function isValidIP(ip) {
@@ -269,8 +274,9 @@ Timezone: ${currentResults.timezone}
 ISP: ${currentResults.isp}
 Organization: ${currentResults.org}
 AS: ${currentResults.as}
-Proxy: ${currentResults.proxy ? 'Yes' : 'No'}
-Hosting: ${currentResults.hosting ? 'Yes' : 'No'}`;
+Proxy: ${formatRiskSignal(currentResults.proxy)}
+VPN: ${formatRiskSignal(currentResults.vpn)}
+Hosting: ${formatRiskSignal(currentResults.hosting)}`;
 
             navigator.clipboard.writeText(resultText).then(() => {
                 showSuccess('Results copied to clipboard!');

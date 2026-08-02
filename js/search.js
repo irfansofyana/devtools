@@ -10,9 +10,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearBtn = document.getElementById('search-clear');
     const sections = Array.from(document.querySelectorAll('.section'));
     const noResults = document.getElementById('no-results-message');
+    const searchStatus = document.getElementById('search-status');
     if (!input || sections.length === 0) return;
 
     const tools = sections.flatMap(s => Array.from(s.querySelectorAll('.tool')));
+    let activeResultIndex = -1;
+
+    tools.forEach((tool, index) => {
+        const link = tool.querySelector('.tool__link');
+        if (link && !link.id) link.id = `tool-result-${index}`;
+    });
+
+    function visibleLinks() {
+        return tools
+            .filter(tool => !tool.hidden && !tool.closest('.section')?.hidden)
+            .map(tool => tool.querySelector('.tool__link'))
+            .filter(Boolean);
+    }
+
+    function setActiveResult(nextIndex) {
+        const links = visibleLinks();
+        tools.forEach(tool => tool.querySelector('.tool__link')?.classList.remove('is-active'));
+
+        if (links.length === 0) {
+            activeResultIndex = -1;
+            input.removeAttribute('aria-activedescendant');
+            return;
+        }
+
+        activeResultIndex = (nextIndex + links.length) % links.length;
+        const activeLink = links[activeResultIndex];
+        activeLink.classList.add('is-active');
+        input.setAttribute('aria-activedescendant', activeLink.id);
+        activeLink.scrollIntoView({ block: 'nearest' });
+    }
 
     function applyFilter(q) {
         const query = q.trim().toLowerCase();
@@ -33,6 +64,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (noResults) noResults.classList.toggle('hidden', totalVisible !== 0);
+        document.body.classList.toggle('is-searching', query !== '');
+        activeResultIndex = -1;
+        input.removeAttribute('aria-activedescendant');
+        tools.forEach(tool => tool.querySelector('.tool__link')?.classList.remove('is-active'));
+
+        if (searchStatus) {
+            const noun = totalVisible === 1 ? 'tool' : 'tools';
+            searchStatus.innerHTML = query
+                ? `<strong>${totalVisible}</strong> matching ${noun}`
+                : `<strong>${totalVisible}</strong> ${noun} available`;
+        }
     }
 
     input.addEventListener('input', () => {
@@ -73,6 +115,27 @@ document.addEventListener('DOMContentLoaded', () => {
             clearBtn?.classList.add('hidden');
             applyFilter('');
             input.blur();
+            return;
+        }
+
+        if (document.activeElement === input && e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActiveResult(activeResultIndex + 1);
+            return;
+        }
+
+        if (document.activeElement === input && e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActiveResult(activeResultIndex <= 0 ? visibleLinks().length - 1 : activeResultIndex - 1);
+            return;
+        }
+
+        if (document.activeElement === input && e.key === 'Enter' && activeResultIndex >= 0) {
+            const activeLink = visibleLinks()[activeResultIndex];
+            if (activeLink) {
+                e.preventDefault();
+                activeLink.click();
+            }
         }
     });
 
