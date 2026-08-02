@@ -19,7 +19,9 @@ test('homepage exposes a navigable catalog and live search status', () => {
     assert.match(index, /id="search-status"[^>]*aria-live="polite"/);
     assert.match(index, /id="category-writing-text"/);
     assert.match(index, /href="#category-writing-text"/);
-    assert.match(index, /Curated tools for everything you need\./);
+    assert.match(index, /class="utility-hero"/);
+    assert.match(index, /Tools, ready\./);
+    assert.doesNotMatch(index, /Curated tools/i);
     assert.doesNotMatch(index, /focused browser tools|tools available|id="tool-count"/i);
     assert.doesNotMatch(index, /class="category-nav__link"><span>[^<]+<\/span><span>\d+<\/span>/);
     assert.match(index, /assets\/logo\.svg/);
@@ -77,6 +79,9 @@ test('shared workbench styling uses an action hierarchy and directory rows inste
     assert.match(css, /\.catalog-layout/);
     assert.match(css, /\.category-nav/);
     assert.doesNotMatch(css, /\.category-nav__link span:last-child/);
+    assert.match(css, /\.utility-hero/);
+    assert.match(css, /body:not\(\.tool-page-shell\) \.utility-hero[\s\S]*grid-template-columns/);
+    assert.match(css, /\.catalog \.tool-list[\s\S]*grid-template-columns:\s*repeat\(2/);
     assert.match(css, /\.btn--primary[\s\S]*background:\s*var\(--accent\)/);
     assert.match(css, /\.tool-content:has\(> \.options-group \+ \.options-group\)/);
     assert.match(css, /\.tool-content > \.text-center/);
