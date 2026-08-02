@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Useful browser tools for text, data, documents, security, design, and everyday digital work.">
+    <meta name="description" content="Curated tools for text, data, documents, design, security, and everyday work.">
     <meta name="theme-color" content="#2257d8">
     <link rel="canonical" href="https://tools.irfansp.dev/">
-    <meta property="og:title" content="tools. — useful browser utilities">
-    <meta property="og:description" content="A growing drawer of fast, privacy-friendly tools for everyday digital work.">
+    <meta property="og:title" content="tools. — curated tools for everyday work">
+    <meta property="og:description" content="Curated tools for everything you need.">
     <meta property="og:url" content="https://tools.irfansp.dev/">
     <meta property="og:type" content="website">
-    <title>tools. — useful browser utilities</title>
+    <title>tools. — curated tools for everyday work</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/layout.css">
@@ -35,7 +35,7 @@
             <a class="icon-btn" href="https://github.com/irfansofyana/tools" target="_blank" rel="noopener" aria-label="GitHub repository">
                 <i class="fab fa-github" aria-hidden="true"></i>
             </a>
-            <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark and light theme" aria-pressed="false">
+            <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark and light theme" aria-pressed="false">
                 <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
                 <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             </button>
@@ -44,9 +44,8 @@
 
     <main class="page" id="tools">
         <section class="intro">
-            <p class="intro__eyebrow"><strong id="tool-count">43</strong> focused browser tools</p>
-            <h1>Small tools.<br><em>No ceremony.</em></h1>
-            <p class="intro__lede">Format, convert, inspect, and generate—the useful stuff, ready when you need it.</p>
+            <h1>Curated tools for everything you need.</h1>
+            <p class="intro__lede">Pick a task, get it done, and move on.</p>
         </section>
 
         <div class="search-shell">
@@ -59,24 +58,24 @@
                 <kbd class="search__shortcut" aria-hidden="true">/</kbd>
             </div>
             <div class="search-shell__meta">
-                <p id="search-hint">No sign-in. Most tools process data in your browser.</p>
-                <p id="search-status" aria-live="polite"><strong>43</strong> tools available</p>
+                <p id="search-hint">Search by task, format, or name.</p>
+                <p id="search-status" aria-live="polite">Ready to search</p>
             </div>
         </div>
 
         <div class="catalog-layout">
             <nav class="category-nav" aria-label="Tool categories">
                 <p class="category-nav__label">Browse</p>
-                <a href="#category-writing-text" class="category-nav__link"><span>Writing &amp; text</span><span>6</span></a>
-                <a href="#category-encode-convert" class="category-nav__link"><span>Encode &amp; convert</span><span>4</span></a>
-                <a href="#category-data" class="category-nav__link"><span>Data</span><span>10</span></a>
-                <a href="#category-web" class="category-nav__link"><span>Web</span><span>4</span></a>
-                <a href="#category-security-privacy" class="category-nav__link"><span>Security &amp; privacy</span><span>5</span></a>
-                <a href="#category-system-developer" class="category-nav__link"><span>System &amp; developer</span><span>1</span></a>
-                <a href="#category-time-schedules" class="category-nav__link"><span>Time &amp; schedules</span><span>2</span></a>
-                <a href="#category-visual-documents" class="category-nav__link"><span>Visual &amp; documents</span><span>6</span></a>
-                <a href="#category-build-test" class="category-nav__link"><span>Build &amp; test</span><span>2</span></a>
-                <a href="#category-network" class="category-nav__link"><span>Network</span><span>3</span></a>
+                <a href="#category-writing-text" class="category-nav__link"><span>Writing &amp; text</span></a>
+                <a href="#category-encode-convert" class="category-nav__link"><span>Encode &amp; convert</span></a>
+                <a href="#category-data" class="category-nav__link"><span>Data</span></a>
+                <a href="#category-web" class="category-nav__link"><span>Web</span></a>
+                <a href="#category-security-privacy" class="category-nav__link"><span>Security &amp; privacy</span></a>
+                <a href="#category-system-developer" class="category-nav__link"><span>System &amp; developer</span></a>
+                <a href="#category-time-schedules" class="category-nav__link"><span>Time &amp; schedules</span></a>
+                <a href="#category-visual-documents" class="category-nav__link"><span>Visual &amp; documents</span></a>
+                <a href="#category-build-test" class="category-nav__link"><span>Build &amp; test</span></a>
+                <a href="#category-network" class="category-nav__link"><span>Network</span></a>
             </nav>
             <div class="catalog" id="tool-catalog">
 
@@ -88,7 +87,7 @@
                 <li class="tool"><a href="tools/backslash-escape-unescape.html" class="tool__link"><span class="tool__name">backslash-escape</span><span class="tool__desc">Escape and unescape backslashes in text</span></a></li>
                 <li class="tool"><a href="tools/string-generator.html" class="tool__link"><span class="tool__name">random-string</span><span class="tool__desc">Generate random strings with patterns</span></a></li>
                 <li class="tool"><a href="tools/text-diff.html" class="tool__link"><span class="tool__name">text-diff</span><span class="tool__desc">Compare two text blocks and highlight differences</span></a></li>
-                <li class="tool"><a href="tools/vim-editor.html" class="tool__link"><span class="tool__name">vim-editor</span><span class="tool__desc">In-browser text editor with Vim key bindings</span></a></li>
+                <li class="tool"><a href="tools/vim-editor.html" class="tool__link"><span class="tool__name">vim-editor</span><span class="tool__desc">Text editor with Vim key bindings</span></a></li>
             </ul>
         </section>
 

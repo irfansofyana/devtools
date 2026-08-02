@@ -70,10 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
         tools.forEach(tool => tool.querySelector('.tool__link')?.classList.remove('is-active'));
 
         if (searchStatus) {
-            const noun = totalVisible === 1 ? 'tool' : 'tools';
-            searchStatus.innerHTML = query
-                ? `<strong>${totalVisible}</strong> matching ${noun}`
-                : `<strong>${totalVisible}</strong> ${noun} available`;
+            searchStatus.textContent = query
+                ? (totalVisible > 0 ? 'Matching tools shown' : 'No matching tools')
+                : 'Ready to search';
         }
     }
 
@@ -138,7 +137,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-
-    const countEl = document.getElementById('tool-count');
-    if (countEl) countEl.textContent = String(tools.length);
 });

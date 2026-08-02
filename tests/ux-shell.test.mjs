@@ -19,6 +19,21 @@ test('homepage exposes a navigable catalog and live search status', () => {
     assert.match(index, /id="search-status"[^>]*aria-live="polite"/);
     assert.match(index, /id="category-writing-text"/);
     assert.match(index, /href="#category-writing-text"/);
+    assert.match(index, /Curated tools for everything you need\./);
+    assert.doesNotMatch(index, /focused browser tools|tools available|id="tool-count"/i);
+    assert.doesNotMatch(index, /class="category-nav__link"><span>[^<]+<\/span><span>\d+<\/span>/);
+    assert.match(index, /assets\/logo\.svg/);
+});
+
+test('homepage wordmark uses a simple hand-drawn monogram rather than a dashboard tile', () => {
+    const logo = read('assets/logo.svg');
+    const favicon = read('assets/favicon.svg');
+
+    assert.match(logo, /<path/);
+    assert.match(logo, /<circle/);
+    assert.doesNotMatch(logo, /<rect/);
+    assert.match(favicon, /<path/);
+    assert.doesNotMatch(favicon, /width="7" height="7"/);
 });
 
 test('homepage search supports keyboard result navigation', () => {
@@ -61,6 +76,7 @@ test('shared workbench styling uses an action hierarchy and directory rows inste
     assert.doesNotMatch(css, /content:\s*['"]open['"]/i);
     assert.match(css, /\.catalog-layout/);
     assert.match(css, /\.category-nav/);
+    assert.doesNotMatch(css, /\.category-nav__link span:last-child/);
     assert.match(css, /\.btn--primary[\s\S]*background:\s*var\(--accent\)/);
     assert.match(css, /\.tool-content:has\(> \.options-group \+ \.options-group\)/);
     assert.match(css, /\.tool-content > \.text-center/);
