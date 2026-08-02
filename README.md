@@ -61,6 +61,8 @@ node --test tests/*.test.mjs
 │   ├── search.js           # Filtering and keyboard navigation
 │   ├── theme.js            # Theme persistence
 │   └── pdf-*.mjs           # Local PDF engines and controllers
+├── apps/
+│   └── diagram-workbench/   # Isolated React/Vite Excalidraw application
 ├── vendor/                 # Pinned browser libraries and WASM
 ├── assets/                 # Logo, favicon, and screenshots
 └── tests/                  # Static and behavior regressions
@@ -73,6 +75,34 @@ node --test tests/*.test.mjs
 3. Add the tool to the matching category in `index.html`.
 4. Keep the page usable with a keyboard and in both themes.
 5. Update the tool count and run the tests.
+
+## Diagram Workbench
+
+The Diagram Workbench is deliberately isolated from the vanilla catalog:
+
+- Source: `apps/diagram-workbench/`
+- Production route: `/tools/diagram-workbench/`
+- Editor engine: `@excalidraw/excalidraw@0.18.1`
+- Build: Vite; generated route files are ignored locally and produced in the Pages workflow
+- Persistence: versioned IndexedDB stores named board metadata, serialized scenes, embedded files, and library settings
+- Privacy: no accounts, analytics, uploads, collaboration, or runtime CDN dependencies
+- Recovery: debounced autosave is browser convenience; portable `.excalidraw`, PNG, SVG, documentation ZIP, and complete-workspace exports remain available
+- Restore safety: workspace backups are structurally validated, prototype-sensitive identifiers are rejected, and IndexedDB replacement is atomic
+- Component packs: downloaded from this repository only when installed, pinned by upstream revision and SHA-256; branded packs with unclear redistribution rights are deferred; see `apps/diagram-workbench/COMPONENT_PACKS.md`
+- Dependency audit: reviewed residual transitive parser advisories and mitigations are recorded in `apps/diagram-workbench/SECURITY_REVIEW.md`
+
+Local development:
+
+```bash
+cd apps/diagram-workbench
+npm ci
+npm test
+npm run build
+cd ../..
+python3 -m http.server 8765 --bind 127.0.0.1
+```
+
+Open `http://127.0.0.1:8765/tools/diagram-workbench/`. The build output is not committed; the GitHub Pages workflow builds it before Jekyll packages the site.
 
 ## Vendored PDF engines
 

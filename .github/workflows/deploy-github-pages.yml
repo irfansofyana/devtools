@@ -26,6 +26,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/diagram-workbench/package-lock.json
+      - name: Run repository tests
+        run: node --test tests/*.test.mjs
+      - name: Build Diagram Workbench
+        working-directory: apps/diagram-workbench
+        run: |
+          npm ci
+          npm test
+          npm run build
+          rm -rf node_modules
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Build with Jekyll

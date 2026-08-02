@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Create software architecture and system design diagrams with local browser persistence." />
+    <meta name="theme-color" content="#f7f7f3" />
+    <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+    <title>Diagram Workbench | tools.</title>
+    <script>
+        try {
+            const saved = localStorage.getItem('tools-theme');
+            const theme = saved || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.dataset.theme = theme;
+        } catch (_) {}
+    </script>
+</head>
+<body>
+    <a class="skip-link" href="#diagram-canvas">Skip to diagram canvas</a>
+    <div id="root"></div>
+    <script>
+        window.EXCALIDRAW_ASSET_PATH = new URL('./', window.location.href).pathname;
+    </script>
+    <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

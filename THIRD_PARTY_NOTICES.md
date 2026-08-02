@@ -38,3 +38,25 @@ The published ESM bundle was renamed from `.js` to `.mjs`; its contents are othe
 - SHA-256 (`qpdf.wasm`): `86cba3db67ce3add2dd4b3533dd0614dade0b4e98b14a229bfda90306c053dd3`
 
 The qpdf-run MIT license and the QPDF license/notice files are retained in their respective vendor directories. The npm package does not publish the WASM build flags or a separate build commit; the exact shipped artifact is pinned by package version and SHA-256 above. The local wrapper includes one defensive patch that terminates its worker when initialization fails or times out.
+
+## Diagram Workbench
+
+The isolated Diagram Workbench is built from the lockfile at `apps/diagram-workbench/package-lock.json`. Its principal runtime packages are:
+
+- `@excalidraw/excalidraw@0.18.1` — MIT; upstream: <https://github.com/excalidraw/excalidraw>; license retained at `apps/diagram-workbench/licenses/excalidraw-MIT.txt`.
+- `@excalidraw/mermaid-to-excalidraw@2.2.2` — MIT; upstream: <https://github.com/excalidraw/mermaid-to-excalidraw>; license retained at `apps/diagram-workbench/licenses/mermaid-to-excalidraw-MIT.txt`. Mermaid conversion is loaded only when requested.
+- `react@18.3.1` and `react-dom@18.3.1` — MIT; upstream: <https://github.com/facebook/react>; license retained at `apps/diagram-workbench/licenses/react-MIT.txt`.
+- `idb@8.0.3` — ISC; upstream: <https://github.com/jakearchibald/idb>; license retained at `apps/diagram-workbench/licenses/idb-ISC.txt`.
+- `@dagrejs/dagre@3.0.0` — MIT; upstream: <https://github.com/dagrejs/dagre>; license retained at `apps/diagram-workbench/licenses/dagre-MIT.txt`.
+- `fflate@0.8.3` — MIT; upstream: <https://github.com/101arrowz/fflate>; license retained at `apps/diagram-workbench/licenses/fflate-MIT.txt`.
+- `vite@7.3.6` — MIT, build-time only; upstream: <https://github.com/vitejs/vite>; license retained at `apps/diagram-workbench/licenses/vite-MIT.txt`.
+
+The generated application and editor assets are served from this repository; no runtime CDN is required.
+
+## Excalidraw community component packs
+
+Three optional `.excalidrawlib` files are redistributed from `excalidraw/excalidraw-libraries` revision `92e1979e8157da0ad9c2bd912c01ea9381d1733f`: Software Architecture, System Design, and C4 Architecture. The repository MIT license is retained at `apps/diagram-workbench/licenses/excalidraw-libraries-MIT.txt`.
+
+Exact source paths, authors, SHA-256 hashes, and the review policy are recorded in `apps/diagram-workbench/COMPONENT_PACKS.md`. The C4 pack is attributed to its library author and to Simon Brown’s C4 model at <https://c4model.com/>; the C4 website identifies its content as CC BY 4.0.
+
+AWS, Google Cloud, Azure, and Kubernetes community packs are not redistributed in v1 because repository inclusion does not establish standalone rights to repackage branded artwork. The workbench links to current official provider sources instead.
