@@ -90,6 +90,7 @@ test('JSON formatter output uses a local JSON viewer palette', () => {
     assert.match(jsonPage, /class="tool-page-shell json-tool"/);
     assert.match(jsonPage, /json-output-shell/);
     assert.match(jsonPage, /json-output-meta/);
+    assert.match(jsonPage, /<button class="primary" id="beautify-btn">Beautify<\/button>/);
     assert.match(jsonPage, /--json-property/);
     assert.doesNotMatch(jsonPage, /themes\/prism(?:-dark)?\.min\.css/);
 });

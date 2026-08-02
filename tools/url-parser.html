@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../css/theme.css">
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/workbench.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;500;600&display=swap">
@@ -16,6 +17,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="tool-page-shell">
+    <a class="skip-link" href="#main-content">Skip to tool</a>
     <header class="top-bar">
         <a href="../index.html" class="top-bar__brand" aria-label="tools home"><img src="../assets/logo.svg" alt="" width="24" height="24"><span>tools.</span></a>
         <div class="top-bar__spacer"></div>
@@ -30,7 +32,7 @@
         </div>
     </header>
 
-    <main>
+    <main id="main-content">
         <section class="tool-container">
             <div class="container">
                 <a href="../index.html" class="back-link">all tools</a>
@@ -139,14 +141,13 @@
         </section>
     </main>
 
-    <footer>
-        <div class="container">
-            <p>&copy; <span id="current-year">2025</span> tools.. All rights reserved.</p>
-            <p>
-                <a href="https://github.com/irfansofyana/tools" target="_blank">GitHub</a> |
-                <a href="https://github.com/irfansofyana/tools/issues" target="_blank">Report Issues</a>
-            </p>
-        </div>
+    <footer class="app-footer">
+        <p>
+            &copy; <span id="current-year">2025</span> ·
+            <a href="https://github.com/irfansofyana/tools" target="_blank" rel="noopener">source</a> ·
+            <a href="https://github.com/irfansofyana/tools/issues" target="_blank" rel="noopener">report an issue</a> ·
+            <a href="../index.html">all tools</a>
+        </p>
     </footer>
 
     <script src="../js/theme.js"></script>
