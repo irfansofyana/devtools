@@ -1,18 +1,19 @@
 /**
- * Devtools — theme switcher.
- * - Persists choice in localStorage (key: Devtools-theme).
+ * tools. — theme switcher.
+ * - Persists choice in localStorage (key: tools-theme).
  * - Falls back to prefers-color-scheme.
  * - Updates aria-pressed and aria-label on the toggle button so screen
  *   readers describe state rather than reading raw emoji.
  * - Respects prefers-reduced-motion (no spin animation).
  */
 (function () {
-    const STORAGE_KEY = 'Devtools-theme';
+    const STORAGE_KEY = 'tools-theme';
+    const LEGACY_STORAGE_KEY = 'Devtools-theme';
     const root = document.documentElement;
 
     // Apply initial theme as early as possible to avoid FOUC.
     try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const initial = saved || (prefersDark ? 'dark' : 'light');
         root.setAttribute('data-theme', initial);

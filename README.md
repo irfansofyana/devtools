@@ -1,8 +1,8 @@
-# Devtools
+# tools.
 
-A comprehensive collection of web-based tools for developers. This project provides a toolkit that developers can access via GitHub Pages to perform common development tasks more efficiently.
+Useful browser tools for text, data, documents, security, design, and everyday digital work — available at [tools.irfansp.dev](https://tools.irfansp.dev).
 
-![Devtools Screenshot](assets/images/screenshot.png)
+![tools. Screenshot](assets/images/screenshot.png)
 
 ## 📋 Table of Contents
 
@@ -18,7 +18,7 @@ A comprehensive collection of web-based tools for developers. This project provi
 
 ## 🔍 Overview
 
-Devtools is designed to streamline common development tasks by providing a suite of web-based utilities that can be accessed directly from your browser. Whether you're working on front-end, back-end, or DevOps tasks, these tools help you save time and improve productivity.
+tools. is a growing utility drawer for the small digital jobs that should not require an account, an install, or handing your data to another service. It includes approachable everyday tools alongside deeper utilities for technical work.
 
 ## 🧰 Available Tools
 
@@ -85,8 +85,8 @@ Devtools is designed to streamline common development tasks by providing a suite
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/irfansofyana/devtools.git
-   cd devtools
+   git clone https://github.com/irfansofyana/tools.git
+   cd tools
    ```
 
 2. Open the project in your favorite code editor
@@ -119,7 +119,7 @@ Devtools is designed to streamline common development tasks by providing a suite
 ## 📁 Project Structure
 
 ```plaintext
-devtools/
+tools/
 ├── assets/            # Static assets (images, icons, favicon)
 │   └── images/        # Screenshot and other images
 ├── css/               # Stylesheet files
@@ -164,4 +164,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
    - Verify the deployment process completed successfully
    - Check that all assets were properly uploaded
 
-For additional help, please [open an issue](https://github.com/irfansofyana/devtools/issues) on GitHub.
+For additional help, please [open an issue](https://github.com/irfansofyana/tools/issues) on GitHub.

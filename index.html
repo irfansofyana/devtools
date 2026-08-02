@@ -3,27 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="A small collection of offline-friendly developer utilities.">
-    <title>devtools</title>
+    <meta name="description" content="Useful browser tools for text, data, documents, security, design, and everyday digital work.">
+    <meta name="theme-color" content="#2257d8">
+    <link rel="canonical" href="https://tools.irfansp.dev/">
+    <meta property="og:title" content="tools. — useful browser utilities">
+    <meta property="og:description" content="A growing drawer of fast, privacy-friendly tools for everyday digital work.">
+    <meta property="og:url" content="https://tools.irfansp.dev/">
+    <meta property="og:type" content="website">
+    <title>tools. — useful browser utilities</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-    <link rel="icon" href="assets/favicon-32x32.png" type="image/png" sizes="32x32">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <a class="skip-link" href="#tools">Skip to content</a>
 
     <header class="top-bar">
-        <a href="index.html" class="top-bar__brand">devtools</a>
+        <a href="index.html" class="top-bar__brand" aria-label="tools home">
+            <img src="assets/logo.svg" alt="" width="24" height="24">
+            <span>tools.</span>
+        </a>
         <div class="top-bar__spacer"></div>
         <div class="top-bar__actions">
-            <a class="icon-btn" href="https://github.com/irfansofyana/Devtools" target="_blank" rel="noopener" aria-label="GitHub repository">
+            <a class="icon-btn" href="https://github.com/irfansofyana/tools" target="_blank" rel="noopener" aria-label="GitHub repository">
                 <i class="fab fa-github" aria-hidden="true"></i>
             </a>
             <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle dark and light theme" aria-pressed="false">
@@ -35,20 +43,26 @@
 
     <main class="page" id="tools">
         <section class="intro">
-            <h1>Developer tools</h1>
-            <p>A small collection of <span id="tool-count">43</span> offline-friendly utilities — text, encoding, data, web, crypto. Press <code>/</code> or <code>⌘K</code> to search.</p>
+            <p class="intro__eyebrow">A useful little corner of the internet</p>
+            <h1>Tools for the thing<br>you need to do <em>right now.</em></h1>
+            <p class="intro__lede">Format a file. Read a QR code. Compare text. Make a diagram. A growing drawer of fast browser utilities for everyday digital work.</p>
+            <div class="intro__meta">
+                <span><strong id="tool-count">43</strong> tools</span>
+                <span>Most work stays on your device</span>
+                <span class="intro__shortcut"><kbd>/</kbd> to search</span>
+            </div>
         </section>
 
         <div class="search">
             <i class="fas fa-search search__icon" aria-hidden="true"></i>
-            <input type="search" id="tool-search" placeholder="Search…" aria-label="Search tools" autocomplete="off" spellcheck="false">
+            <input type="search" id="tool-search" placeholder="What do you need to do?" aria-label="Search tools" autocomplete="off" spellcheck="false">
             <button type="button" id="search-clear" class="search__clear hidden" aria-label="Clear search">
                 <i class="fas fa-times" aria-hidden="true"></i>
             </button>
         </div>
 
         <section class="section">
-            <h2 class="section__title">Text</h2>
+            <h2 class="section__title">Writing &amp; text</h2>
             <ul class="tool-list">
                 <li class="tool"><a href="tools/string-case-converter.html" class="tool__link"><span class="tool__name">string-case-converter</span><span class="tool__desc">camelCase, snake_case, kebab-case and more</span></a></li>
                 <li class="tool"><a href="tools/line-sort-dedupe.html" class="tool__link"><span class="tool__name">line-sort-dedupe</span><span class="tool__desc">Sort lines alphabetically and remove duplicates</span></a></li>
@@ -60,7 +74,7 @@
         </section>
 
         <section class="section">
-            <h2 class="section__title">Encoding</h2>
+            <h2 class="section__title">Encode &amp; convert</h2>
             <ul class="tool-list">
                 <li class="tool"><a href="tools/base64-encoder-decoder.html" class="tool__link"><span class="tool__name">base64</span><span class="tool__desc">Encode and decode Base64 (text or files)</span></a></li>
                 <li class="tool"><a href="tools/url-encoder-decoder.html" class="tool__link"><span class="tool__name">url-encode</span><span class="tool__desc">Encode and decode URLs and URL components</span></a></li>
@@ -96,7 +110,7 @@
         </section>
 
         <section class="section">
-            <h2 class="section__title">Crypto</h2>
+            <h2 class="section__title">Security &amp; privacy</h2>
             <ul class="tool-list">
                 <li class="tool"><a href="tools/hash-generator.html" class="tool__link"><span class="tool__name">hash</span><span class="tool__desc">MD5, SHA-1, SHA-256, SHA-512 hashes</span></a></li>
                 <li class="tool"><a href="tools/hmac-generator.html" class="tool__link"><span class="tool__name">hmac</span><span class="tool__desc">Generate and verify HMAC signatures</span></a></li>
@@ -107,14 +121,14 @@
         </section>
 
         <section class="section">
-            <h2 class="section__title">System</h2>
+            <h2 class="section__title">System &amp; developer</h2>
             <ul class="tool-list">
                 <li class="tool"><a href="tools/chmod-calculator.html" class="tool__link"><span class="tool__name">chmod</span><span class="tool__desc">Calculate Unix permission modes and commands</span></a></li>
             </ul>
         </section>
 
         <section class="section">
-            <h2 class="section__title">Time</h2>
+            <h2 class="section__title">Time &amp; schedules</h2>
             <ul class="tool-list">
                 <li class="tool"><a href="tools/timestamp-converter.html" class="tool__link"><span class="tool__name">timestamp</span><span class="tool__desc">Convert between timestamp formats and dates</span></a></li>
                 <li class="tool"><a href="tools/crontab-generator.html" class="tool__link"><span class="tool__name">crontab</span><span class="tool__desc">Build crontab expressions with human-readable preview</span></a></li>
@@ -122,7 +136,7 @@
         </section>
 
         <section class="section">
-            <h2 class="section__title">Visual</h2>
+            <h2 class="section__title">Visual &amp; documents</h2>
             <ul class="tool-list">
                 <li class="tool"><a href="tools/color-converter.html" class="tool__link"><span class="tool__name">color-converter</span><span class="tool__desc">Convert between HEX, RGB and HSL</span></a></li>
                 <li class="tool"><a href="tools/qr-code-tool.html" class="tool__link"><span class="tool__name">qr-code</span><span class="tool__desc">Generate and read QR codes</span></a></li>
@@ -134,7 +148,7 @@
         </section>
 
         <section class="section">
-            <h2 class="section__title">API</h2>
+            <h2 class="section__title">Build &amp; test</h2>
             <ul class="tool-list">
                 <li class="tool"><a href="tools/api-mock-generator.html" class="tool__link"><span class="tool__name">api-mock</span><span class="tool__desc">Generate realistic mock data for API testing</span></a></li>
                 <li class="tool"><a href="tools/regex-tester.html" class="tool__link"><span class="tool__name">regex-tester</span><span class="tool__desc">Test and validate regular expressions live</span></a></li>
@@ -156,8 +170,8 @@
     <footer class="app-footer">
         <p>
             &copy; <span id="current-year">2025</span> ·
-            <a href="https://github.com/irfansofyana/Devtools" target="_blank" rel="noopener">source</a> ·
-            <a href="https://github.com/irfansofyana/Devtools/issues" target="_blank" rel="noopener">issues</a> ·
+            <a href="https://github.com/irfansofyana/tools" target="_blank" rel="noopener">source</a> ·
+            <a href="https://github.com/irfansofyana/tools/issues" target="_blank" rel="noopener">suggest a tool</a> ·
             built by <a href="https://github.com/irfansofyana" target="_blank" rel="noopener">irfansofyana</a>
         </p>
     </footer>

@@ -1,5 +1,5 @@
 /**
- * Devtools — shared utilities.
+ * tools. — shared utilities.
  */
 document.addEventListener('DOMContentLoaded', () => {
     loadWorkbenchStyles();

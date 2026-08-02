@@ -1,11 +1,11 @@
 /* ============================================================
-   Devtools — tokens, reset, base typography
+   tools. — tokens, reset, base typography
    ============================================================ */
 
 :root {
-    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-    --font-display: var(--font-sans);
+    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --font-sans: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-display: 'Archivo', var(--font-sans);
     --font-body: var(--font-sans);
     --font-primary: var(--font-sans);
 
@@ -80,6 +80,7 @@ ul, ol { list-style: none; }
 img, svg { display: block; max-width: 100%; }
 
 h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
     line-height: var(--leading-tight);
     letter-spacing: -0.01em;
     color: var(--text);

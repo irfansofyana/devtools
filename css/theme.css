@@ -1,33 +1,33 @@
 /* ============================================================
-   Devtools — palette
-   Quiet, monochrome with a single muted accent.
+   tools. — palette
+   Paper, work blue, and one warm marker-yellow accent.
    ============================================================ */
 
 :root {
-    --bg: #fafaf9;
-    --bg-secondary: #f4f4f2;
-    --bg-tertiary: #e8e8e4;
+    --bg: #f7f7f3;
+    --bg-secondary: #efefe9;
+    --bg-tertiary: #e5e6df;
     --surface-1: #ffffff;
     --surface-2: #f4f4f2;
     --bg-primary: var(--bg); /* legacy */
 
-    --text: #18181b;
+    --text: #1c211f;
     --text-primary: var(--text);
-    --text-secondary: #52525b;
-    --text-muted: #a1a1aa;
+    --text-secondary: #5f6762;
+    --text-muted: #8c948f;
 
-    --border: #e4e4e7;
-    --border-strong: #d4d4d8;
+    --border: #daddd7;
+    --border-strong: #c7cbc4;
     --border-color: var(--border);
 
-    /* Muted dev-blog blue (not Tailwind blue, not vermilion). */
-    --accent: #2563eb;
-    --accent-hover: #1d4ed8;
-    --accent-soft: rgba(37, 99, 235, 0.10);
+    --accent: #2257d8;
+    --accent-hover: #1945b1;
+    --accent-soft: rgba(34, 87, 216, 0.10);
+    --marker: #f2c94c;
     --accent-primary: var(--accent);
     --accent-secondary: var(--accent-hover);
     --primary-color: var(--accent);
-    --primary-color-rgb: 37, 99, 235;
+    --primary-color-rgb: 34, 87, 216;
 
     --success: #16a34a;
     --success-bg: #ecfccb;
@@ -53,29 +53,30 @@
 }
 
 [data-theme="dark"] {
-    --bg: #0a0a0a;
-    --bg-secondary: #111111;
-    --bg-tertiary: #161616;
-    --surface-1: #111111;
-    --surface-2: #161616;
+    --bg: #111513;
+    --bg-secondary: #181d1a;
+    --bg-tertiary: #202622;
+    --surface-1: #181d1a;
+    --surface-2: #202622;
     --bg-primary: var(--bg);
 
-    --text: #f5f5f4;
+    --text: #f1f3ef;
     --text-primary: var(--text);
-    --text-secondary: #a1a1aa;
-    --text-muted: #6b6b70;
+    --text-secondary: #aeb6b0;
+    --text-muted: #78817b;
 
-    --border: #1f1f22;
-    --border-strong: #2a2a2e;
+    --border: #2a312d;
+    --border-strong: #39413c;
     --border-color: var(--border);
 
-    --accent: #60a5fa;
-    --accent-hover: #93c5fd;
-    --accent-soft: rgba(96, 165, 250, 0.12);
+    --accent: #7da2ff;
+    --accent-hover: #a9c0ff;
+    --accent-soft: rgba(125, 162, 255, 0.12);
+    --marker: #f2c94c;
     --accent-primary: var(--accent);
     --accent-secondary: var(--accent-hover);
     --primary-color: var(--accent);
-    --primary-color-rgb: 96, 165, 250;
+    --primary-color-rgb: 125, 162, 255;
 
     --success: #4ade80;
     --success-bg: rgba(74, 222, 128, 0.10);

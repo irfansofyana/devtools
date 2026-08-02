@@ -1,6 +1,6 @@
-# Contributing to Devtools
+# Contributing to tools.
 
-Thank you for your interest in contributing to Devtools! This document provides guidelines and instructions for contributing to this project.
+Thank you for your interest in contributing to tools.! This document provides guidelines and instructions for contributing to this project.
 
 ## Table of Contents
 
@@ -37,14 +37,14 @@ This project and everyone participating in it is governed by our Code of Conduct
 2. **Clone Your Fork**
 
    ```bash
-   git clone https://github.com/irfansofyana/devtools.git
-   cd devtools
+   git clone https://github.com/irfansofyana/tools.git
+   cd tools
    ```
 
 3. **Set Up Remote**
 
    ```bash
-   git remote add upstream https://github.com/irfansofyana/devtools.git
+   git remote add upstream https://github.com/irfansofyana/tools.git
    ```
 
 4. **Open the Project**
@@ -56,7 +56,7 @@ This project and everyone participating in it is governed by our Code of Conduct
 Familiarize yourself with the project structure:
 
 ```plaintext
-devtools/
+tools/
 ├── assets/            # Static assets (images, icons, etc.)
 ├── css/               # Stylesheet files
 ├── js/                # JavaScript files
@@ -192,4 +192,4 @@ Join our community:
 - Participate in discussions in issues and pull requests
 - Help others with their questions
 
-Thank you for contributing to Devtools!
+Thank you for contributing to tools.!

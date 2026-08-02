@@ -1,5 +1,5 @@
 /**
- * Devtools — homepage search.
+ * tools. — homepage search.
  * - Filters tool rows by query (matches name + description).
  * - Hides sections that have no matching rows.
  * - Ctrl/Cmd+K or "/" focuses the search input. Esc clears it.

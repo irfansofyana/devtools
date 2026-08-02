@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Devtools is a collection of 36 web-based developer tools deployed via GitHub Pages. It's a static site built with vanilla HTML, CSS, and JavaScript that provides utilities for text processing, data conversion, encoding/decoding, API testing, network analysis, and more.
+tools. is a collection of 43 browser-based utilities deployed via GitHub Pages. It serves everyday digital work as well as technical workflows, with tools for text, documents, data conversion, design, security, APIs, and network analysis. The site uses vanilla HTML, CSS, and JavaScript.
 
 ## Development Commands
 
