@@ -64,4 +64,6 @@ test('shared workbench styling uses an action hierarchy and directory rows inste
     assert.match(css, /\.btn--primary[\s\S]*background:\s*var\(--accent\)/);
     assert.match(css, /\.tool-content:has\(> \.options-group \+ \.options-group\)/);
     assert.match(css, /\.tool-content > \.text-center/);
+    assert.match(css, /--text-muted:\s*#68706b/);
+    assert.match(css, /\.jsoneditor[^\{]*:focus-visible[\s\S]*outline/);
 });

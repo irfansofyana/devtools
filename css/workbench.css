@@ -16,7 +16,7 @@
     --surface-3: #e9eae4;
     --text: #1c211f;
     --text-secondary: #5f6762;
-    --text-muted: #8c948f;
+    --text-muted: #68706b;
     --border: #daddd7;
     --border-strong: #c7cbc4;
     --accent: #2257d8;
@@ -51,7 +51,7 @@
     --surface-3: #262d29;
     --text: #f1f3ef;
     --text-secondary: #aeb6b0;
-    --text-muted: #78817b;
+    --text-muted: #9aa39d;
     --border: #2a312d;
     --border-strong: #39413c;
     --accent: #7da2ff;
@@ -377,6 +377,12 @@ select:focus {
     border-radius: var(--panel-radius);
     background: var(--surface-1);
     box-shadow: var(--shadow-sm);
+}
+
+.service-note {
+    max-width: 76ch;
+    margin: var(--space-3) 0 0;
+    color: var(--text-secondary);
 }
 
 .workbench-panel--result,
@@ -826,14 +832,14 @@ th {
     width: 120px;
 }
 
-.jsoneditor input:focus,
-.jsoneditor input:not([type]):focus,
-.jsoneditor input[type="text"]:focus,
-.jsoneditor input[type="search"]:focus,
-.jsoneditor select:focus,
-.jsoneditor textarea:focus {
-    outline: 0 !important;
-    outline-offset: 0 !important;
+.jsoneditor input:focus-visible,
+.jsoneditor input:not([type]):focus-visible,
+.jsoneditor input[type="text"]:focus-visible,
+.jsoneditor input[type="search"]:focus-visible,
+.jsoneditor select:focus-visible,
+.jsoneditor textarea:focus-visible {
+    outline: 2px solid var(--focus-ring) !important;
+    outline-offset: 1px !important;
     border-color: inherit !important;
 }
 

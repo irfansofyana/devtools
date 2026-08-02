@@ -14,7 +14,7 @@
     --text: #1c211f;
     --text-primary: var(--text);
     --text-secondary: #5f6762;
-    --text-muted: #8c948f;
+    --text-muted: #68706b;
 
     --border: #daddd7;
     --border-strong: #c7cbc4;
@@ -63,7 +63,7 @@
     --text: #f1f3ef;
     --text-primary: var(--text);
     --text-secondary: #aeb6b0;
-    --text-muted: #78817b;
+    --text-muted: #9aa39d;
 
     --border: #2a312d;
     --border-strong: #39413c;
