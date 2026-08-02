@@ -1,0 +1,53 @@
+{
+  "name": "qpdf-run",
+  "version": "0.2.1",
+  "description": "Run qpdf WASM in the browser with a Uint8Array-first API.",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    },
+    "./worker": "./src/worker.js",
+    "./qpdf.js": "./vendor/qpdf/lib/qpdf.js",
+    "./qpdf.wasm": "./vendor/qpdf/lib/qpdf.wasm"
+  },
+  "types": "./src/index.d.ts",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/RabbitHols/qpdf-run.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RabbitHols/qpdf-run/issues"
+  },
+  "homepage": "https://github.com/RabbitHols/qpdf-run#readme",
+  "files": [
+    "src",
+    "vendor/qpdf",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "npm run check",
+    "check": "node --check src/*.js scripts/*.mjs",
+    "demo:browser": "serve . --listen 8080",
+    "prepack": "npm run check",
+    "serve": "serve . --listen 8080",
+    "smoke:browser": "node scripts/browser-smoke.mjs",
+    "test": "npm run check && npm run smoke:browser"
+  },
+  "keywords": [
+    "pdf",
+    "qpdf",
+    "wasm",
+    "browser",
+    "browser-only",
+    "worker",
+    "uint8array"
+  ],
+  "devDependencies": {
+    "serve": "^14.2.6"
+  }
+}
