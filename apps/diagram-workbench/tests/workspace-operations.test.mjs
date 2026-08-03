@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createSerializedDeltaQueue, createWorkspaceOperationCoordinator } from '../src/domain/workspace-operations.js';
+import { createSerializedDeltaQueue, createWorkspaceOperationCoordinator, refreshCommittedLibraryView } from '../src/domain/workspace-operations.js';
 
 test('serialized delta queues retry failed intent from the last successful editor baseline', async () => {
     const calls = [];
@@ -39,6 +39,28 @@ test('serialized delta queues expose failed pending writes and accept an authori
     await assert.rejects(queue.flush(), /disk unavailable/);
     queue.setBaseline(['restored']);
     assert.deepEqual(queue.getBaseline(), ['restored']);
+});
+
+test('failed committed-library UI refresh restores the prior queue intent baseline', async () => {
+    const queue = createSerializedDeltaQueue({
+        initialValue: [{ id: 'editor-before' }],
+        persist: async (_previous, desired) => desired,
+    });
+    const suppressionRef = { current: 0 };
+    await assert.rejects(
+        refreshCommittedLibraryView({
+            queue,
+            committedItems: [{ id: 'editor-before' }, { id: 'stored-import' }],
+            suppressionRef,
+            refresh: async () => {
+                assert.equal(suppressionRef.current, 1);
+                throw new Error('editor refresh failed');
+            },
+        }),
+        /editor refresh failed/,
+    );
+    assert.deepEqual(queue.getBaseline(), [{ id: 'editor-before' }]);
+    assert.equal(suppressionRef.current, 0);
 });
 
 test('workspace operations are exclusive and expose a monotonic transition token', async () => {

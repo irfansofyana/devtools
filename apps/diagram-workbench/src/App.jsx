@@ -17,9 +17,10 @@ import { createBoard, normalizeBoardName, sortBoardsByUpdatedAt } from './domain
 import { componentPacks, deferredCloudPacks } from './domain/component-packs.js';
 import { createDefaultLibraryMigration } from './domain/default-library.js';
 import { layoutSelectedElements } from './domain/layout.js';
+import { mergeImportedLibraryItems, stabilizeImportedLibraryItems } from './domain/library-import.js';
 import { templateToSkeletons } from './domain/template-elements.js';
 import { getTemplate, templateCatalog } from './domain/templates.js';
-import { createSerializedDeltaQueue, createWorkspaceOperationCoordinator } from './domain/workspace-operations.js';
+import { createSerializedDeltaQueue, createWorkspaceOperationCoordinator, refreshCommittedLibraryView } from './domain/workspace-operations.js';
 import {
     deleteBoard,
     getSetting,
@@ -37,8 +38,21 @@ import { downloadBlob, safeFilename } from './utils/download.js';
 const AUTOSAVE_DELAY = 700;
 const EMPTY_FILES = {};
 const MAX_MERMAID_CHARACTERS = 20_000;
+const MAX_LIBRARY_FILE_BYTES = 50 * 1024 * 1024;
 const rejectRemoteEmbeddable = () => false;
 const renderLocalOnlyEmbeddable = () => null;
+
+function isAllowedCommunityLibraryUrl(value) {
+    try {
+        const url = new URL(value);
+        if (url.protocol !== 'https:' || url.username || url.password || !url.pathname.endsWith('.excalidrawlib')) return false;
+        if (url.hostname === 'libraries.excalidraw.com') return url.pathname.startsWith('/libraries/');
+        return url.hostname === 'raw.githubusercontent.com'
+            && /^\/excalidraw\/excalidraw-libraries\/[^/]+\/libraries\//.test(url.pathname);
+    } catch {
+        return false;
+    }
+}
 
 function materializeDefaultLibraryItem(definition) {
     return {
@@ -132,6 +146,7 @@ function App() {
     const [editorKey, setEditorKey] = useState(0);
     const [editor, setEditor] = useState(null);
     const [saveState, setSaveState] = useState('Loading local workspace…');
+    const [libraryImportError, setLibraryImportError] = useState('');
     const [panel, setPanel] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(() => !window.matchMedia('(max-width: 920px)').matches);
     const [installedPacks, setInstalledPacks] = useState([]);
@@ -141,6 +156,7 @@ function App() {
     const [storagePersistent, setStoragePersistent] = useState(null);
     const [workspaceBusy, setWorkspaceBusy] = useState(false);
     const importInputRef = useRef(null);
+    const libraryInputRef = useRef(null);
     const workspaceInputRef = useRef(null);
     const sidebarToggleRef = useRef(null);
     const sidebarRef = useRef(null);
@@ -150,6 +166,7 @@ function App() {
     const saveTimerRef = useRef(null);
     const saveQueueRef = useRef(Promise.resolve());
     const libraryWriteQueueRef = useRef(null);
+    const suppressLibraryChangeDepthRef = useRef(0);
     if (libraryWriteQueueRef.current === null) {
         libraryWriteQueueRef.current = createSerializedDeltaQueue({
             initialValue: [],
@@ -181,6 +198,7 @@ function App() {
             },
         });
     }
+
 
     useEffect(() => {
         currentBoardRef.current = currentBoard;
@@ -584,8 +602,18 @@ function App() {
                 );
                 const mergedItems = updates['library-items'];
                 const next = updates['installed-packs'];
-                libraryWriteQueueRef.current.setBaseline(mergedItems);
-                await editor.updateLibrary({ libraryItems: mergedItems, merge: false, openLibraryMenu: true, defaultStatus: 'published' });
+                try {
+                    await refreshCommittedLibraryView({
+                        queue: libraryWriteQueueRef.current,
+                        committedItems: mergedItems,
+                        suppressionRef: suppressLibraryChangeDepthRef,
+                        refresh: () => editor.updateLibrary({ libraryItems: mergedItems, merge: false, openLibraryMenu: true, defaultStatus: 'published' }),
+                    });
+                } catch (error) {
+                    const persistedError = new Error('Pack stored locally, but the library view could not refresh. Reload to display it.', { cause: error });
+                    persistedError.libraryPersisted = true;
+                    throw persistedError;
+                }
                 setInstalledPacks(next);
                 setPanel(null);
                 setSaveState(`${pack.name} installed locally`);
@@ -593,14 +621,14 @@ function App() {
             if (!result.accepted) throw new Error('Another workspace operation started first.');
         } catch (error) {
             console.error('Component pack installation failed', error);
-            setSaveState(`${pack.name} could not be installed`);
+            setSaveState(error.libraryPersisted ? error.message : `${pack.name} could not be installed`);
         } finally {
             setPackLoading(null);
         }
     }, [editor, packLoading, runWorkspaceOperation]);
 
     const persistLibrary = useCallback(async (libraryItems) => {
-        if (operationCoordinatorRef.current.isActive()) return;
+        if (suppressLibraryChangeDepthRef.current > 0) return;
         try {
             await libraryWriteQueueRef.current.enqueue(libraryItems);
         } catch (error) {
@@ -776,6 +804,102 @@ function App() {
         }
     }, [createNewBoard, editor]);
 
+    const installLibraryFile = useCallback(async (file) => {
+        if (!editor) throw new Error('The diagram editor is not ready.');
+        if (operationCoordinatorRef.current.isActive()) throw new Error('Another workspace operation is active. Try the library import again.');
+        if (file.size > MAX_LIBRARY_FILE_BYTES) throw new Error('Library import rejected: file exceeds 50 MiB');
+        const preparationToken = operationCoordinatorRef.current.currentToken();
+        const loadedItems = await loadLibraryFromBlob(file, 'published');
+        if (!loadedItems.length) throw new Error('No library items found');
+        const items = await stabilizeImportedLibraryItems(file, loadedItems);
+        if (operationCoordinatorRef.current.isActive()
+            || operationCoordinatorRef.current.currentToken() !== preparationToken) {
+            throw new Error('The workspace changed during library loading. Try the import again.');
+        }
+        let addedCount = 0;
+        const result = await runWorkspaceOperation('import-component-library', async () => {
+            const { updates } = await updateSettingsAtomically(['library-items'], (settings) => {
+                const currentItems = settings['library-items'] ?? [];
+                const mergedItems = mergeImportedLibraryItems(currentItems, items);
+                addedCount = mergedItems.length - currentItems.length;
+                return { 'library-items': mergedItems };
+            });
+            const mergedItems = updates['library-items'];
+            try {
+                await refreshCommittedLibraryView({
+                    queue: libraryWriteQueueRef.current,
+                    committedItems: mergedItems,
+                    suppressionRef: suppressLibraryChangeDepthRef,
+                    refresh: () => editor.updateLibrary({
+                        libraryItems: mergedItems,
+                        merge: false,
+                        openLibraryMenu: true,
+                        defaultStatus: 'published',
+                    }),
+                });
+            } catch (error) {
+                const persistedError = new Error('Library stored locally, but the library view could not refresh. Reload to display it.', { cause: error });
+                persistedError.libraryPersisted = true;
+                throw persistedError;
+            }
+            setSaveState(addedCount
+                ? `Imported ${addedCount} community library item${addedCount === 1 ? '' : 's'}`
+                : 'Community library already installed');
+            setLibraryImportError('');
+        });
+        if (!result.accepted) throw new Error('Another workspace operation started first. Try the import again.');
+        return addedCount;
+    }, [editor, runWorkspaceOperation]);
+
+    const importLibrary = useCallback(async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+        try {
+            await installLibraryFile(file);
+        } catch (error) {
+            console.error('Community library import failed', error);
+            const message = error.libraryPersisted
+                ? error.message
+                : error.message?.includes('50 MiB') || error.message?.includes('workspace operation')
+                    ? error.message
+                    : 'Library import failed: choose a valid .excalidrawlib file';
+            setSaveState(message);
+            setLibraryImportError(message);
+        }
+    }, [installLibraryFile]);
+
+    useEffect(() => {
+        if (!editor) return undefined;
+        const handleCommunityLibraryReturn = async () => {
+            const parameters = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+            const libraryUrl = parameters.get('addLibrary');
+            if (!libraryUrl) return;
+            window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+            try {
+                if (parameters.get('token') !== editor.id) throw new Error('Community library link token is invalid or expired.');
+                if (!isAllowedCommunityLibraryUrl(libraryUrl)) throw new Error('Community library URL is not allowed.');
+                if (operationCoordinatorRef.current.isActive()) throw new Error('Another workspace operation is active. Open the community library link again.');
+                const response = await fetch(libraryUrl, { credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer' });
+                if (!response.ok) throw new Error(`Community library request failed (${response.status}).`);
+                const declaredSize = Number(response.headers.get('content-length'));
+                if (Number.isFinite(declaredSize) && declaredSize > MAX_LIBRARY_FILE_BYTES) throw new Error('Library import rejected: file exceeds 50 MiB');
+                const blob = await response.blob();
+                if (blob.size > MAX_LIBRARY_FILE_BYTES) throw new Error('Library import rejected: file exceeds 50 MiB');
+                const filename = new URL(libraryUrl).pathname.split('/').at(-1) || 'community-library.excalidrawlib';
+                await installLibraryFile(new File([blob], filename, { type: blob.type || 'application/json' }));
+            } catch (error) {
+                console.error('Community library link import failed', error);
+                const message = error.libraryPersisted ? error.message : error.message || 'Community library link import failed';
+                setSaveState(message);
+                setLibraryImportError(message);
+            }
+        };
+        window.addEventListener('hashchange', handleCommunityLibraryReturn);
+        void handleCommunityLibraryReturn();
+        return () => window.removeEventListener('hashchange', handleCommunityLibraryReturn);
+    }, [editor, installLibraryFile]);
+
     const toggleTheme = useCallback(() => {
         const next = theme === 'dark' ? 'light' : 'dark';
         setTheme(next);
@@ -818,6 +942,7 @@ function App() {
                             <summary>Import</summary>
                             <div className="menu-popover">
                                 <button type="button" onClick={() => importInputRef.current?.click()}>Excalidraw file</button>
+                                <button type="button" onClick={() => libraryInputRef.current?.click()}>Community library</button>
                                 <button type="button" onClick={() => workspaceInputRef.current?.click()}>Workspace backup</button>
                             </div>
                         </details>
@@ -843,6 +968,7 @@ function App() {
                                 <button type="button" onClick={() => setPanel('packs')}>Component packs</button>
                                 <button type="button" onClick={arrangeSelection}>Arrange selection</button>
                                 <button type="button" onClick={() => importInputRef.current?.click()}>Import diagram</button>
+                                <button type="button" onClick={() => libraryInputRef.current?.click()}>Import community library</button>
                                 <button type="button" onClick={() => workspaceInputRef.current?.click()}>Restore workspace backup</button>
                                 <button type="button" onClick={exportScene}>Export Excalidraw file</button>
                                 <button type="button" onClick={() => exportImage('png')}>Export PNG image</button>
@@ -854,9 +980,17 @@ function App() {
                     </div>
                     <button className="icon-button" type="button" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}>{theme === 'dark' ? '☀' : '◐'}</button>
                     <input ref={importInputRef} className="visually-hidden" type="file" accept=".excalidraw,application/json,application/vnd.excalidraw+json" onChange={importScene} />
+                    <input ref={libraryInputRef} className="visually-hidden" type="file" accept=".excalidrawlib,application/vnd.excalidrawlib+json,application/json" onChange={importLibrary} />
                     <input ref={workspaceInputRef} className="visually-hidden" type="file" accept=".json,application/json" onChange={importWorkspace} />
                 </div>
             </header>
+
+            {libraryImportError && (
+                <div className="library-import-alert" role="alert">
+                    <span>{libraryImportError}</span>
+                    <button type="button" onClick={() => setLibraryImportError('')} aria-label="Dismiss library import error">×</button>
+                </div>
+            )}
 
             <div className="workbench-main">
                 <button className={`sidebar-scrim ${sidebarOpen ? 'is-visible' : ''}`} type="button" disabled={!sidebarOpen || workspaceBusy} onClick={() => closeSidebar(true)} aria-label="Close local boards" aria-hidden={!sidebarOpen} tabIndex={sidebarOpen && !workspaceBusy ? 0 : -1} />
@@ -889,6 +1023,7 @@ function App() {
                         initialData={initialData}
                         onChange={handleChange}
                         onLibraryChange={persistLibrary}
+                        libraryReturnUrl={`${window.location.origin}${import.meta.env.BASE_URL}`}
                         validateEmbeddable={rejectRemoteEmbeddable}
                         renderEmbeddable={renderLocalOnlyEmbeddable}
                         theme="light"

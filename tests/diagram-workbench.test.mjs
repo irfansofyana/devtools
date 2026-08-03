@@ -47,6 +47,15 @@ test('diagram workbench is local-first, lazy-loads component packs, and avoids r
     assert.match(app, /await libraryWriteQueueRef\.current\.flush\(\)/);
     assert.match(app, /libraryWriteQueueRef\.current\.enqueue\(libraryItems\)/);
     assert.doesNotMatch(app, /editor\?\.updateLibrary/);
+    assert.match(app, /const importLibrary = useCallback/);
+    assert.match(app, /loadLibraryFromBlob\(file, 'published'\)/);
+    assert.match(app, /handleCommunityLibraryReturn/);
+    assert.match(app, /isAllowedCommunityLibraryUrl\(libraryUrl\)/);
+    assert.match(app, /parameters\.get\('token'\) !== editor\.id/);
+    assert.match(app, /className="library-import-alert" role="alert"/);
+    assert.match(css, /\.library-import-alert\s*\{/);
+    assert.match(app, /runWorkspaceOperation\('import-component-library'/);
+    assert.match(app, /accept="\.excalidrawlib,application\/vnd\.excalidrawlib\+json,application\/json"/);
     assert.match(app, /updateSettingsAtomically\(/);
     assert.match(app, /updateLibraryItems\(/);
     assert.doesNotMatch(app, /setSetting\('library-items'/);

@@ -1,6 +1,6 @@
 # Diagram Workbench component packs
 
-Diagram Workbench includes a first-party default library and three optional community packs. All component content is local; the application makes no runtime request to third-party asset hosts.
+Diagram Workbench includes a first-party default library and three optional community packs. Bundled component content is local. A network request occurs only when the user explicitly chooses a library from Excalidraw's official community directory.
 
 ## Built-in Irfan Core library
 
@@ -33,6 +33,15 @@ Repository inclusion is not treated as trademark or third-party-asset clearance.
 | C4 architecture | `libraries/dmitry-burnyshev/c4-architecture.excalidrawlib` | Dmitry Burnyshev; based on the C4 model by Simon Brown | `54f7841eb8b24dcfab0230761f4d5099c29eacacb48b83f8856a2d70aaf15679` |
 
 The C4 model attribution points to <https://c4model.com/>. The C4 website identifies its content as CC BY 4.0 and the model as notation- and tooling-independent.
+
+## Importing other community libraries
+
+- Choose **Import → Community library** to load a local `.excalidrawlib` file.
+- Or open Excalidraw's Library and choose **Browse libraries**; the official directory returns the selected library to Diagram Workbench.
+- Imports are additive. Existing Irfan Core, optional-pack, custom, and edited items are retained.
+- Legacy library files receive deterministic local IDs so importing the same file again does not duplicate every item.
+- Files larger than 50 MiB and malformed or incompatible library payloads are rejected without changing the stored library.
+- Imported items remain editable and are stored locally in the same workspace library included in complete-workspace backups.
 
 ## Deferred branded packs
 

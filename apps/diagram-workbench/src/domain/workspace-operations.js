@@ -29,6 +29,20 @@ export function createSerializedDeltaQueue({ initialValue, persist }) {
     };
 }
 
+export async function refreshCommittedLibraryView({ queue, committedItems, suppressionRef, refresh }) {
+    const previousBaseline = queue.getBaseline();
+    queue.setBaseline(committedItems);
+    suppressionRef.current += 1;
+    try {
+        await refresh();
+    } catch (error) {
+        queue.setBaseline(previousBaseline);
+        throw error;
+    } finally {
+        suppressionRef.current -= 1;
+    }
+}
+
 export function createWorkspaceOperationCoordinator({ onStart = () => {}, onFinish = () => {} } = {}) {
     let active = false;
     let token = 0;

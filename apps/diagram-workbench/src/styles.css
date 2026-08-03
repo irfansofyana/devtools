@@ -217,6 +217,35 @@ a {
     color: var(--danger);
 }
 
+.library-import-alert {
+    position: fixed;
+    z-index: 120;
+    top: 64px;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: min(560px, calc(100vw - 24px));
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--danger) 48%, var(--border));
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--danger);
+    box-shadow: 0 10px 32px rgba(19, 19, 22, 0.2);
+    transform: translateX(-50%);
+}
+
+.library-import-alert span {
+    flex: 1;
+}
+
+.library-import-alert button {
+    flex: 0 0 auto;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+}
+
 .menu-wrap,
 details {
     position: relative;
