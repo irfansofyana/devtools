@@ -55,7 +55,6 @@ test('diagram workbench is local-first, lazy-loads component packs, and avoids r
     assert.match(app, /className="library-import-alert" role="alert"/);
     assert.match(css, /\.library-import-alert\s*\{/);
     assert.match(app, /runWorkspaceOperation\('import-component-library'/);
-    assert.match(app, /accept="\.excalidrawlib,application\/vnd\.excalidrawlib\+json,application\/json"/);
     assert.match(app, /updateSettingsAtomically\(/);
     assert.match(app, /updateLibraryItems\(/);
     assert.doesNotMatch(app, /setSetting\('library-items'/);
@@ -64,6 +63,20 @@ test('diagram workbench is local-first, lazy-loads component packs, and avoids r
     assert.doesNotMatch(app, /localStorage\.setItem\([^)]*(scene|elements|files|library)/i);
     assert.equal((packs.match(/source: 'component-packs\//g) ?? []).length, 3);
     assert.match(packs, /deferredCloudPacks/);
+});
+
+test('community and Personal library imports remain usable and visibly persisted on iOS', () => {
+    const app = read('apps/diagram-workbench/src/App.jsx');
+    const css = read('apps/diagram-workbench/src/styles.css');
+    const communityLibraryInput = app.match(/<input ref=\{libraryInputRef\}[^>]*>/)?.[0] ?? '';
+
+    assert.ok(communityLibraryInput, 'community library input must exist');
+    assert.doesNotMatch(communityLibraryInput, /\saccept=/, 'iOS Files must not be filtered by custom-extension or MIME accept rules');
+    assert.match(app, /Personal library saved locally/);
+    assert.match(app, /const previousLibraryItems = libraryWriteQueueRef\.current\.getBaseline\(\)/);
+    assert.match(app, /libraryItems\.length > previousLibraryItems\.length/);
+    assert.match(app, /className="library-save-notice" role="status"/);
+    assert.match(css, /\.library-save-notice\s*\{/);
 });
 
 test('Pages workflow builds the isolated Vite app before Jekyll packaging', () => {

@@ -11,6 +11,7 @@
     --accent: #2257d8;
     --accent-hover: #1945b1;
     --danger: #b42318;
+    --success: #157347;
     --focus: rgba(34, 87, 216, 0.28);
     --shadow: 0 1px 5px -4px rgba(19, 19, 22, 0.7), 0 0 0 1px rgba(34, 42, 53, 0.08), 0 8px 24px rgba(34, 42, 53, 0.08);
     font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
@@ -29,6 +30,7 @@
     --accent: #7da2ff;
     --accent-hover: #a9c0ff;
     --danger: #ff8a80;
+    --success: #71d6a5;
     --focus: rgba(125, 162, 255, 0.32);
     --shadow: 0 16px 52px rgba(0, 0, 0, 0.42);
 }
@@ -240,6 +242,35 @@ a {
 }
 
 .library-import-alert button {
+    flex: 0 0 auto;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+}
+
+.library-save-notice {
+    position: fixed;
+    z-index: 120;
+    top: 64px;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: min(560px, calc(100vw - 24px));
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--success) 48%, var(--border));
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--success);
+    box-shadow: 0 10px 32px rgba(19, 19, 22, 0.2);
+    transform: translateX(-50%);
+}
+
+.library-save-notice span {
+    flex: 1;
+}
+
+.library-save-notice button {
     flex: 0 0 auto;
     min-width: 32px;
     min-height: 32px;

@@ -147,6 +147,7 @@ function App() {
     const [editor, setEditor] = useState(null);
     const [saveState, setSaveState] = useState('Loading local workspace…');
     const [libraryImportError, setLibraryImportError] = useState('');
+    const [librarySaveNotice, setLibrarySaveNotice] = useState('');
     const [panel, setPanel] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(() => !window.matchMedia('(max-width: 920px)').matches);
     const [installedPacks, setInstalledPacks] = useState([]);
@@ -629,11 +630,16 @@ function App() {
 
     const persistLibrary = useCallback(async (libraryItems) => {
         if (suppressLibraryChangeDepthRef.current > 0) return;
+        const previousLibraryItems = libraryWriteQueueRef.current.getBaseline();
+        const importedPersonalLibrary = libraryItems.length > previousLibraryItems.length;
         try {
             await libraryWriteQueueRef.current.enqueue(libraryItems);
+            setLibraryImportError('');
+            if (importedPersonalLibrary) setLibrarySaveNotice('Personal library saved locally');
         } catch (error) {
             console.error('Library persistence failed', error);
             setSaveState('Component library save failed');
+            setLibrarySaveNotice('');
         }
     }, []);
 
@@ -846,6 +852,9 @@ function App() {
                 ? `Imported ${addedCount} community library item${addedCount === 1 ? '' : 's'}`
                 : 'Community library already installed');
             setLibraryImportError('');
+            setLibrarySaveNotice(addedCount
+                ? `${addedCount} community library item${addedCount === 1 ? '' : 's'} saved locally`
+                : 'Community library already saved locally');
         });
         if (!result.accepted) throw new Error('Another workspace operation started first. Try the import again.');
         return addedCount;
@@ -866,6 +875,7 @@ function App() {
                     : 'Library import failed: choose a valid .excalidrawlib file';
             setSaveState(message);
             setLibraryImportError(message);
+            setLibrarySaveNotice('');
         }
     }, [installLibraryFile]);
 
@@ -980,7 +990,7 @@ function App() {
                     </div>
                     <button className="icon-button" type="button" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}>{theme === 'dark' ? '☀' : '◐'}</button>
                     <input ref={importInputRef} className="visually-hidden" type="file" accept=".excalidraw,application/json,application/vnd.excalidraw+json" onChange={importScene} />
-                    <input ref={libraryInputRef} className="visually-hidden" type="file" accept=".excalidrawlib,application/vnd.excalidrawlib+json,application/json" onChange={importLibrary} />
+                    <input ref={libraryInputRef} className="visually-hidden" type="file" onChange={importLibrary} />
                     <input ref={workspaceInputRef} className="visually-hidden" type="file" accept=".json,application/json" onChange={importWorkspace} />
                 </div>
             </header>
@@ -989,6 +999,13 @@ function App() {
                 <div className="library-import-alert" role="alert">
                     <span>{libraryImportError}</span>
                     <button type="button" onClick={() => setLibraryImportError('')} aria-label="Dismiss library import error">×</button>
+                </div>
+            )}
+
+            {librarySaveNotice && !libraryImportError && (
+                <div className="library-save-notice" role="status">
+                    <span>{librarySaveNotice}</span>
+                    <button type="button" onClick={() => setLibrarySaveNotice('')} aria-label="Dismiss library save notice">×</button>
                 </div>
             )}
 
