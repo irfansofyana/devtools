@@ -1,3 +1,34 @@
+export function createSerializedDeltaQueue({ initialValue, persist }) {
+    if (typeof persist !== 'function') throw new TypeError('A persistence function is required.');
+    let baseline = structuredClone(initialValue);
+    let tail = Promise.resolve(structuredClone(baseline));
+
+    return {
+        enqueue(nextValue) {
+            const desired = structuredClone(nextValue);
+            const operation = tail
+                .catch(() => undefined)
+                .then(async () => {
+                    const previous = structuredClone(baseline);
+                    const persisted = await persist(previous, desired);
+                    baseline = structuredClone(desired);
+                    return structuredClone(persisted ?? desired);
+                });
+            tail = operation;
+            return operation;
+        },
+        flush() {
+            return tail.then((value) => structuredClone(value));
+        },
+        getBaseline() {
+            return structuredClone(baseline);
+        },
+        setBaseline(value) {
+            baseline = structuredClone(value);
+        },
+    };
+}
+
 export function createWorkspaceOperationCoordinator({ onStart = () => {}, onFinish = () => {} } = {}) {
     let active = false;
     let token = 0;

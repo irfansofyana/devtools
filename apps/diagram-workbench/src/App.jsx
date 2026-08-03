@@ -15,10 +15,11 @@ import { strToU8, zipSync } from 'fflate';
 import { createArtifactFiles, createWorkspaceBackup, validateWorkspaceBackup } from './domain/artifacts.js';
 import { createBoard, normalizeBoardName, sortBoardsByUpdatedAt } from './domain/boards.js';
 import { componentPacks, deferredCloudPacks } from './domain/component-packs.js';
+import { createDefaultLibraryMigration } from './domain/default-library.js';
 import { layoutSelectedElements } from './domain/layout.js';
 import { templateToSkeletons } from './domain/template-elements.js';
 import { getTemplate, templateCatalog } from './domain/templates.js';
-import { createWorkspaceOperationCoordinator } from './domain/workspace-operations.js';
+import { createSerializedDeltaQueue, createWorkspaceOperationCoordinator } from './domain/workspace-operations.js';
 import {
     deleteBoard,
     getSetting,
@@ -28,6 +29,8 @@ import {
     replaceWorkspace,
     saveBoard,
     setSetting,
+    updateLibraryItems,
+    updateSettingsAtomically,
 } from './storage/workspace-db.js';
 import { downloadBlob, safeFilename } from './utils/download.js';
 
@@ -37,18 +40,38 @@ const MAX_MERMAID_CHARACTERS = 20_000;
 const rejectRemoteEmbeddable = () => false;
 const renderLocalOnlyEmbeddable = () => null;
 
-function blankScene(theme = 'light') {
+function materializeDefaultLibraryItem(definition) {
+    return {
+        id: definition.id,
+        status: 'published',
+        created: 1,
+        elements: convertToExcalidrawElements(definition.skeletons, { regenerateIds: false }),
+    };
+}
+
+function blankScene() {
     return {
         type: 'excalidraw',
         version: 2,
         source: window.location.origin,
         elements: [],
         appState: {
-            theme,
-            viewBackgroundColor: theme === 'dark' ? '#111513' : '#f7f7f3',
+            theme: 'light',
+            viewBackgroundColor: '#ffffff',
             gridSize: 20,
         },
         files: {},
+    };
+}
+
+function withWhiteCanvas(scene) {
+    return {
+        ...scene,
+        appState: {
+            ...(scene?.appState ?? {}),
+            theme: 'light',
+            viewBackgroundColor: '#ffffff',
+        },
     };
 }
 
@@ -126,6 +149,16 @@ function App() {
     const currentBoardRef = useRef(null);
     const saveTimerRef = useRef(null);
     const saveQueueRef = useRef(Promise.resolve());
+    const libraryWriteQueueRef = useRef(null);
+    if (libraryWriteQueueRef.current === null) {
+        libraryWriteQueueRef.current = createSerializedDeltaQueue({
+            initialValue: [],
+            persist: async (previousItems, nextItems) => {
+                const { updates } = await updateLibraryItems(previousItems, nextItems);
+                return updates['library-items'];
+            },
+        });
+    }
     const saveRevisionRef = useRef(0);
     const savedRevisionRef = useRef(0);
     const mountedRef = useRef(true);
@@ -239,6 +272,7 @@ function App() {
         operationCoordinatorRef.current.run(label, async (token) => {
             try {
                 await flushSave();
+                await libraryWriteQueueRef.current.flush();
             } catch (error) {
                 throw new Error('Pending local changes could not be saved.', { cause: error });
             }
@@ -281,19 +315,42 @@ function App() {
             try {
                 let availableBoards = await listBoards();
                 const preferredId = await getSetting('current-board-id');
-                const savedLibrary = await getSetting('library-items', []);
+                let savedLibrary = [];
                 const savedPacks = await getSetting('installed-packs', []);
+                let defaultLibraryWarning = '';
+                try {
+                    const { current, updates } = await updateSettingsAtomically(
+                        ['library-items', 'default-library-version'],
+                        (settings) => {
+                            const migration = createDefaultLibraryMigration(
+                                settings['library-items'] ?? [],
+                                settings['default-library-version'] ?? 0,
+                                materializeDefaultLibraryItem,
+                            );
+                            return migration ? {
+                                'library-items': migration.libraryItems,
+                                'default-library-version': migration.version,
+                            } : null;
+                        },
+                    );
+                    savedLibrary = updates?.['library-items'] ?? current['library-items'] ?? [];
+                } catch (error) {
+                    console.error('Built-in component library could not be prepared', error);
+                    defaultLibraryWarning = 'Workspace loaded; built-in components unavailable';
+                    savedLibrary = await getSetting('library-items', []);
+                }
                 let board = availableBoards.find(({ id }) => id === preferredId) ?? availableBoards[0];
 
                 if (!board) {
                     board = createBoard({ id: crypto.randomUUID(), name: 'Untitled diagram' });
-                    const scene = blankScene(theme);
+                    const scene = blankScene();
                     await saveBoard(board, JSON.stringify(scene));
                     availableBoards = [board];
                 }
 
-                const scene = (await loadScene(board.id)) ?? blankScene(theme);
+                const scene = withWhiteCanvas((await loadScene(board.id)) ?? blankScene());
                 scene.libraryItems = savedLibrary;
+                libraryWriteQueueRef.current.setBaseline(savedLibrary);
                 if (!active) return;
                 setBoards(availableBoards);
                 setInstalledPacks(savedPacks);
@@ -305,7 +362,7 @@ function App() {
                     appState: scene.appState ?? {},
                     files: scene.files ?? {},
                 };
-                setSaveState('Saved locally');
+                setSaveState(defaultLibraryWarning || 'Saved locally');
                 if (navigator.storage?.persisted) setStoragePersistent(await navigator.storage.persisted());
             } catch (error) {
                 console.error('Could not open local diagram workspace', error);
@@ -314,7 +371,7 @@ function App() {
                 setBoards([fallbackBoard]);
                 currentBoardRef.current = fallbackBoard;
                 setCurrentBoard(fallbackBoard);
-                setInitialData(blankScene(theme));
+                setInitialData(blankScene());
                 setSaveState('Browser storage unavailable — export your work');
             }
         })();
@@ -337,16 +394,18 @@ function App() {
     }, [queueSave]);
 
     const activateBoard = useCallback((board, scene, libraryItems = [], status = 'Saved locally') => {
+        const canvasScene = withWhiteCanvas(scene);
         latestSceneRef.current = {
-            elements: scene.elements ?? [],
-            appState: scene.appState ?? {},
-            files: scene.files ?? {},
+            elements: canvasScene.elements ?? [],
+            appState: canvasScene.appState,
+            files: canvasScene.files ?? {},
         };
         saveRevisionRef.current = 0;
         savedRevisionRef.current = 0;
         currentBoardRef.current = board;
+        libraryWriteQueueRef.current.setBaseline(libraryItems);
         setCurrentBoard(board);
-        setInitialData({ ...scene, libraryItems });
+        setInitialData({ ...canvasScene, libraryItems });
         setEditor(null);
         setEditorKey((value) => value + 1);
         setPanel(null);
@@ -355,7 +414,7 @@ function App() {
     }, [closeSidebar]);
 
     const loadAndActivateBoard = useCallback(async (board) => {
-        const scene = (await loadScene(board.id)) ?? blankScene(theme);
+        const scene = (await loadScene(board.id)) ?? blankScene();
         let settingsAvailable = true;
         let libraryItems = [];
         try {
@@ -367,11 +426,12 @@ function App() {
         }
         activateBoard(board, scene, libraryItems, settingsAvailable ? 'Saved locally' : 'Board opened; current-board preference unavailable');
         return board;
-    }, [activateBoard, theme]);
+    }, [activateBoard]);
 
-    const createAndActivateBoard = useCallback(async (name = 'Untitled diagram', scene = blankScene(theme)) => {
+    const createAndActivateBoard = useCallback(async (name = 'Untitled diagram', scene = blankScene()) => {
+        const canvasScene = withWhiteCanvas(scene);
         const board = createBoard({ id: crypto.randomUUID(), name });
-        await saveBoard(board, JSON.stringify(scene));
+        await saveBoard(board, JSON.stringify(canvasScene));
         let settingsAvailable = true;
         let libraryItems = [];
         try {
@@ -382,9 +442,9 @@ function App() {
             console.error('Diagram workspace settings unavailable', error);
         }
         setBoards((items) => sortBoardsByUpdatedAt([...items, board]));
-        activateBoard(board, scene, libraryItems, settingsAvailable ? 'Saved locally' : 'Board saved; current-board preference unavailable');
+        activateBoard(board, canvasScene, libraryItems, settingsAvailable ? 'Saved locally' : 'Board saved; current-board preference unavailable');
         return board;
-    }, [activateBoard, theme]);
+    }, [activateBoard]);
 
     const openBoard = useCallback(async (board) => {
         if (board.id === currentBoardRef.current?.id || operationCoordinatorRef.current.isActive()) return null;
@@ -398,7 +458,7 @@ function App() {
         }
     }, [loadAndActivateBoard, runWorkspaceOperation]);
 
-    const createNewBoard = useCallback(async (name = 'Untitled diagram', scene = blankScene(theme)) => {
+    const createNewBoard = useCallback(async (name = 'Untitled diagram', scene = blankScene()) => {
         if (operationCoordinatorRef.current.isActive()) return null;
         try {
             const result = await runWorkspaceOperation('create-board', () => createAndActivateBoard(name, scene));
@@ -408,7 +468,7 @@ function App() {
             setSaveState('Could not create a local board — export a workspace backup');
             return null;
         }
-    }, [createAndActivateBoard, runWorkspaceOperation, theme]);
+    }, [createAndActivateBoard, runWorkspaceOperation]);
 
     const renameCurrentBoard = useCallback(async (event) => {
         const name = normalizeBoardName(event.currentTarget.value);
@@ -454,7 +514,7 @@ function App() {
         try {
             const template = getTemplate(templateId);
             const elements = convertToExcalidrawElements(templateToSkeletons(template), { regenerateIds: false });
-            const scene = blankScene(theme);
+            const scene = blankScene();
             scene.elements = elements;
             scene.appState.scrollToContent = true;
             await createNewBoard(template.name, scene);
@@ -462,7 +522,7 @@ function App() {
             console.error('Template creation failed', error);
             setSaveState('Template failed to load');
         }
-    }, [createNewBoard, theme]);
+    }, [createNewBoard]);
 
     const createFromMermaid = useCallback(async () => {
         setMermaidError('');
@@ -478,7 +538,7 @@ function App() {
                 throw new Error('The workspace changed during conversion. Run Mermaid conversion again.');
             }
             const elements = convertToExcalidrawElements(result.elements, { regenerateIds: true });
-            const scene = blankScene(theme);
+            const scene = blankScene();
             scene.elements = elements;
             scene.files = result.files ?? {};
             scene.appState.scrollToContent = true;
@@ -487,7 +547,7 @@ function App() {
             console.error('Mermaid conversion failed', error);
             setMermaidError(error?.message || 'Could not parse this Mermaid diagram.');
         }
-    }, [createNewBoard, mermaidText, theme]);
+    }, [createNewBoard, mermaidText]);
 
     const arrangeSelection = useCallback(() => {
         if (!editor) return;
@@ -515,12 +575,17 @@ function App() {
                 throw new Error('The workspace changed during component loading.');
             }
             const result = await runWorkspaceOperation('install-component-pack', async () => {
-                const existingItems = await getSetting('library-items', []);
-                const mergedItems = mergeLibraryItems(existingItems, items);
-                const next = [...new Set([...installedPacks, pack.id])];
+                const { updates } = await updateSettingsAtomically(
+                    ['library-items', 'installed-packs'],
+                    (settings) => ({
+                        'library-items': mergeLibraryItems(settings['library-items'] ?? [], items),
+                        'installed-packs': [...new Set([...(settings['installed-packs'] ?? []), pack.id])],
+                    }),
+                );
+                const mergedItems = updates['library-items'];
+                const next = updates['installed-packs'];
+                libraryWriteQueueRef.current.setBaseline(mergedItems);
                 await editor.updateLibrary({ libraryItems: mergedItems, merge: false, openLibraryMenu: true, defaultStatus: 'published' });
-                await setSetting('library-items', mergedItems);
-                await setSetting('installed-packs', next);
                 setInstalledPacks(next);
                 setPanel(null);
                 setSaveState(`${pack.name} installed locally`);
@@ -532,12 +597,12 @@ function App() {
         } finally {
             setPackLoading(null);
         }
-    }, [editor, installedPacks, packLoading, runWorkspaceOperation]);
+    }, [editor, packLoading, runWorkspaceOperation]);
 
     const persistLibrary = useCallback(async (libraryItems) => {
         if (operationCoordinatorRef.current.isActive()) return;
         try {
-            await setSetting('library-items', libraryItems);
+            await libraryWriteQueueRef.current.enqueue(libraryItems);
         } catch (error) {
             console.error('Library persistence failed', error);
             setSaveState('Component library save failed');
@@ -621,6 +686,7 @@ function App() {
                     scenes: await loadWorkspaceScenes(allBoards),
                     libraryItems: await getSetting('library-items', []),
                     installedPacks: await getSetting('installed-packs', []),
+                    defaultLibraryVersion: await getSetting('default-library-version', 0),
                 });
                 downloadBlob(
                     new Blob([JSON.stringify(backup)], { type: 'application/json' }),
@@ -658,12 +724,24 @@ function App() {
             await runWorkspaceOperation('restore-workspace', async () => {
                 const knownPacks = new Set(componentPacks.map(({ id }) => id));
                 const restoredPacks = backup.installedPacks.filter((id) => knownPacks.has(id));
-                await replaceWorkspace({ ...backup, installedPacks: restoredPacks });
+                const defaultMigration = createDefaultLibraryMigration(
+                    backup.libraryItems,
+                    backup.defaultLibraryVersion ?? 0,
+                    materializeDefaultLibraryItem,
+                );
+                const restoredLibrary = defaultMigration?.libraryItems ?? backup.libraryItems;
+                const restoredDefaultVersion = defaultMigration?.version ?? backup.defaultLibraryVersion ?? 0;
+                await replaceWorkspace({
+                    ...backup,
+                    libraryItems: restoredLibrary,
+                    installedPacks: restoredPacks,
+                    defaultLibraryVersion: restoredDefaultVersion,
+                });
                 const firstBoard = backup.boards[0];
                 const scene = backup.scenes[firstBoard.id];
                 setBoards(sortBoardsByUpdatedAt(backup.boards));
                 setInstalledPacks(restoredPacks);
-                activateBoard(firstBoard, scene, backup.libraryItems, 'Workspace restored locally');
+                activateBoard(firstBoard, scene, restoredLibrary, 'Workspace restored locally');
             });
         } catch (error) {
             console.error('Workspace import failed', error);
@@ -765,7 +843,12 @@ function App() {
                                 <button type="button" onClick={() => setPanel('packs')}>Component packs</button>
                                 <button type="button" onClick={arrangeSelection}>Arrange selection</button>
                                 <button type="button" onClick={() => importInputRef.current?.click()}>Import diagram</button>
-                                <button type="button" onClick={exportScene}>Export diagram</button>
+                                <button type="button" onClick={() => workspaceInputRef.current?.click()}>Restore workspace backup</button>
+                                <button type="button" onClick={exportScene}>Export Excalidraw file</button>
+                                <button type="button" onClick={() => exportImage('png')}>Export PNG image</button>
+                                <button type="button" onClick={() => exportImage('svg')}>Export SVG image</button>
+                                <button type="button" onClick={exportArtifactPack}>Export documentation pack</button>
+                                <button type="button" onClick={exportWorkspace}>Export workspace backup</button>
                             </div>
                         </details>
                     </div>
@@ -808,7 +891,7 @@ function App() {
                         onLibraryChange={persistLibrary}
                         validateEmbeddable={rejectRemoteEmbeddable}
                         renderEmbeddable={renderLocalOnlyEmbeddable}
-                        theme={theme}
+                        theme="light"
                         name={currentBoard.name}
                         autoFocus
                         UIOptions={{
@@ -852,8 +935,17 @@ function App() {
             )}
 
             {panel === 'packs' && (
-                <Modal title="Component packs" description="Packs are downloaded only when installed, then retained in this browser’s Excalidraw library." onClose={closePanel} busy={workspaceBusy}>
+                <Modal title="Components" description="Irfan Core is ready in Excalidraw’s Library. Optional community packs can be added below and remain local to this browser." onClose={closePanel} busy={workspaceBusy}>
                     <div className="pack-list">
+                        <article className="pack-row">
+                            <div>
+                                <span className="card-meta">Built in · first-party</span>
+                                <h3>Irfan Core</h3>
+                                <p>36 editable AWS, Kubernetes, AI / LLM, and reusable architecture-pattern components.</p>
+                                <small>Original artwork · available offline · no install required</small>
+                            </div>
+                            <span className="pack-state">Ready</span>
+                        </article>
                         {componentPacks.map((pack) => {
                             const installed = installedPacks.includes(pack.id);
                             return (

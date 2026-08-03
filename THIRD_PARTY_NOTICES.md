@@ -51,7 +51,7 @@ The isolated Diagram Workbench is built from the lockfile at `apps/diagram-workb
 - `fflate@0.8.3` — MIT; upstream: <https://github.com/101arrowz/fflate>; license retained at `apps/diagram-workbench/licenses/fflate-MIT.txt`.
 - `vite@7.3.6` — MIT, build-time only; upstream: <https://github.com/vitejs/vite>; license retained at `apps/diagram-workbench/licenses/vite-MIT.txt`.
 
-The generated application and editor assets are served from this repository; no runtime CDN is required.
+The generated application and editor assets are served from this repository; no runtime CDN is required. The built-in Irfan Core component library is first-party original editable artwork and does not redistribute AWS, Kubernetes, or other vendor logo files. Product and service names remain trademarks of their respective owners; their descriptive use does not imply affiliation or endorsement, and those trademarks are not licensed under this repository's MIT license.
 
 ## Excalidraw community component packs
 

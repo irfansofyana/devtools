@@ -88,7 +88,7 @@ The Diagram Workbench is deliberately isolated from the vanilla catalog:
 - Privacy: no accounts, analytics, uploads, collaboration, or runtime CDN dependencies
 - Recovery: debounced autosave is browser convenience; portable `.excalidraw`, PNG, SVG, documentation ZIP, and complete-workspace exports remain available
 - Restore safety: workspace backups are structurally validated, prototype-sensitive identifiers are rejected, and IndexedDB replacement is atomic
-- Component packs: downloaded from this repository only when installed, pinned by upstream revision and SHA-256; branded packs with unclear redistribution rights are deferred; see `apps/diagram-workbench/COMPONENT_PACKS.md`
+- Components: 36 first-party AWS, Kubernetes, AI/LLM, and architecture-pattern items are seeded locally and ready without installation; optional community packs remain local, revision-pinned, and checksum-verified; branded artwork with unclear redistribution rights is deferred; see `apps/diagram-workbench/COMPONENT_PACKS.md`
 - Dependency audit: reviewed residual transitive parser advisories and mitigations are recorded in `apps/diagram-workbench/SECURITY_REVIEW.md`
 
 Local development:

@@ -1,3 +1,5 @@
+import { DEFAULT_LIBRARY_VERSION } from './default-library.js';
+
 function slugify(value) {
     return String(value || 'diagram')
         .normalize('NFKD')
@@ -22,7 +24,7 @@ export function createArtifactFiles({ name, sceneJson, svgText, pngBytes, update
     };
 }
 
-export function createWorkspaceBackup({ boards, scenes, libraryItems, installedPacks, exportedAt = Date.now() }) {
+export function createWorkspaceBackup({ boards, scenes, libraryItems, installedPacks, defaultLibraryVersion = 0, exportedAt = Date.now() }) {
     return {
         type: 'tools-diagram-workspace',
         schemaVersion: 1,
@@ -31,6 +33,7 @@ export function createWorkspaceBackup({ boards, scenes, libraryItems, installedP
         scenes: structuredClone(scenes),
         libraryItems: structuredClone(libraryItems ?? []),
         installedPacks: [...(installedPacks ?? [])],
+        defaultLibraryVersion,
     };
 }
 
@@ -210,13 +213,20 @@ export function validateWorkspaceBackup(value) {
         let aggregateDataLength = 0;
         return Object.entries(files).every(([key, file]) => {
             aggregateDataLength += typeof file?.dataURL === 'string' ? file.dataURL.length : 0;
+            const prefix = `data:${file?.mimeType};base64,`;
+            const payload = typeof file?.dataURL === 'string' && file.dataURL.startsWith(prefix)
+                ? file.dataURL.slice(prefix.length)
+                : '';
+            const validBase64 = payload.length > 0
+                && payload.length % 4 === 0
+                && /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(payload);
             return validEntityId(key)
                 && isRecord(file)
                 && validEntityId(file.id)
                 && file.id === key
                 && /^image\/(?:png|jpeg|gif|webp|svg\+xml)$/.test(file.mimeType)
                 && typeof file.dataURL === 'string'
-                && file.dataURL.startsWith(`data:${file.mimeType};base64,`)
+                && validBase64
                 && file.dataURL.length <= 25 * 1024 * 1024
                 && aggregateDataLength <= 100 * 1024 * 1024
                 && Number.isFinite(file.created)
@@ -227,7 +237,8 @@ export function validateWorkspaceBackup(value) {
     };
     const validAppState = (appState) => isRecord(appState)
         && safeTree(appState)
-        && hasOnlyKeys(appState, new Set(['gridModeEnabled', 'gridSize', 'gridStep', 'viewBackgroundColor']))
+        && hasOnlyKeys(appState, new Set(['gridModeEnabled', 'gridSize', 'gridStep', 'theme', 'viewBackgroundColor']))
+        && (appState.theme === undefined || ['light', 'dark'].includes(appState.theme))
         && (appState.gridModeEnabled === undefined || typeof appState.gridModeEnabled === 'boolean')
         && (appState.gridSize === undefined || appState.gridSize === null || (Number.isFinite(appState.gridSize) && appState.gridSize > 0))
         && (appState.gridStep === undefined || (Number.isFinite(appState.gridStep) && appState.gridStep > 0))
@@ -285,9 +296,11 @@ export function validateWorkspaceBackup(value) {
     const scenes = value?.scenes;
     const valid = isRecord(value)
         && safeTree(value)
-        && hasOnlyKeys(value, new Set(['type', 'schemaVersion', 'exportedAt', 'boards', 'scenes', 'libraryItems', 'installedPacks']))
+        && hasOnlyKeys(value, new Set(['type', 'schemaVersion', 'exportedAt', 'boards', 'scenes', 'libraryItems', 'installedPacks', 'defaultLibraryVersion']))
         && value.type === 'tools-diagram-workspace'
         && value.schemaVersion === 1
+        && (value.defaultLibraryVersion === undefined
+            || (Number.isInteger(value.defaultLibraryVersion) && value.defaultLibraryVersion >= 0 && value.defaultLibraryVersion <= DEFAULT_LIBRARY_VERSION))
         && Number.isFinite(value.exportedAt)
         && value.exportedAt >= 0
         && Array.isArray(boards)

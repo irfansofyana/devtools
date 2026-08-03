@@ -1,4 +1,5 @@
 import { openDB } from 'idb';
+import { applyLibraryItemsDelta } from '../domain/default-library.js';
 import { sortBoardsByUpdatedAt } from '../domain/boards.js';
 
 const DATABASE_NAME = 'tools-diagram-workbench';
@@ -6,6 +7,32 @@ const DATABASE_VERSION = 1;
 const BOARDS_STORE = 'boards';
 const SCENES_STORE = 'scenes';
 const SETTINGS_STORE = 'settings';
+
+async function abortAndDrainTransaction(transaction, requests = []) {
+    try {
+        transaction.abort();
+    } catch {
+        // The transaction may already have completed or aborted.
+    }
+    await Promise.allSettled(requests);
+    await transaction.done.catch(() => undefined);
+}
+
+async function putSettingEntries(transaction, store, entries) {
+    const requests = [];
+    try {
+        const clonedEntries = entries.map(([key, value]) => [key, structuredClone(value)]);
+        for (const [key, value] of clonedEntries) {
+            const request = store.put(value, key);
+            request.catch(() => undefined);
+            requests.push(request);
+        }
+        await Promise.all([...requests, transaction.done]);
+    } catch (error) {
+        await abortAndDrainTransaction(transaction, requests);
+        throw error;
+    }
+}
 
 const database = openDB(DATABASE_NAME, DATABASE_VERSION, {
     upgrade(db) {
@@ -58,6 +85,54 @@ export async function setSetting(key, value) {
     await db.put(SETTINGS_STORE, value, key);
 }
 
+export async function setSettings(settings) {
+    const entries = Object.entries(settings);
+    if (!entries.length) return;
+    const db = await database;
+    const transaction = db.transaction(SETTINGS_STORE, 'readwrite');
+    const store = transaction.objectStore(SETTINGS_STORE);
+    await putSettingEntries(transaction, store, entries);
+}
+
+export async function updateSettingsAtomically(keys, updater) {
+    if (!Array.isArray(keys) || !keys.length || new Set(keys).size !== keys.length || keys.some((key) => typeof key !== 'string' || !key)) {
+        throw new TypeError('Atomic setting keys must be unique non-empty strings.');
+    }
+    if (typeof updater !== 'function') throw new TypeError('Atomic settings updater must be a function.');
+
+    const db = await database;
+    const transaction = db.transaction(SETTINGS_STORE, 'readwrite');
+    const store = transaction.objectStore(SETTINGS_STORE);
+    const current = Object.create(null);
+    let updates;
+    let entries;
+    try {
+        const values = await Promise.all(keys.map((key) => store.get(key)));
+        keys.forEach((key, index) => {
+            current[key] = values[index];
+        });
+        updates = updater(current);
+        if (updates !== null && (typeof updates !== 'object' || Array.isArray(updates))) {
+            throw new TypeError('Atomic settings updater must return an object or null.');
+        }
+        entries = updates ? Object.entries(updates) : [];
+        if (entries.some(([key]) => !keys.includes(key))) {
+            throw new TypeError('Atomic settings updater returned an undeclared key.');
+        }
+    } catch (error) {
+        await abortAndDrainTransaction(transaction);
+        throw error;
+    }
+    await putSettingEntries(transaction, store, entries);
+    return { current, updates };
+}
+
+export async function updateLibraryItems(previousItems, nextItems) {
+    return updateSettingsAtomically(['library-items'], (settings) => ({
+        'library-items': applyLibraryItemsDelta(settings['library-items'], previousItems, nextItems),
+    }));
+}
+
 export async function loadWorkspaceScenes(boards) {
     const scenes = Object.create(null);
     for (const board of boards) {
@@ -66,22 +141,44 @@ export async function loadWorkspaceScenes(boards) {
     return scenes;
 }
 
-export async function replaceWorkspace({ boards, scenes, libraryItems, installedPacks }) {
+export async function replaceWorkspace({ boards, scenes, libraryItems, installedPacks, defaultLibraryVersion = 0 }) {
+    if (!Array.isArray(boards) || boards.length === 0) throw new TypeError('Workspace replacement requires at least one board.');
+    const preparedBoards = structuredClone(boards);
+    const preparedScenes = preparedBoards.map((board) => ({
+        id: board.id,
+        json: JSON.stringify(scenes[board.id]),
+    }));
+    const preparedLibraryItems = structuredClone(libraryItems);
+    const preparedInstalledPacks = structuredClone(installedPacks);
+    const preparedDefaultLibraryVersion = structuredClone(defaultLibraryVersion);
+
     const db = await database;
     const transaction = db.transaction([BOARDS_STORE, SCENES_STORE, SETTINGS_STORE], 'readwrite');
     const boardsStore = transaction.objectStore(BOARDS_STORE);
     const scenesStore = transaction.objectStore(SCENES_STORE);
     const settingsStore = transaction.objectStore(SETTINGS_STORE);
-    const operations = [boardsStore.clear(), scenesStore.clear(), settingsStore.clear()];
-
-    for (const board of boards) {
-        operations.push(boardsStore.put(board));
-        operations.push(scenesStore.put({ id: board.id, json: JSON.stringify(scenes[board.id]) }));
+    const requests = [];
+    const track = (request) => {
+        request.catch(() => undefined);
+        requests.push(request);
+    };
+    try {
+        track(boardsStore.clear());
+        track(scenesStore.clear());
+        track(settingsStore.clear());
+        preparedBoards.forEach((board, index) => {
+            track(boardsStore.put(board));
+            track(scenesStore.put(preparedScenes[index]));
+        });
+        track(settingsStore.put(preparedLibraryItems, 'library-items'));
+        track(settingsStore.put(preparedInstalledPacks, 'installed-packs'));
+        track(settingsStore.put(preparedDefaultLibraryVersion, 'default-library-version'));
+        track(settingsStore.put(preparedBoards[0].id, 'current-board-id'));
+        await Promise.all([...requests, transaction.done]);
+    } catch (error) {
+        await abortAndDrainTransaction(transaction, requests);
+        throw error;
     }
-    operations.push(settingsStore.put(libraryItems, 'library-items'));
-    operations.push(settingsStore.put(installedPacks, 'installed-packs'));
-    operations.push(settingsStore.put(boards[0].id, 'current-board-id'));
-    await Promise.all([...operations, transaction.done]);
 }
 
 export async function clearWorkspace() {

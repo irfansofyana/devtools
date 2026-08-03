@@ -1,17 +1,30 @@
 # Diagram Workbench component packs
 
-Diagram Workbench ships only component libraries with reviewed provenance and locally pinned files. Packs are not part of the initial JavaScript payload; the browser fetches a local `.excalidrawlib` file only when the user installs it.
+Diagram Workbench includes a first-party default library and three optional community packs. All component content is local; the application makes no runtime request to third-party asset hosts.
 
-## Provenance baseline
+## Built-in Irfan Core library
+
+The built-in library is original editable artwork generated from repository-local Excalidraw skeleton definitions. It is available immediately in Excalidraw’s Library with no install action:
+
+- 14 AWS Core cards, including EC2, Lambda, EKS, VPC, IAM, networking, storage, and data services.
+- 9 Kubernetes cards for clusters, workloads, networking, and configuration.
+- 9 AI / LLM cards for gateways, models, agents, RAG, vector storage, guardrails, and evaluation.
+- 4 reusable patterns: Private EKS Platform, Multi-AZ VPC, RAG Application, and LiteLLM Gateway.
+
+The cards use an original visual system and service-name labels; they do not copy official AWS or Kubernetes logo artwork. Stable library-item IDs and a versioned IndexedDB marker make seeding non-destructive: existing items are retained, user-deleted defaults are not recreated on every launch, and future versions add only newly introduced IDs. Startup seeding, normal library edits, and optional-pack installation use coordinated IndexedDB transactions so stale tabs cannot overwrite newly seeded items. Workspace backups preserve the marker.
+
+## Optional-pack provenance baseline
 
 - Community repository: <https://github.com/excalidraw/excalidraw-libraries>
 - Pinned revision: `92e1979e8157da0ad9c2bd912c01ea9381d1733f`
 - Repository license: MIT; retained at `licenses/excalidraw-libraries-MIT.txt`
 - Runtime community fetches: none
 
-Repository inclusion is not treated as trademark or third-party-asset clearance. The v1 catalog therefore defaults to generic, provider-neutral components.
+AWS and Kubernetes names are used only as descriptive labels for architecture concepts. They and other product names remain trademarks of their respective owners; this project is not affiliated with or endorsed by Amazon Web Services, the Cloud Native Computing Foundation, or other named vendors. The repository's MIT license covers the original code and artwork, not third-party names or trademarks.
 
-## Bundled packs
+Repository inclusion is not treated as trademark or third-party-asset clearance. Optional community content therefore remains generic and reviewed, while Irfan Core uses original artwork with descriptive service labels rather than copied vendor icons.
+
+## Optional community packs
 
 | Pack | Source at pinned revision | Author / attribution | SHA-256 |
 | --- | --- | --- | --- |

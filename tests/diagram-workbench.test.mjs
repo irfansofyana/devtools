@@ -14,6 +14,7 @@ test('homepage exposes the isolated diagram workbench without loading its React 
 
 test('diagram workbench is local-first, lazy-loads component packs, and avoids runtime third-party CDNs', () => {
     const app = read('apps/diagram-workbench/src/App.jsx');
+    const css = read('apps/diagram-workbench/src/styles.css');
     const packs = read('apps/diagram-workbench/src/domain/component-packs.js');
     const packageJson = JSON.parse(read('apps/diagram-workbench/package.json'));
 
@@ -33,6 +34,22 @@ test('diagram workbench is local-first, lazy-loads component packs, and avoids r
     assert.match(app, /runWorkspaceOperation\(`export-\$\{format\}`/);
     assert.match(app, /runWorkspaceOperation\('export-documentation-pack'/);
     assert.match(app, /runWorkspaceOperation\('install-component-pack'/);
+    assert.match(app, /createDefaultLibraryMigration/);
+    assert.match(app, /default-library-version/);
+    assert.match(app, /Irfan Core is ready/);
+    assert.match(app, /className="pack-state">Ready<\/span>/);
+    assert.doesNotMatch(app, /<button[^>]*disabled>Ready<\/button>/);
+    assert.match(app, /viewBackgroundColor: '#ffffff'/);
+    assert.match(app, /theme="light"/);
+    assert.match(css, /\.canvas-region[\s\S]*?background: #ffffff;/);
+    assert.match(css, /\.sidebar-scrim:not\(\.is-visible\)[\s\S]*?visibility: hidden;/);
+    assert.match(css, /@media \(max-width: 1100px\)[\s\S]*?\.mobile-action-menu[\s\S]*?display: block;/);
+    assert.match(app, /await libraryWriteQueueRef\.current\.flush\(\)/);
+    assert.match(app, /libraryWriteQueueRef\.current\.enqueue\(libraryItems\)/);
+    assert.doesNotMatch(app, /editor\?\.updateLibrary/);
+    assert.match(app, /updateSettingsAtomically\(/);
+    assert.match(app, /updateLibraryItems\(/);
+    assert.doesNotMatch(app, /setSetting\('library-items'/);
     assert.match(app, /fetch\(`\$\{import\.meta\.env\.BASE_URL\}\$\{pack\.source\}`\)/);
     assert.doesNotMatch(app, /fetch\([^)]*https?:\/\//);
     assert.doesNotMatch(app, /localStorage\.setItem\([^)]*(scene|elements|files|library)/i);

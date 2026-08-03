@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createArtifactFiles, createWorkspaceBackup, validateWorkspaceBackup } from '../src/domain/artifacts.js';
+import { createDefaultLibraryMigration, DEFAULT_LIBRARY_VERSION } from '../src/domain/default-library.js';
 
 test('documentation artifact pack contains editable source, rendered formats, and repository guidance', () => {
     const files = createArtifactFiles({
@@ -25,13 +26,36 @@ test('documentation artifact pack contains editable source, rendered formats, an
 test('workspace backups are versioned and reject malformed records', () => {
     const backup = createWorkspaceBackup({
         boards: [{ id: 'a', name: 'A', createdAt: 1, updatedAt: 2 }],
-        scenes: { a: { type: 'excalidraw', version: 2, source: 'artifact-test', elements: [], appState: {}, files: {} } },
+        scenes: { a: { type: 'excalidraw', version: 2, source: 'artifact-test', elements: [], appState: { theme: 'light', viewBackgroundColor: '#ffffff' }, files: {} } },
         libraryItems: [],
         installedPacks: ['systems-design'],
+        defaultLibraryVersion: 1,
         exportedAt: 3,
     });
     assert.equal(backup.schemaVersion, 1);
+    assert.equal(backup.defaultLibraryVersion, 1);
     assert.deepEqual(validateWorkspaceBackup(backup), backup);
+
+    const legacyBackup = structuredClone(backup);
+    delete legacyBackup.defaultLibraryVersion;
+    legacyBackup.libraryItems = [{ id: 'legacy-custom', status: 'published', created: 1, elements: [] }];
+    const validatedLegacy = validateWorkspaceBackup(legacyBackup);
+    assert.equal(Object.hasOwn(validatedLegacy, 'defaultLibraryVersion'), false);
+    const legacyMigration = createDefaultLibraryMigration(
+        validatedLegacy.libraryItems,
+        validatedLegacy.defaultLibraryVersion ?? 0,
+        ({ id }) => ({ id, status: 'published', created: 1, elements: [] }),
+    );
+    assert.ok(legacyMigration.libraryItems.some(({ id }) => id === 'legacy-custom'));
+    assert.ok(legacyMigration.libraryItems.some(({ id }) => id === 'irfan-core-aws-ec2-v1'));
+
+    const invalidDefaultVersion = structuredClone(backup);
+    invalidDefaultVersion.defaultLibraryVersion = -1;
+    assert.throws(() => validateWorkspaceBackup(invalidDefaultVersion), /Invalid workspace backup/);
+
+    const futureDefaultVersion = structuredClone(backup);
+    futureDefaultVersion.defaultLibraryVersion = DEFAULT_LIBRARY_VERSION + 1;
+    assert.throws(() => validateWorkspaceBackup(futureDefaultVersion), /Invalid workspace backup/);
 
     const completeElement = structuredClone(backup);
     completeElement.scenes.a.elements = [{
@@ -123,6 +147,12 @@ test('workspace backups are versioned and reject malformed records', () => {
         created: 1,
     }]));
     assert.throws(() => validateWorkspaceBackup(oversizedFiles), /Invalid workspace backup/);
+
+    const malformedBase64 = structuredClone(backup);
+    malformedBase64.scenes.a.files = {
+        image: { id: 'image', dataURL: 'data:image/png;base64,%%%%', mimeType: 'image/png', created: 1 },
+    };
+    assert.throws(() => validateWorkspaceBackup(malformedBase64), /Invalid workspace backup/);
 });
 
 test('workspace validation accepts complete pinned Excalidraw element schemas and enforces references', () => {
