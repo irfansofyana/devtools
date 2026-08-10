@@ -46,6 +46,75 @@ export function normalizeViewport(value = {}) {
     };
 }
 
+export function renormalizeZOrder(cards) {
+    const ordered = [...cards].sort((left, right) => (
+        left.z - right.z
+        || left.createdAt - right.createdAt
+        || left.id.localeCompare(right.id)
+    ));
+    ordered.forEach((card, index) => { card.z = index + 1; });
+    return ordered.length;
+}
+
+export function listMarkdownTasks(content) {
+    const tasks = [];
+    let offset = 0;
+    let fence = null;
+    let listIndents = [];
+    for (const line of String(content).split('\n')) {
+        if (fence) {
+            const closingFence = new RegExp(`^\\s{0,3}${fence.character}{${fence.length},}\\s*$`);
+            if (closingFence.test(line)) fence = null;
+        } else {
+            const fenceMatch = line.match(/^\s{0,3}(`{3,}|~{3,})/);
+            if (fenceMatch) {
+                const marker = fenceMatch[1];
+                fence = { character: marker[0], length: marker.length };
+                listIndents = [];
+            } else {
+                const listMatch = line.match(/^(\s*)[-+*]\s+/);
+                if (listMatch) {
+                    const indent = listMatch[1].length;
+                    while (listIndents.length && listIndents.at(-1) >= indent) listIndents.pop();
+                    const nestedInList = listIndents.some((parentIndent) => parentIndent < indent);
+                    const isListItem = indent <= 3 || nestedInList;
+                    const taskMatch = line.match(/^(\s*[-+*]\s+)\[([ xX])\]/);
+                    if (taskMatch && isListItem) {
+                        tasks.push({
+                            checked: taskMatch[2].toLowerCase() === 'x',
+                            markIndex: offset + taskMatch[1].length + 1,
+                        });
+                    }
+                    if (isListItem) listIndents.push(indent);
+                    else listIndents = [];
+                } else if (line.trim()) {
+                    listIndents = [];
+                }
+            }
+        }
+        offset += line.length + 1;
+    }
+    return tasks;
+}
+
+export function toggleMarkdownTask(content, taskIndex, checked) {
+    const value = String(content);
+    const task = listMarkdownTasks(value)[taskIndex];
+    if (!task) return value;
+    return `${value.slice(0, task.markIndex)}${checked ? 'x' : ' '}${value.slice(task.markIndex + 1)}`;
+}
+
+export function annotateMarkdownTasks(content, nonce) {
+    let value = String(content);
+    const tasks = listMarkdownTasks(value);
+    for (let index = tasks.length - 1; index >= 0; index -= 1) {
+        const insertionPoint = tasks[index].markIndex + 2;
+        const marker = `<span data-sticky-task="${String(nonce)}:${index}"></span>`;
+        value = `${value.slice(0, insertionPoint)}${marker}${value.slice(insertionPoint)}`;
+    }
+    return value;
+}
+
 export function createBoard({ id, name = 'Untitled board', now = Date.now(), viewport } = {}) {
     if (!validId(id)) throw new TypeError('A safe board id is required.');
     const timestamp = finite(now, Date.now());

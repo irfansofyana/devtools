@@ -1,4 +1,4 @@
-import { BACKUP_TYPE, SCHEMA_VERSION, createBoard, createCard, normalizeViewport, validateWorkspaceBackup } from './sticky-board-domain.mjs';
+import { BACKUP_TYPE, SCHEMA_VERSION, annotateMarkdownTasks, createBoard, createCard, normalizeViewport, renormalizeZOrder, toggleMarkdownTask, validateWorkspaceBackup } from './sticky-board-domain.mjs';
 import {
     deleteBoard,
     deleteCard,
@@ -21,6 +21,7 @@ const boardSelect = $('#board-select');
 const cardTemplate = $('#card-template');
 const searchInput = $('#card-search');
 const SAVE_DELAY = 450;
+const TEXT_COLORS = new Set(['ink', 'red', 'blue', 'green', 'purple', 'orange']);
 
 let boards = [];
 let cards = [];
@@ -30,8 +31,8 @@ let topZ = 1;
 let writeQueue = Promise.resolve();
 let saveTimer = null;
 let boardTimer = null;
+let retryTimer = null;
 let interaction = null;
-let saveFailed = false;
 let boardBusyDepth = 0;
 
 window.marked.setOptions({ gfm: true, breaks: true });
@@ -44,14 +45,36 @@ function setStatus(message) {
     statusElement.textContent = message;
 }
 
+function hasDirtyChanges() {
+    return Boolean(currentBoard?.updatedAtDirty || cards.some((card) => card.updatedAtDirty));
+}
+
+function refreshSaveStatus() {
+    if (hasDirtyChanges() || saveTimer || boardTimer) {
+        setStatus('Unsaved changes');
+        return;
+    }
+    window.clearTimeout(retryTimer);
+    retryTimer = null;
+    setStatus('Saved locally');
+}
+
+function scheduleRetry() {
+    if (!hasDirtyChanges()) return;
+    window.clearTimeout(retryTimer);
+    retryTimer = window.setTimeout(() => {
+        retryTimer = null;
+        flushSaves().catch(() => undefined);
+    }, 5_000);
+}
+
 function queueWrite(operation) {
     setStatus('Saving locally…');
-    saveFailed = false;
     writeQueue = writeQueue.catch(() => undefined).then(operation).then(() => {
-        if (!saveFailed) setStatus('Saved locally');
+        refreshSaveStatus();
     }).catch((error) => {
-        saveFailed = true;
         setStatus('Local save failed — export before leaving');
+        scheduleRetry();
         console.error('Sticky board save failed', error);
         throw error;
     });
@@ -78,6 +101,7 @@ async function persistDirtyBoard() {
     board.updatedAt = Date.now();
     await queueWrite(() => saveBoard(durableBoard(board)));
     if (board.updatedAtDirty === revision) delete board.updatedAtDirty;
+    refreshSaveStatus();
 }
 
 async function persistDirtyCards() {
@@ -93,6 +117,7 @@ async function persistDirtyCards() {
     pending.forEach(({ card, revision }) => {
         if (card.updatedAtDirty === revision) delete card.updatedAtDirty;
     });
+    refreshSaveStatus();
 }
 
 function scheduleCardSave() {
@@ -161,6 +186,10 @@ function renderMarkdown(content) {
     wrapper.querySelectorAll('input').forEach((input) => {
         if (input.type !== 'checkbox' || !input.disabled) input.remove();
     });
+    wrapper.querySelectorAll('[data-text-color]').forEach((element) => {
+        const color = element.getAttribute('data-text-color');
+        if (element.tagName !== 'SPAN' || !TEXT_COLORS.has(color)) element.removeAttribute('data-text-color');
+    });
     wrapper.querySelectorAll('a').forEach((anchor) => {
         anchor.target = '_blank';
         anchor.rel = 'noopener noreferrer';
@@ -178,13 +207,20 @@ function renderCode(card) {
 
 function updateCardPreview(card, element) {
     const preview = $('.card-preview', element);
-    preview.innerHTML = card.type === 'code' ? renderCode(card) : renderMarkdown(card.content);
+    const taskNonce = uuid();
+    const noteContent = card.type === 'note' ? annotateMarkdownTasks(card.content, taskNonce) : '';
+    preview.innerHTML = card.type === 'code' ? renderCode(card) : renderMarkdown(noteContent);
     if (card.type === 'note') {
-        const taskMatches = [...card.content.matchAll(/^- \[([ xX])\]/gm)];
-        preview.querySelectorAll('input[type="checkbox"]').forEach((checkbox, index) => {
-            checkbox.disabled = false;
-            checkbox.dataset.taskIndex = String(index);
-            checkbox.checked = taskMatches[index]?.[1].toLowerCase() === 'x';
+        preview.querySelectorAll('[data-sticky-task]').forEach((marker) => {
+            const value = marker.getAttribute('data-sticky-task');
+            const prefix = `${taskNonce}:`;
+            const taskIndex = value?.startsWith(prefix) ? Number(value.slice(prefix.length)) : NaN;
+            const checkbox = marker.closest('li')?.querySelector(':scope > input[type="checkbox"]');
+            if (checkbox?.disabled && Number.isInteger(taskIndex)) {
+                checkbox.disabled = false;
+                checkbox.dataset.taskIndex = String(taskIndex);
+            }
+            marker.remove();
         });
     }
 }
@@ -196,6 +232,22 @@ function setEditing(element, editing) {
         editor.focus();
         editor.setSelectionRange(editor.value.length, editor.value.length);
     }
+}
+
+function wrapEditorSelection(editor, before, after = before, placeholder = 'text') {
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const selected = editor.value.slice(start, end) || placeholder;
+    const replacement = `${before}${selected}${after}`;
+    const nextLength = editor.value.length - (end - start) + replacement.length;
+    if (nextLength > editor.maxLength) {
+        setStatus('Card content is too long to apply formatting');
+        return;
+    }
+    editor.setRangeText(replacement, start, end, 'end');
+    editor.focus();
+    editor.setSelectionRange(start + before.length, start + before.length + selected.length);
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 function updateCardElement(card, element) {
@@ -219,9 +271,22 @@ function findCard(id) {
     return cards.find((card) => card.id === id);
 }
 
-function bringToFront(card, element) {
+function nextZIndex() {
+    if (topZ >= 999_999) {
+        topZ = renormalizeZOrder(cards);
+        cards.forEach((item) => {
+            item.updatedAtDirty = Number(item.updatedAtDirty ?? 0) + 1;
+            const itemElement = surface.querySelector(`[data-id="${CSS.escape(item.id)}"]`);
+            if (itemElement) itemElement.style.zIndex = String(item.z);
+        });
+        if (cards.length) scheduleCardSave();
+    }
     topZ += 1;
-    card.z = topZ;
+    return topZ;
+}
+
+function bringToFront(card, element) {
+    card.z = nextZIndex();
     element.style.zIndex = String(card.z);
     markCardChanged(card);
 }
@@ -238,6 +303,8 @@ function startCardPointer(event, card, element, mode) {
 
 function bindCard(card, element) {
     const header = $('.card-header', element);
+    const editor = $('.card-editor', element);
+    const formatToolbar = $('.note-format-toolbar', element);
     header.addEventListener('pointerdown', (event) => {
         if (event.target.closest('button, input, select')) return;
         startCardPointer(event, card, element, 'drag-card');
@@ -246,6 +313,28 @@ function bindCard(card, element) {
     $('.card-preview', element).addEventListener('dblclick', () => setEditing(element, true));
     $('.card-edit', element).addEventListener('click', () => setEditing(element, true));
     $('.card-done', element).addEventListener('click', () => setEditing(element, false));
+    formatToolbar.addEventListener('pointerdown', (event) => {
+        if (event.target.closest('button')) event.preventDefault();
+    });
+    formatToolbar.querySelectorAll('[data-format]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const formats = {
+                bold: ['**', '**', 'bold text'],
+                italic: ['_', '_', 'italic text'],
+                strike: ['~~', '~~', 'struck text'],
+                code: ['`', '`', 'code'],
+            };
+            const format = formats[button.dataset.format];
+            if (format) wrapEditorSelection(editor, ...format);
+        });
+    });
+    $('.text-color', element).addEventListener('change', (event) => {
+        const color = event.target.value;
+        if (TEXT_COLORS.has(color)) {
+            wrapEditorSelection(editor, `<span data-text-color="${color}">`, '</span>', 'colored text');
+        }
+        event.target.value = '';
+    });
     $('.card-title', element).addEventListener('input', (event) => {
         card.title = event.target.value.trimStart().slice(0, 80) || (card.type === 'code' ? 'Code snippet' : 'Sticky note');
         markCardChanged(card);
@@ -269,7 +358,7 @@ function bindCard(card, element) {
         try {
             await navigator.clipboard.writeText(card.content);
             setStatus('Copied card content');
-            window.setTimeout(() => setStatus('Saved locally'), 1_200);
+            window.setTimeout(refreshSaveStatus, 1_200);
         } catch {
             setStatus('Copy failed');
         }
@@ -290,11 +379,7 @@ function bindCard(card, element) {
         const checkbox = event.target.closest('input[type="checkbox"]');
         if (!checkbox) return;
         const wanted = Number(checkbox.dataset.taskIndex);
-        let index = -1;
-        card.content = card.content.replace(/^- \[([ xX])\]/gm, (match) => {
-            index += 1;
-            return index === wanted ? `- [${checkbox.checked ? 'x' : ' '}]` : match;
-        });
+        card.content = toggleMarkdownTask(card.content, wanted, checkbox.checked);
         $('.card-editor', element).value = card.content;
         markCardChanged(card);
     });
@@ -372,7 +457,7 @@ async function addCard(type) {
         type,
         x: center.x - (type === 'code' ? 210 : 150) + offset,
         y: center.y - 120 + offset,
-        z: ++topZ,
+        z: nextZIndex(),
     });
     await queueWrite(() => saveCard(card));
     cards.push(card);
@@ -595,17 +680,28 @@ $('#import-workspace-input').addEventListener('change', async (event) => {
         setStatus('Backup is too large');
         return;
     }
+    let backup;
     try {
-        const backup = validateWorkspaceBackup(JSON.parse(await file.text()));
-        if (!window.confirm('Replace every local sticky board with this backup? Export first if needed.')) return;
+        backup = validateWorkspaceBackup(JSON.parse(await file.text()));
+    } catch (error) {
+        console.error('Sticky-board backup validation failed', error);
+        setStatus('Invalid backup — nothing was replaced');
+        return;
+    }
+    if (!window.confirm('Replace every local sticky board with this backup? Export first if needed.')) return;
+    let workspaceReplaced = false;
+    try {
         await flushSaves();
         await replaceWorkspace(backup);
+        workspaceReplaced = true;
         boards = backup.boards.sort((a, b) => b.updatedAt - a.updatedAt);
         await openBoard(boards.find((board) => board.id === backup.currentBoardId) ?? boards[0]);
         setStatus('Workspace backup restored');
     } catch (error) {
         console.error('Sticky-board import failed', error);
-        setStatus('Invalid backup — nothing was replaced');
+        if (workspaceReplaced) setStatus('Backup was restored, but the board could not be opened');
+        else if (hasDirtyChanges()) setStatus('Local save failed — export before leaving');
+        else setStatus('Backup could not be restored — nothing was replaced');
     }
 });
 

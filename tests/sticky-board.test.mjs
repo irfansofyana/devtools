@@ -5,9 +5,13 @@ import test from 'node:test';
 
 import {
     BACKUP_TYPE,
+    annotateMarkdownTasks,
     createBoard,
     createCard,
+    listMarkdownTasks,
     normalizeViewport,
+    renormalizeZOrder,
+    toggleMarkdownTask,
     validateWorkspaceBackup,
 } from '../js/sticky-board-domain.mjs';
 
@@ -33,6 +37,39 @@ test('sticky board creates safe named boards and typed cards', () => {
     assert.equal(code.type, 'code');
     assert.equal(code.language, 'javascript');
     assert.match(code.content, /console\.log/);
+});
+
+test('z-order renormalization keeps cards inside the backup schema', () => {
+    const cards = [
+        createCard({ id: 'high', z: 1_000_000 }),
+        createCard({ id: 'low', z: 2 }),
+        createCard({ id: 'middle', z: 40 }),
+    ];
+    assert.equal(renormalizeZOrder(cards), 3);
+    assert.deepEqual(cards.map(({ id, z }) => ({ id, z })), [
+        { id: 'high', z: 3 },
+        { id: 'low', z: 1 },
+        { id: 'middle', z: 2 },
+    ]);
+});
+
+test('Markdown tasks support mixed markers and ignore fenced code', () => {
+    const markdown = '```md\n- [x] fake\n```\n    - [x] indented code\n- [ ] dash\n* [x] star\n  + [ ] nested';
+    assert.deepEqual(listMarkdownTasks(markdown).map((task) => task.checked), [false, true, false]);
+    assert.equal(
+        toggleMarkdownTask(markdown, 2, true),
+        '```md\n- [x] fake\n```\n    - [x] indented code\n- [ ] dash\n* [x] star\n  + [x] nested',
+    );
+    const annotated = annotateMarkdownTasks(markdown, 'nonce');
+    assert.match(annotated, /- \[ \]<span data-sticky-task="nonce:0"><\/span> dash/);
+    assert.doesNotMatch(annotated, /fake<span data-sticky-task/);
+    const trickyFence = '```md\n```not-a-close\n- [ ] still code\n```\n- [ ] outside';
+    assert.deepEqual(listMarkdownTasks(trickyFence).map((task) => task.checked), [false]);
+    assert.match(annotateMarkdownTasks(trickyFence, 'fence'), /- \[ \]<span data-sticky-task="fence:0"><\/span> outside/);
+    assert.doesNotMatch(annotateMarkdownTasks(trickyFence, 'fence'), /still code<span data-sticky-task/);
+    const nestedTask = '- parent\n    - [ ] child';
+    assert.equal(listMarkdownTasks(nestedTask).length, 1);
+    assert.match(annotateMarkdownTasks(nestedTask, 'nested'), /\[ \]<span data-sticky-task="nested:0"><\/span> child/);
 });
 
 test('viewport normalization clamps unsafe pan and zoom values', () => {
@@ -76,6 +113,11 @@ test('homepage exposes a standalone sticky board and required local-first contro
     assert.match(page, /id="export-workspace"/);
     assert.match(page, /id="import-workspace-input"/);
     assert.match(page, /id="storage-status"[^>]*aria-live="polite"/);
+    assert.match(page, /class="note-format-toolbar"[^>]*role="toolbar"/);
+    for (const format of ['bold', 'italic', 'strike', 'code']) {
+        assert.match(page, new RegExp(`data-format="${format}"`));
+    }
+    assert.match(page, /class="text-color"/);
     assert.match(page, /marked\.min\.js/);
     assert.match(page, /purify\.min\.js/);
     assert.match(page, /prism\.js/);
@@ -85,6 +127,10 @@ test('homepage exposes a standalone sticky board and required local-first contro
     assert.match(css, /\.empty-state\[hidden\]\s*\{\s*display:\s*none;/);
     assert.match(css, /\.card-title\s*\{[^}]*width:\s*0;/s);
     assert.match(css, /\.card-toolbar select[^}]*width:\s*auto;/s);
+    assert.match(css, /--card-ink:/);
+    assert.match(css, /\.card-preview\s*\{[^}]*color:\s*var\(--card-ink\)/s);
+    assert.match(css, /\[data-text-color="red"\]/);
+    assert.match(css, /\.canvas-card\.is-editing\[data-type="note"\] \.note-format-toolbar/);
 });
 
 test('sticky board storage uses IndexedDB rather than localStorage for workspace data', () => {
@@ -116,6 +162,21 @@ test('sticky board storage uses IndexedDB rather than localStorage for workspace
     assert.match(app, /const offset = \(cards\.length % 8\) \* 28/);
     assert.match(app, /const revision = card\.updatedAtDirty/);
     assert.match(app, /card\.updatedAtDirty === revision/);
+    assert.match(app, /annotateMarkdownTasks\(card\.content, taskNonce\)/);
+    assert.match(app, /data-sticky-task/);
+    assert.match(app, /toggleMarkdownTask\(card\.content, wanted, checkbox\.checked\)/);
+    assert.match(app, /function wrapEditorSelection/);
+    assert.match(app, /data-text-color/);
+    assert.match(app, /TEXT_COLORS\.has/);
+    assert.match(app, /event\.target\.value = ''/);
+    assert.match(app, /function nextZIndex/);
+    assert.match(app, /z:\s*nextZIndex\(\)/);
+    assert.match(app, /let workspaceReplaced = false/);
+    assert.match(app, /Backup was restored, but the board could not be opened/);
+    assert.match(app, /Backup could not be restored — nothing was replaced/);
+    assert.match(app, /else if \(hasDirtyChanges\(\)\) setStatus\('Local save failed — export before leaving'\)/);
+    assert.doesNotMatch(app, /saveFailed/);
+    assert.match(app, /retryTimer/);
     assert.match(app, /Saving locally/);
     assert.match(app, /Saved locally/);
 });
