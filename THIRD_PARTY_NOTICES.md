@@ -60,3 +60,14 @@ Three optional `.excalidrawlib` files are redistributed from `excalidraw/excalid
 Exact source paths, authors, SHA-256 hashes, and the review policy are recorded in `apps/diagram-workbench/COMPONENT_PACKS.md`. The C4 pack is attributed to its library author and to Simon Brown’s C4 model at <https://c4model.com/>; the C4 website identifies its content as CC BY 4.0.
 
 AWS, Google Cloud, Azure, and Kubernetes community packs are not redistributed in v1 because repository inclusion does not establish standalone rights to repackage branded artwork. The workbench links to current official provider sources instead.
+
+## Sticky Board
+
+The Sticky Board serves pinned browser libraries from `vendor/sticky-board/` so Markdown notes and code snippets do not require runtime CDN requests:
+
+- `marked@18.0.9` — MIT; upstream: <https://github.com/markedjs/marked>
+- `DOMPurify@3.4.13` — Apache-2.0/MPL-2.0; upstream: <https://github.com/cure53/DOMPurify>
+- `PrismJS@1.30.0` — MIT; upstream: <https://github.com/PrismJS/prism>
+
+Markdown output is sanitized before insertion. Remote images, frames, forms, and embedded objects are excluded from note rendering.
+Integrity is enforced by `tests/sticky-board.test.mjs`, which records SHA-256 digests for every vendored Sticky Board runtime file.

@@ -2,7 +2,7 @@
 
 A focused collection of browser utilities for the small digital jobs that should not need an account, an install, or a heavyweight app.
 
-**Live:** [tools.irfansp.dev](https://tools.irfansp.dev) · **Tools:** 52 · **Stack:** vanilla HTML, CSS, and JavaScript
+**Live:** [tools.irfansp.dev](https://tools.irfansp.dev) · **Tools:** 53 · **Stack:** vanilla HTML, CSS, and JavaScript
 
 [![tools. homepage](assets/images/screenshot.png)](https://tools.irfansp.dev)
 
@@ -12,7 +12,7 @@ A focused collection of browser utilities for the small digital jobs that should
 - **Encoding and conversion** — Base64, URLs, HTML entities, ASCII, hex, CSV, JSON, YAML, XML, and SQL
 - **Security and privacy** — hashes, HMAC, UUID/ULID, passwords, and encrypted secret sharing
 - **PDF** — structured Markdown extraction, merge, page organization, images, encryption, metadata, and watermarks
-- **Visual and documents** — QR codes, Markdown, Mermaid, OCR, colors, and ASCII art
+- **Visual and documents** — infinite Markdown/code boards, QR codes, Mermaid, OCR, colors, and ASCII art
 - **Developer and network** — API mocks, regex, timestamps, cron, IP lookup, TLS checks, and subnet calculations
 
 The homepage is built for quick retrieval: search by tool name or task, use `/` or `Ctrl/Cmd + K` to focus search, then use the arrow keys and Enter to open a result.
@@ -48,7 +48,7 @@ node --test tests/*.test.mjs
 ```text
 .
 ├── index.html              # Searchable tool catalog
-├── tools/                  # 52 standalone tool pages
+├── tools/                  # 53 standalone tool pages
 ├── css/
 │   ├── styles.css          # Tokens, reset, and typography
 │   ├── theme.css           # Light and dark palettes

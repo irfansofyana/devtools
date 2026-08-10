@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-tools. is a collection of 43 browser-based utilities deployed via GitHub Pages. It serves everyday digital work as well as technical workflows, with tools for text, documents, data conversion, design, security, APIs, and network analysis. The site uses vanilla HTML, CSS, and JavaScript.
+tools. is a collection of 53 browser-based utilities deployed via GitHub Pages. It serves everyday digital work as well as technical workflows, with tools for text, documents, data conversion, design, security, APIs, and network analysis. The site uses vanilla HTML, CSS, and JavaScript.
 
 ## Development Commands
 
