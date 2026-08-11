@@ -2,15 +2,19 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
+import vm from 'node:vm';
 
 import {
     BACKUP_TYPE,
+    SCHEMA_VERSION,
     annotateMarkdownTasks,
     createBoard,
     createCard,
     listMarkdownTasks,
+    migrateCard,
     normalizeViewport,
     renormalizeZOrder,
+    richTextToPlainText,
     toggleMarkdownTask,
     validateWorkspaceBackup,
 } from '../js/sticky-board-domain.mjs';
@@ -28,15 +32,40 @@ test('sticky board creates safe named boards and typed cards', () => {
         viewport: { x: 0, y: 0, zoom: 1 },
     });
 
-    const note = createCard({ id: 'note-1', type: 'note', x: 40, y: 80, now: 101 });
+    const note = createCard({ id: 'note-1', type: 'note', x: 40, y: 80, width: 220, height: 160, now: 101 });
     assert.equal(note.type, 'note');
-    assert.match(note.content, /Markdown/);
+    assert.equal(note.width, 240);
+    assert.equal(note.height, 170);
+    assert.equal(note.contentFormat, 'tiptap-json');
+    assert.equal(note.content.type, 'doc');
+    assert.equal(note.content.content.at(-1).type, 'taskList');
     assert.equal(note.language, undefined);
 
     const code = createCard({ id: 'code-1', type: 'code', x: 120, y: 160, now: 102 });
     assert.equal(code.type, 'code');
+    assert.equal(code.contentFormat, 'plain-text');
     assert.equal(code.language, 'javascript');
     assert.match(code.content, /console\.log/);
+});
+
+test('legacy note cards migrate without losing Markdown', () => {
+    const migrated = migrateCard({
+        id: 'legacy-note', boardId: 'board-1', type: 'note', x: 1, y: 2,
+        width: 300, height: 240, title: 'Old note', content: '- [ ] Keep me',
+        color: 'yellow', z: 1, createdAt: 10, updatedAt: 10,
+    });
+    assert.equal(migrated.contentFormat, 'markdown');
+    assert.equal(migrated.content, '- [ ] Keep me');
+    assert.equal(migrated.legacyMarkdown, '- [ ] Keep me');
+    assert.equal(migrated.width, 300);
+    assert.equal(migrateCard({ ...migrated, width: 220 }).width, 240);
+    assert.equal(migrateCard({ ...migrated, height: 160 }).height, 170);
+});
+
+test('rich-text documents provide searchable portable plain text', () => {
+    const note = createCard({ id: 'note-text', type: 'note' });
+    assert.equal(richTextToPlainText(note.content), 'New note\nCapture the thought. Shape it later.\nFirst task');
+    assert.equal(richTextToPlainText({ type: 'doc', content: [{ type: 'paragraph' }] }), '');
 });
 
 test('z-order renormalization keeps cards inside the backup schema', () => {
@@ -61,15 +90,24 @@ test('Markdown tasks support mixed markers and ignore fenced code', () => {
         '```md\n- [x] fake\n```\n    - [x] indented code\n- [ ] dash\n* [x] star\n  + [x] nested',
     );
     const annotated = annotateMarkdownTasks(markdown, 'nonce');
-    assert.match(annotated, /- \[ \]<span data-sticky-task="nonce:0"><\/span> dash/);
+    assert.match(annotated, /- \[ \] <span data-sticky-task="nonce:0"><\/span>dash/);
     assert.doesNotMatch(annotated, /fake<span data-sticky-task/);
     const trickyFence = '```md\n```not-a-close\n- [ ] still code\n```\n- [ ] outside';
     assert.deepEqual(listMarkdownTasks(trickyFence).map((task) => task.checked), [false]);
-    assert.match(annotateMarkdownTasks(trickyFence, 'fence'), /- \[ \]<span data-sticky-task="fence:0"><\/span> outside/);
+    assert.match(annotateMarkdownTasks(trickyFence, 'fence'), /- \[ \] <span data-sticky-task="fence:0"><\/span>outside/);
     assert.doesNotMatch(annotateMarkdownTasks(trickyFence, 'fence'), /still code<span data-sticky-task/);
     const nestedTask = '- parent\n    - [ ] child';
     assert.equal(listMarkdownTasks(nestedTask).length, 1);
-    assert.match(annotateMarkdownTasks(nestedTask, 'nested'), /\[ \]<span data-sticky-task="nested:0"><\/span> child/);
+    assert.match(annotateMarkdownTasks(nestedTask, 'nested'), /\[ \] <span data-sticky-task="nested:0"><\/span>child/);
+});
+
+test('annotated Markdown tasks still render as interactive task inputs', () => {
+    const context = { globalThis: {} };
+    vm.runInNewContext(read('vendor/sticky-board/marked.min.js'), context);
+    const marked = context.globalThis.marked ?? context.marked;
+    const html = marked.parse(annotateMarkdownTasks('- [ ] Buy milk', 'render'));
+    assert.match(html, /<input[^>]+type="checkbox"/);
+    assert.match(html, /data-sticky-task="render:0"/);
 });
 
 test('viewport normalization clamps unsafe pan and zoom values', () => {
@@ -82,7 +120,7 @@ test('workspace backups accept complete valid workspaces and reject unsafe conte
     const card = createCard({ id: 'note-1', type: 'note', boardId: board.id, now: 101 });
     const backup = {
         type: BACKUP_TYPE,
-        schemaVersion: 1,
+        schemaVersion: SCHEMA_VERSION,
         exportedAt: 200,
         currentBoardId: board.id,
         boards: [board],
@@ -90,12 +128,41 @@ test('workspace backups accept complete valid workspaces and reject unsafe conte
     };
 
     assert.deepEqual(validateWorkspaceBackup(backup), backup);
+    const orderedDocument = {
+        type: 'doc',
+        content: [{ type: 'orderedList', attrs: { start: 1, type: null }, content: [{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'First' }] }] }] }],
+    };
+    assert.doesNotThrow(() => validateWorkspaceBackup({ ...backup, cards: [{ ...card, content: orderedDocument }] }));
     assert.throws(
         () => validateWorkspaceBackup({ ...backup, boards: [{ ...board, id: '__proto__' }] }),
         /Invalid sticky-board backup/,
     );
     assert.throws(
         () => validateWorkspaceBackup({ ...backup, cards: [{ ...card, content: 'x'.repeat(200_001) }] }),
+        /Invalid sticky-board backup/,
+    );
+    const unsafeLink = {
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'click', marks: [{ type: 'link', attrs: { href: 'javascript:alert(1)' } }] }] }],
+    };
+    assert.throws(
+        () => validateWorkspaceBackup({ ...backup, cards: [{ ...card, content: unsafeLink }] }),
+        /Invalid sticky-board backup/,
+    );
+    const unsafeClass = {
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'styled', marks: [{ type: 'link', attrs: { href: 'https://example.com', class: 'canvas-card' } }] }] }],
+    };
+    assert.throws(
+        () => validateWorkspaceBackup({ ...backup, cards: [{ ...card, content: unsafeClass }] }),
+        /Invalid sticky-board backup/,
+    );
+    const malformedDocument = {
+        type: 'doc',
+        content: [{ type: 'text', text: 'parent', content: [{ type: 'text', text: 'impossible' }] }],
+    };
+    assert.throws(
+        () => validateWorkspaceBackup({ ...backup, cards: [{ ...card, content: malformedDocument }] }),
         /Invalid sticky-board backup/,
     );
 });
@@ -114,10 +181,14 @@ test('homepage exposes a standalone sticky board and required local-first contro
     assert.match(page, /id="import-workspace-input"/);
     assert.match(page, /id="storage-status"[^>]*aria-live="polite"/);
     assert.match(page, /class="note-format-toolbar"[^>]*role="toolbar"/);
-    for (const format of ['bold', 'italic', 'strike', 'code']) {
-        assert.match(page, new RegExp(`data-format="${format}"`));
+    assert.match(page, /class="note-editor"/);
+    for (const action of ['bold', 'italic', 'strike', 'task-list', 'bullet-list']) {
+        assert.match(page, new RegExp(`data-editor-action="${action}"`));
     }
-    assert.match(page, /class="text-color"/);
+    assert.match(page, /class="text-size"/);
+    assert.match(page, /value="1\.35rem"/);
+    assert.doesNotMatch(page, /pinch/i);
+    assert.match(page, /tiptap-editor\.mjs/);
     assert.match(page, /marked\.min\.js/);
     assert.match(page, /purify\.min\.js/);
     assert.match(page, /prism\.js/);
@@ -126,11 +197,14 @@ test('homepage exposes a standalone sticky board and required local-first contro
     const css = read('css/sticky-board.css');
     assert.match(css, /\.empty-state\[hidden\]\s*\{\s*display:\s*none;/);
     assert.match(css, /\.card-title\s*\{[^}]*width:\s*0;/s);
-    assert.match(css, /\.card-toolbar select[^}]*width:\s*auto;/s);
     assert.match(css, /--card-ink:/);
-    assert.match(css, /\.card-preview\s*\{[^}]*color:\s*var\(--card-ink\)/s);
-    assert.match(css, /\[data-text-color="red"\]/);
-    assert.match(css, /\.canvas-card\.is-editing\[data-type="note"\] \.note-format-toolbar/);
+    assert.match(css, /\.canvas-dock\s*\{/);
+    assert.match(css, /\.note-editor__content\s*\{/);
+    assert.match(css, /\.note-editor__content li\[data-checked\]\s*\{[^}]*display:\s*flex;/s);
+    assert.match(css, /\.canvas-card\.is-selected\[data-type="note"\] \.note-format-toolbar/);
+    assert.match(css, /@media \(max-width: 620px\)[\s\S]*?\.search-control:focus-within input/);
+    assert.doesNotMatch(css, /\.board-menu\s*\{\s*display:\s*none/);
+    assert.doesNotMatch(css, /\.search-control\s*\{\s*display:\s*none/);
 });
 
 test('sticky board storage uses IndexedDB rather than localStorage for workspace data', () => {
@@ -162,13 +236,19 @@ test('sticky board storage uses IndexedDB rather than localStorage for workspace
     assert.match(app, /const offset = \(cards\.length % 8\) \* 28/);
     assert.match(app, /const revision = card\.updatedAtDirty/);
     assert.match(app, /card\.updatedAtDirty === revision/);
-    assert.match(app, /annotateMarkdownTasks\(card\.content, taskNonce\)/);
-    assert.match(app, /data-sticky-task/);
-    assert.match(app, /toggleMarkdownTask\(card\.content, wanted, checkbox\.checked\)/);
-    assert.match(app, /function wrapEditorSelection/);
-    assert.match(app, /data-text-color/);
-    assert.match(app, /TEXT_COLORS\.has/);
-    assert.match(app, /event\.target\.value = ''/);
+    assert.match(app, /createNoteEditor\(\{/);
+    assert.match(app, /card\.contentFormat = 'tiptap-json'/);
+    assert.match(app, /card\.legacyMarkdown = String\(card\.content\)/);
+    assert.match(app, /unsavableNoteIds\.add\(card\.id\)/);
+    assert.match(app, /if \(unsavableNoteIds\.size\)[\s\S]*?shorten it before leaving/);
+    assert.match(app, /beforeunload[\s\S]*?event\.preventDefault\(\)/);
+    assert.match(app, /cards\.some\(\(card, index\) => card !== storedCards\[index\]\)/);
+    assert.match(app, /Math\.max\(240, start\.width/);
+    assert.match(app, /Math\.max\(170, start\.height/);
+    assert.match(app, /resizeControl\.addEventListener\('keydown'/);
+    assert.match(app, /storedCards\.map\(migrateCard\)/);
+    assert.match(app, /richTextToPlainText\(card\.content\)/);
+    assert.match(app, /event\.target\.closest\('input, textarea, select, \[contenteditable="true"\]'\)/);
     assert.match(app, /function nextZIndex/);
     assert.match(app, /z:\s*nextZIndex\(\)/);
     assert.match(app, /let workspaceReplaced = false/);
@@ -192,6 +272,8 @@ test('vendored sticky-board libraries match reviewed integrity hashes', () => {
         'prism-typescript.min.js': '852f5513bb9ca9db247f86ecfce74acc91c541749d34929157240518fef8152a',
         'prism-sql.min.js': '3fc5f8ce69950ec73adc972f061df42aaea78faa4864709134ea2adc083f3a33',
         'prism-yaml.min.js': '719c8e8b8c344dc9de510c729f65ba840b1502a0a8e7e25e2ad19ee715f65c02',
+        'tiptap-editor.mjs': '10106d816926fd473fd8da42e3fb4d9a57c3ab7402af2b4ef5e5b281af444a04',
+        'tiptap-editor.NOTICE.md': '777b765b1513a8eadc0d801c47c6164e31ee43ec38faac41195b759af0645a0f',
     };
     for (const [filename, digest] of Object.entries(expected)) {
         const bytes = readFileSync(new URL(`vendor/sticky-board/${filename}`, root));

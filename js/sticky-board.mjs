@@ -1,4 +1,15 @@
-import { BACKUP_TYPE, SCHEMA_VERSION, annotateMarkdownTasks, createBoard, createCard, normalizeViewport, renormalizeZOrder, toggleMarkdownTask, validateWorkspaceBackup } from './sticky-board-domain.mjs';
+import {
+    BACKUP_TYPE,
+    SCHEMA_VERSION,
+    createBoard,
+    createCard,
+    migrateCard,
+    normalizeViewport,
+    renormalizeZOrder,
+    richTextToPlainText,
+    validateWorkspaceBackup,
+} from './sticky-board-domain.mjs';
+import { createNoteEditor } from '../vendor/sticky-board/tiptap-editor.mjs';
 import {
     deleteBoard,
     deleteCard,
@@ -22,6 +33,8 @@ const cardTemplate = $('#card-template');
 const searchInput = $('#card-search');
 const SAVE_DELAY = 450;
 const TEXT_COLORS = new Set(['ink', 'red', 'blue', 'green', 'purple', 'orange']);
+const noteEditors = new Map();
+const unsavableNoteIds = new Set();
 
 let boards = [];
 let cards = [];
@@ -50,6 +63,10 @@ function hasDirtyChanges() {
 }
 
 function refreshSaveStatus() {
+    if (unsavableNoteIds.size) {
+        setStatus('A note is too large to save — shorten it before leaving');
+        return;
+    }
     if (hasDirtyChanges() || saveTimer || boardTimer) {
         setStatus('Unsaved changes');
         return;
@@ -57,6 +74,13 @@ function refreshSaveStatus() {
     window.clearTimeout(retryTimer);
     retryTimer = null;
     setStatus('Saved locally');
+}
+
+function canUseDurableNotes() {
+    if (!unsavableNoteIds.size) return true;
+    noteEditors.get(unsavableNoteIds.values().next().value)?.focus();
+    refreshSaveStatus();
+    return false;
 }
 
 function scheduleRetry() {
@@ -205,27 +229,36 @@ function renderCode(card) {
     return `<pre><code class="language-${escapeHtml(card.language)}">${code}</code></pre>`;
 }
 
-function updateCardPreview(card, element) {
-    const preview = $('.card-preview', element);
-    const taskNonce = uuid();
-    const noteContent = card.type === 'note' ? annotateMarkdownTasks(card.content, taskNonce) : '';
-    preview.innerHTML = card.type === 'code' ? renderCode(card) : renderMarkdown(noteContent);
-    if (card.type === 'note') {
-        preview.querySelectorAll('[data-sticky-task]').forEach((marker) => {
-            const value = marker.getAttribute('data-sticky-task');
-            const prefix = `${taskNonce}:`;
-            const taskIndex = value?.startsWith(prefix) ? Number(value.slice(prefix.length)) : NaN;
-            const checkbox = marker.closest('li')?.querySelector(':scope > input[type="checkbox"]');
-            if (checkbox?.disabled && Number.isInteger(taskIndex)) {
-                checkbox.disabled = false;
-                checkbox.dataset.taskIndex = String(taskIndex);
-            }
-            marker.remove();
-        });
-    }
+function legacyMarkdownToEditorHtml(content) {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderMarkdown(String(content));
+    wrapper.querySelectorAll('li > input[type="checkbox"]').forEach((checkbox) => {
+        const item = checkbox.closest('li');
+        const list = item?.parentElement;
+        if (!item || list?.tagName !== 'UL') return;
+        list.dataset.type = 'taskList';
+        item.dataset.type = 'taskItem';
+        item.dataset.checked = String(checkbox.checked);
+        checkbox.remove();
+    });
+    return wrapper.innerHTML;
 }
 
-function setEditing(element, editing) {
+function cardPlainText(card) {
+    if (card.type === 'code' || card.contentFormat === 'markdown') return String(card.content);
+    return richTextToPlainText(card.content);
+}
+
+function updateCodePreview(card, element) {
+    if (card.type !== 'code') return;
+    $('.card-preview', element).innerHTML = renderCode(card);
+}
+
+function setCodeEditing(element, editing) {
+    if (element.dataset.type !== 'code') {
+        noteEditors.get(element.dataset.id)?.focus();
+        return;
+    }
     element.classList.toggle('is-editing', editing);
     if (editing) {
         const editor = $('.card-editor', element);
@@ -234,20 +267,22 @@ function setEditing(element, editing) {
     }
 }
 
-function wrapEditorSelection(editor, before, after = before, placeholder = 'text') {
-    const start = editor.selectionStart;
-    const end = editor.selectionEnd;
-    const selected = editor.value.slice(start, end) || placeholder;
-    const replacement = `${before}${selected}${after}`;
-    const nextLength = editor.value.length - (end - start) + replacement.length;
-    if (nextLength > editor.maxLength) {
-        setStatus('Card content is too long to apply formatting');
-        return;
-    }
-    editor.setRangeText(replacement, start, end, 'end');
-    editor.focus();
-    editor.setSelectionRange(start + before.length, start + before.length + selected.length);
-    editor.dispatchEvent(new Event('input', { bubbles: true }));
+function refreshEditorToolbar(element, editor) {
+    const states = {
+        bold: editor.isActive('bold'),
+        italic: editor.isActive('italic'),
+        strike: editor.isActive('strike'),
+        code: editor.isActive('code'),
+        'bullet-list': editor.isActive('bulletList'),
+        'ordered-list': editor.isActive('orderedList'),
+        'task-list': editor.isActive('taskList'),
+    };
+    Object.entries(states).forEach(([action, active]) => {
+        const button = element.querySelector(`[data-editor-action="${action}"]`);
+        if (button) button.setAttribute('aria-pressed', String(active));
+    });
+    const blockStyle = $('.block-style', element);
+    blockStyle.value = editor.isActive('heading', { level: 2 }) ? 'heading' : 'paragraph';
 }
 
 function updateCardElement(card, element) {
@@ -261,10 +296,10 @@ function updateCardElement(card, element) {
     element.style.zIndex = String(card.z);
     $('.card-kind', element).textContent = card.type === 'code' ? 'code' : 'note';
     $('.card-title', element).value = card.title;
-    $('.card-editor', element).value = card.content;
+    $('.card-editor', element).value = card.type === 'code' ? card.content : '';
     $('.card-language', element).value = card.language ?? 'javascript';
     $('.card-color', element).value = card.color;
-    updateCardPreview(card, element);
+    updateCodePreview(card, element);
 }
 
 function findCard(id) {
@@ -303,50 +338,103 @@ function startCardPointer(event, card, element, mode) {
 
 function bindCard(card, element) {
     const header = $('.card-header', element);
-    const editor = $('.card-editor', element);
+    const codeEditor = $('.card-editor', element);
     const formatToolbar = $('.note-format-toolbar', element);
+    const resizeControl = $('.card-resize', element);
+    let richEditor = null;
+
     header.addEventListener('pointerdown', (event) => {
         if (event.target.closest('button, input, select')) return;
         startCardPointer(event, card, element, 'drag-card');
     });
-    $('.card-resize', element).addEventListener('pointerdown', (event) => startCardPointer(event, card, element, 'resize-card'));
-    $('.card-preview', element).addEventListener('dblclick', () => setEditing(element, true));
-    $('.card-edit', element).addEventListener('click', () => setEditing(element, true));
-    $('.card-done', element).addEventListener('click', () => setEditing(element, false));
-    formatToolbar.addEventListener('pointerdown', (event) => {
-        if (event.target.closest('button')) event.preventDefault();
+    resizeControl.addEventListener('pointerdown', (event) => startCardPointer(event, card, element, 'resize-card'));
+    resizeControl.addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+        event.preventDefault();
+        const step = event.shiftKey ? 40 : 10;
+        if (event.key === 'ArrowLeft') card.width = Math.max(240, card.width - step);
+        if (event.key === 'ArrowRight') card.width = Math.min(1_200, card.width + step);
+        if (event.key === 'ArrowUp') card.height = Math.max(170, card.height - step);
+        if (event.key === 'ArrowDown') card.height = Math.min(1_000, card.height + step);
+        element.style.width = `${card.width}px`;
+        element.style.height = `${card.height}px`;
+        markCardChanged(card);
     });
-    formatToolbar.querySelectorAll('[data-format]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const formats = {
-                bold: ['**', '**', 'bold text'],
-                italic: ['_', '_', 'italic text'],
-                strike: ['~~', '~~', 'struck text'],
-                code: ['`', '`', 'code'],
-            };
-            const format = formats[button.dataset.format];
-            if (format) wrapEditorSelection(editor, ...format);
+    $('.card-preview', element).addEventListener('dblclick', () => setCodeEditing(element, true));
+    $('.card-edit', element).addEventListener('click', () => setCodeEditing(element, true));
+    $('.card-done', element).addEventListener('click', () => setCodeEditing(element, false));
+
+    if (card.type === 'note') {
+        const initialContent = card.contentFormat === 'tiptap-json'
+            ? card.content
+            : legacyMarkdownToEditorHtml(card.content);
+        const refreshToolbar = () => {
+            if (richEditor) refreshEditorToolbar(element, richEditor);
+        };
+        richEditor = createNoteEditor({
+            element: $('.note-editor', element),
+            content: initialContent,
+            onUpdate: (document) => {
+                if (JSON.stringify(document).length > 200_000) {
+                    unsavableNoteIds.add(card.id);
+                    refreshSaveStatus();
+                    return;
+                }
+                unsavableNoteIds.delete(card.id);
+                if (card.contentFormat === 'markdown' && typeof card.legacyMarkdown !== 'string') card.legacyMarkdown = String(card.content);
+                card.content = document;
+                card.contentFormat = 'tiptap-json';
+                markCardChanged(card);
+            },
+            onFocus: () => {
+                if (!element.classList.contains('is-selected')) bringToFront(card, element);
+                element.classList.add('is-selected');
+            },
+            onBlur: () => window.setTimeout(() => {
+                if (!element.matches(':focus-within')) element.classList.remove('is-selected');
+            }),
+            onStateChange: refreshToolbar,
         });
-    });
-    $('.text-color', element).addEventListener('change', (event) => {
-        const color = event.target.value;
-        if (TEXT_COLORS.has(color)) {
-            wrapEditorSelection(editor, `<span data-text-color="${color}">`, '</span>', 'colored text');
-        }
-        event.target.value = '';
-    });
+        noteEditors.set(card.id, richEditor);
+        refreshToolbar();
+
+        formatToolbar.addEventListener('pointerdown', (event) => {
+            if (event.target.closest('button')) event.preventDefault();
+        });
+        formatToolbar.querySelectorAll('[data-editor-action]').forEach((button) => {
+            button.addEventListener('click', () => {
+                richEditor.run(button.dataset.editorAction);
+                refreshToolbar();
+            });
+        });
+        $('.block-style', element).addEventListener('change', (event) => {
+            richEditor.run(event.target.value);
+            refreshToolbar();
+        });
+        $('.text-size', element).addEventListener('change', (event) => {
+            richEditor.run('font-size', event.target.value);
+            event.target.value = '';
+        });
+        $('.text-color', element).addEventListener('change', (event) => {
+            richEditor.run('text-color', event.target.value);
+            event.target.value = '';
+        });
+    }
+
     $('.card-title', element).addEventListener('input', (event) => {
         card.title = event.target.value.trimStart().slice(0, 80) || (card.type === 'code' ? 'Code snippet' : 'Sticky note');
         markCardChanged(card);
     });
-    $('.card-editor', element).addEventListener('input', (event) => {
+    codeEditor.addEventListener('input', (event) => {
+        if (card.type !== 'code') return;
         card.content = event.target.value.slice(0, 200_000);
-        updateCardPreview(card, element);
+        updateCodePreview(card, element);
         markCardChanged(card);
     });
     $('.card-language', element).addEventListener('change', (event) => {
+        if (card.type !== 'code') return;
         card.language = event.target.value;
-        updateCardPreview(card, element);
+        updateCodePreview(card, element);
         markCardChanged(card);
     });
     $('.card-color', element).addEventListener('change', (event) => {
@@ -356,7 +444,7 @@ function bindCard(card, element) {
     });
     $('.card-copy', element).addEventListener('click', async () => {
         try {
-            await navigator.clipboard.writeText(card.content);
+            await navigator.clipboard.writeText(cardPlainText(card));
             setStatus('Copied card content');
             window.setTimeout(refreshSaveStatus, 1_200);
         } catch {
@@ -371,32 +459,30 @@ function bindCard(card, element) {
         } catch {
             return;
         }
+        noteEditors.get(card.id)?.destroy();
+        noteEditors.delete(card.id);
+        unsavableNoteIds.delete(card.id);
         cards = cards.filter((item) => item.id !== card.id);
         element.remove();
         emptyState.hidden = cards.length > 0;
     });
-    $('.card-preview', element).addEventListener('change', (event) => {
-        const checkbox = event.target.closest('input[type="checkbox"]');
-        if (!checkbox) return;
-        const wanted = Number(checkbox.dataset.taskIndex);
-        card.content = toggleMarkdownTask(card.content, wanted, checkbox.checked);
-        $('.card-editor', element).value = card.content;
-        markCardChanged(card);
-    });
     element.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' && !event.target.matches('textarea, input, select, button, a')) setEditing(element, true);
-        if (event.key === 'Escape') setEditing(element, false);
+        if (event.key !== 'Escape') return;
+        if (card.type === 'code') setCodeEditing(element, false);
+        else document.activeElement?.blur();
     });
 }
 
 function renderCards() {
+    noteEditors.forEach((editor) => editor.destroy());
+    noteEditors.clear();
     surface.replaceChildren();
     topZ = Math.max(1, ...cards.map((card) => card.z));
     cards.forEach((card) => {
         const element = cardTemplate.content.firstElementChild.cloneNode(true);
         updateCardElement(card, element);
-        bindCard(card, element);
         surface.append(element);
+        bindCard(card, element);
     });
     emptyState.hidden = cards.length > 0;
     filterCards();
@@ -418,17 +504,26 @@ function setBoardControlsDisabled(disabled) {
     [boardSelect, $('#new-board'), $('#rename-board'), $('#delete-board')]
         .forEach((control) => { control.disabled = busy; });
     $('.sticky-header').inert = busy;
-    $('.sticky-toolbar').inert = busy;
     canvas.inert = busy;
     canvas.setAttribute('aria-busy', String(busy));
 }
 
 async function openBoard(board) {
+    if (currentBoard && board.id !== currentBoard.id && !canUseDurableNotes()) {
+        boardSelect.value = currentBoard.id;
+        return;
+    }
     setBoardControlsDisabled(true);
     try {
         await flushSaves();
         currentBoard = board;
-        cards = await listCards(board.id);
+        const storedCards = await listCards(board.id);
+        cards = storedCards.map(migrateCard);
+        if (cards.some((card, index) => card !== storedCards[index])) {
+            await queueWrite(async () => {
+                for (const card of cards) await saveCard(durableCard(card));
+            });
+        }
         viewport = normalizeViewport(board.viewport);
         await setSetting('current-board-id', board.id);
         renderBoardOptions();
@@ -449,6 +544,7 @@ function canvasCenterWorld() {
 }
 
 async function addCard(type) {
+    if (!canUseDurableNotes()) return;
     const center = canvasCenterWorld();
     const offset = (cards.length % 8) * 28;
     const card = createCard({
@@ -463,14 +559,15 @@ async function addCard(type) {
     cards.push(card);
     renderCards();
     const element = surface.querySelector(`[data-id="${CSS.escape(card.id)}"]`);
-    setEditing(element, true);
+    if (type === 'note') noteEditors.get(card.id)?.focus();
+    else setCodeEditing(element, true);
 }
 
 function filterCards() {
     const query = searchInput.value.trim().toLowerCase();
     surface.querySelectorAll('.canvas-card').forEach((element) => {
         const card = findCard(element.dataset.id);
-        const matches = !query || `${card.title}\n${card.content}\n${card.language ?? ''}`.toLowerCase().includes(query);
+        const matches = !query || `${card.title}\n${cardPlainText(card)}\n${card.language ?? ''}`.toLowerCase().includes(query);
         element.classList.toggle('is-search-hidden', !matches);
     });
 }
@@ -541,8 +638,8 @@ canvas.addEventListener('pointermove', (event) => {
         setStatus('Unsaved changes');
     } else if (interaction.mode === 'resize-card') {
         const { card, element, start } = interaction;
-        card.width = Math.min(1_200, Math.max(220, start.width + dx / viewport.zoom));
-        card.height = Math.min(1_000, Math.max(160, start.height + dy / viewport.zoom));
+        card.width = Math.min(1_200, Math.max(240, start.width + dx / viewport.zoom));
+        card.height = Math.min(1_000, Math.max(170, start.height + dy / viewport.zoom));
         element.style.width = `${card.width}px`;
         element.style.height = `${card.height}px`;
         card.updatedAtDirty = true;
@@ -574,7 +671,7 @@ canvas.addEventListener('wheel', (event) => {
 }, { passive: false });
 
 document.addEventListener('keydown', (event) => {
-    if (event.target.matches('input, textarea, select') || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.target.closest('input, textarea, select, [contenteditable="true"]') || event.metaKey || event.ctrlKey || event.altKey) return;
     if (event.key.toLowerCase() === 'n') addCard('note');
     if (event.key.toLowerCase() === 'c') addCard('code');
     if (event.key === '0') fitCards();
@@ -593,6 +690,7 @@ boardSelect.addEventListener('change', () => {
     if (board) openBoard(board).catch((error) => console.error('Could not open board', error));
 });
 $('#new-board').addEventListener('click', async () => {
+    if (!canUseDurableNotes()) return;
     const name = window.prompt('Board name', 'Untitled board');
     if (name === null) return;
     setBoardControlsDisabled(true);
@@ -649,6 +747,7 @@ $('#persist-storage').addEventListener('click', async () => {
 });
 
 $('#export-workspace').addEventListener('click', async () => {
+    if (!canUseDurableNotes()) return;
     await flushSaves();
     const workspace = await exportWorkspace();
     const backup = {
@@ -705,6 +804,11 @@ $('#import-workspace-input').addEventListener('change', async (event) => {
     }
 });
 
+window.addEventListener('beforeunload', (event) => {
+    if (!unsavableNoteIds.size) return;
+    event.preventDefault();
+    event.returnValue = '';
+});
 window.addEventListener('pagehide', () => { flushSaves().catch(() => undefined); });
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') flushSaves().catch(() => undefined);

@@ -1,0 +1,2 @@
+# Generated third-party bundles may contain intentional spaces inside template literals.
+vendor/sticky-board/tiptap-editor.mjs whitespace=-blank-at-eol

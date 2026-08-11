@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="A local-first infinite canvas for Markdown notes and code snippets.">
-    <meta name="theme-color" content="#2257d8">
+    <meta name="description" content="A local-first infinite canvas for rich notes, checklists, and code snippets.">
+    <meta name="theme-color" content="#f4f1ea">
     <link rel="canonical" href="https://tools.irfansp.dev/tools/sticky-board.html">
     <title>Sticky Board | tools.</title>
     <link rel="stylesheet" href="../css/styles.css">
@@ -13,59 +13,74 @@
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/workbench.css">
     <link rel="stylesheet" href="../css/sticky-board.css">
+    <link rel="modulepreload" href="../vendor/sticky-board/tiptap-editor.mjs">
     <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 </head>
 <body class="sticky-app">
     <a class="skip-link" href="#main-content">Skip to canvas</a>
+
     <header class="sticky-header">
         <a href="../index.html" class="sticky-brand" aria-label="Back to tools homepage">
-            <img src="../assets/logo.svg" alt="" width="24" height="24">
+            <img src="../assets/logo.svg" alt="" width="25" height="25">
             <span>tools.</span>
         </a>
-        <div class="board-controls">
+        <span class="header-rule" aria-hidden="true"></span>
+        <div class="board-identity">
+            <span class="board-kicker">Sticky board</span>
             <label class="sr-only" for="board-select">Current board</label>
             <select id="board-select" aria-label="Current board"></select>
-            <button type="button" id="new-board" title="New board" aria-label="Create new board">＋</button>
-            <button type="button" id="rename-board">Rename</button>
-            <button type="button" id="delete-board" class="danger-text">Delete</button>
         </div>
-        <div class="header-spacer"></div>
-        <span id="storage-status" class="storage-status" aria-live="polite">Loading local workspace…</span>
-        <button type="button" id="theme-toggle-btn" class="theme-button" aria-label="Toggle dark and light theme" aria-pressed="false">◐</button>
-    </header>
+        <button type="button" id="new-board" class="icon-button" title="New board" aria-label="Create new board">＋</button>
 
-    <nav class="sticky-toolbar" aria-label="Sticky board tools">
-        <button type="button" id="add-note" class="primary-action"><span aria-hidden="true">＋</span> Note</button>
-        <button type="button" id="add-code"><span aria-hidden="true">⌘</span> Code</button>
+        <details class="header-menu board-menu">
+            <summary class="icon-button" aria-label="Board options" title="Board options">•••</summary>
+            <div class="menu-panel">
+                <button type="button" id="rename-board">Rename board</button>
+                <button type="button" id="delete-board" class="danger-text">Delete board</button>
+            </div>
+        </details>
+
+        <div class="header-spacer"></div>
         <label class="search-control">
+            <span aria-hidden="true" class="search-icon">⌕</span>
             <span class="sr-only">Search cards</span>
-            <input id="card-search" type="search" placeholder="Search this board…" autocomplete="off">
+            <input id="card-search" type="search" placeholder="Find on this board" autocomplete="off">
         </label>
-        <div class="toolbar-spacer"></div>
-        <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
-        <button type="button" id="zoom-reset" aria-label="Reset zoom">100%</button>
-        <button type="button" id="zoom-in" aria-label="Zoom in">＋</button>
-        <button type="button" id="fit-cards">Fit cards</button>
-        <details class="toolbar-menu">
-            <summary>Workspace</summary>
-            <div class="toolbar-menu__panel">
-                <button type="button" id="persist-storage">Protect local storage</button>
+        <span id="storage-status" class="storage-status" aria-live="polite">Loading…</span>
+        <button type="button" id="theme-toggle-btn" class="icon-button theme-button" aria-label="Toggle dark and light theme" aria-pressed="false">◐</button>
+        <details class="header-menu workspace-menu">
+            <summary class="icon-button" aria-label="Workspace options" title="Workspace options">☰</summary>
+            <div class="menu-panel">
+                <div class="menu-heading">Local workspace</div>
+                <button type="button" id="persist-storage">Protect browser storage</button>
                 <button type="button" id="export-workspace">Export backup</button>
                 <label class="file-action" for="import-workspace-input">Import backup</label>
                 <input id="import-workspace-input" type="file" accept="application/json,.json" hidden>
             </div>
         </details>
-    </nav>
+    </header>
 
     <main id="main-content">
-    <section id="sticky-canvas" class="sticky-canvas" tabindex="0" aria-label="Infinite sticky-note canvas">
-        <div id="canvas-surface" class="canvas-surface" aria-live="off"></div>
-        <div class="canvas-hint" id="canvas-hint">Drag empty space to pan · Ctrl/⌘ + wheel to zoom · double-click a card to edit</div>
-        <div id="empty-state" class="empty-state" hidden>
-            <strong>Your canvas is empty.</strong>
-            <span>Add a Markdown note or code snippet to start.</span>
-        </div>
-    </section>
+        <section id="sticky-canvas" class="sticky-canvas" tabindex="0" aria-label="Infinite sticky-note canvas">
+            <div id="canvas-surface" class="canvas-surface" aria-live="off"></div>
+
+            <nav class="canvas-dock" aria-label="Canvas tools">
+                <button type="button" id="add-note" class="dock-primary"><span aria-hidden="true">＋</span><span>Note</span><kbd>N</kbd></button>
+                <button type="button" id="add-code" class="dock-button" title="Add code card"><span aria-hidden="true">&lt;/&gt;</span><span class="sr-only">Add code card</span></button>
+                <span class="dock-rule" aria-hidden="true"></span>
+                <button type="button" id="zoom-out" class="dock-button" aria-label="Zoom out">−</button>
+                <button type="button" id="zoom-reset" class="zoom-value" aria-label="Reset zoom">100%</button>
+                <button type="button" id="zoom-in" class="dock-button" aria-label="Zoom in">＋</button>
+                <button type="button" id="fit-cards" class="dock-button" aria-label="Fit all cards" title="Fit all cards">↙↗</button>
+            </nav>
+
+            <div class="canvas-hint" id="canvas-hint">Drag the canvas to move · Ctrl/⌘ + wheel to zoom</div>
+            <div id="empty-state" class="empty-state" hidden>
+                <span class="empty-mark" aria-hidden="true">✦</span>
+                <strong>A quiet place for loud ideas.</strong>
+                <span>Add a note, make a checklist, or pin a code snippet.</span>
+            </div>
+        </section>
     </main>
 
     <footer class="app-footer"><p>Local-first workspace · <a href="../index.html">all tools</a></p></footer>
@@ -73,13 +88,23 @@
     <template id="card-template">
         <article class="canvas-card" tabindex="0">
             <header class="card-header">
+                <span class="card-grip" aria-hidden="true">⠿</span>
                 <span class="card-kind"></span>
                 <input class="card-title" maxlength="80" aria-label="Card title">
-                <button type="button" class="card-copy" aria-label="Copy card content" title="Copy">Copy</button>
-                <button type="button" class="card-delete" aria-label="Delete card" title="Delete">×</button>
+                <select class="card-color" aria-label="Card color" title="Card color">
+                    <option value="yellow">● Yellow</option>
+                    <option value="blue">● Blue</option>
+                    <option value="green">● Green</option>
+                    <option value="pink">● Pink</option>
+                    <option value="purple">● Purple</option>
+                    <option value="slate">● Slate</option>
+                </select>
+                <button type="button" class="card-copy card-action" aria-label="Copy card content" title="Copy">⧉</button>
+                <button type="button" class="card-delete card-action" aria-label="Delete card" title="Delete">×</button>
             </header>
-            <div class="card-toolbar">
-                <label class="language-control">Language
+
+            <div class="code-toolbar">
+                <label>Language
                     <select class="card-language">
                         <option value="javascript">JavaScript</option>
                         <option value="typescript">TypeScript</option>
@@ -93,41 +118,48 @@
                         <option value="text">Plain text</option>
                     </select>
                 </label>
-                <label class="color-control">Color
-                    <select class="card-color">
-                        <option value="yellow">Yellow</option>
-                        <option value="blue">Blue</option>
-                        <option value="green">Green</option>
-                        <option value="pink">Pink</option>
-                        <option value="purple">Purple</option>
-                        <option value="slate">Slate</option>
-                    </select>
-                </label>
-                <button type="button" class="card-edit">Edit</button>
+                <button type="button" class="card-edit">Edit code</button>
                 <button type="button" class="card-done">Done</button>
             </div>
+
             <div class="card-body">
-                <div class="note-format-toolbar" role="toolbar" aria-label="Markdown formatting">
-                    <button type="button" data-format="bold" aria-label="Bold" title="Bold"><strong>B</strong></button>
-                    <button type="button" data-format="italic" aria-label="Italic" title="Italic"><em>I</em></button>
-                    <button type="button" data-format="strike" aria-label="Strikethrough" title="Strikethrough"><s>S</s></button>
-                    <button type="button" data-format="code" aria-label="Inline code" title="Inline code">&lt;/&gt;</button>
-                    <label class="text-color-label"><span class="sr-only">Text color</span>
-                        <select class="text-color" aria-label="Text color">
-                            <option value="" selected>Color</option>
-                            <option value="ink">Ink</option>
-                            <option value="red">Red</option>
-                            <option value="blue">Blue</option>
-                            <option value="green">Green</option>
-                            <option value="purple">Purple</option>
-                            <option value="orange">Orange</option>
-                        </select>
-                    </label>
+                <div class="note-format-toolbar" role="toolbar" aria-label="Rich-text formatting">
+                    <select class="block-style" aria-label="Block style">
+                        <option value="paragraph">Text</option>
+                        <option value="heading">Heading</option>
+                    </select>
+                    <button type="button" data-editor-action="bold" aria-label="Bold" title="Bold"><strong>B</strong></button>
+                    <button type="button" data-editor-action="italic" aria-label="Italic" title="Italic"><em>I</em></button>
+                    <button type="button" data-editor-action="strike" aria-label="Strikethrough" title="Strikethrough"><s>S</s></button>
+                    <button type="button" data-editor-action="code" aria-label="Inline code" title="Inline code">&lt;/&gt;</button>
+                    <span class="format-rule" aria-hidden="true"></span>
+                    <button type="button" data-editor-action="task-list" aria-label="Checklist" title="Checklist">☑</button>
+                    <button type="button" data-editor-action="bullet-list" aria-label="Bullet list" title="Bullet list">•≡</button>
+                    <button type="button" data-editor-action="ordered-list" aria-label="Numbered list" title="Numbered list">1.</button>
+                    <select class="text-size" aria-label="Text size">
+                        <option value="">Size</option>
+                        <option value="0.8rem">Small</option>
+                        <option value="0.95rem">Normal</option>
+                        <option value="1.1rem">Large</option>
+                        <option value="1.35rem">Title</option>
+                    </select>
+                    <select class="text-color" aria-label="Text color">
+                        <option value="">Ink</option>
+                        <option value="#a33845">Red</option>
+                        <option value="#1d5fab">Blue</option>
+                        <option value="#157047">Green</option>
+                        <option value="#7044a8">Purple</option>
+                        <option value="#ad541f">Orange</option>
+                    </select>
+                    <span class="toolbar-spacer"></span>
+                    <button type="button" data-editor-action="undo" aria-label="Undo" title="Undo">↶</button>
+                    <button type="button" data-editor-action="redo" aria-label="Redo" title="Redo">↷</button>
                 </div>
+                <div class="note-editor"></div>
                 <div class="card-preview"></div>
-                <textarea class="card-editor" maxlength="200000" spellcheck="true" aria-label="Card content"></textarea>
+                <textarea class="card-editor" maxlength="200000" spellcheck="true" aria-label="Code content"></textarea>
             </div>
-            <button type="button" class="card-resize" aria-label="Resize card"></button>
+            <button type="button" class="card-resize" aria-label="Resize card with arrow keys" title="Resize card; use arrow keys for precise sizing"></button>
         </article>
     </template>
 
