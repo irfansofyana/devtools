@@ -6,6 +6,10 @@ function edge(from, to, label = '') {
     return { from, to, label };
 }
 
+function planningNode(id, label, x, y, kind = 'sticky-yellow', width = 220, height = 120) {
+    return { id, label, x, y, width, height, kind };
+}
+
 export const templateCatalog = [
     {
         id: 'scalable-web-app',
@@ -150,6 +154,86 @@ export const templateCatalog = [
             edge('system', 'payments', 'charges through'), edge('system', 'identity', 'authenticates with'),
             edge('system', 'analytics', 'sends events to'),
         ],
+    },
+    {
+        id: 'brainstorm',
+        name: 'Brainstorm canvas',
+        category: 'Planning',
+        description: 'A central question surrounded by editable idea cards.',
+        nodes: [
+            planningNode('topic', 'What are we solving?', 390, 220, 'topic', 260, 140),
+            planningNode('idea-1', 'Idea 1', 20, 30, 'sticky-yellow'),
+            planningNode('idea-2', 'Idea 2', 740, 30, 'sticky-pink'),
+            planningNode('idea-3', 'Idea 3', 20, 430, 'sticky-blue'),
+            planningNode('idea-4', 'Idea 4', 740, 430, 'sticky-green'),
+        ],
+        edges: [edge('topic', 'idea-1'), edge('topic', 'idea-2'), edge('topic', 'idea-3'), edge('topic', 'idea-4')],
+    },
+    {
+        id: 'mind-map',
+        name: 'Mind map',
+        category: 'Planning',
+        description: 'Expand one topic into themes and supporting thoughts.',
+        nodes: [
+            planningNode('center', 'Main topic', 430, 230, 'topic', 240, 130),
+            planningNode('theme-a', 'Theme A', 40, 40, 'sticky-blue'),
+            planningNode('theme-b', 'Theme B', 40, 260, 'sticky-yellow'),
+            planningNode('theme-c', 'Theme C', 40, 480, 'sticky-green'),
+            planningNode('theme-d', 'Theme D', 820, 40, 'sticky-pink'),
+            planningNode('theme-e', 'Theme E', 820, 260, 'sticky-blue'),
+            planningNode('theme-f', 'Theme F', 820, 480, 'sticky-yellow'),
+        ],
+        edges: ['theme-a', 'theme-b', 'theme-c', 'theme-d', 'theme-e', 'theme-f'].map((id) => edge('center', id)),
+    },
+    {
+        id: 'kanban-board',
+        name: 'Kanban board',
+        category: 'Planning',
+        description: 'A simple flow from ideas to active work and completion.',
+        nodes: [
+            planningNode('backlog', 'BACKLOG', 0, 0, 'lane-blue', 260, 72),
+            planningNode('todo', 'TO DO', 290, 0, 'lane-yellow', 260, 72),
+            planningNode('doing', 'DOING', 580, 0, 'lane-pink', 260, 72),
+            planningNode('done', 'DONE', 870, 0, 'lane-green', 260, 72),
+            planningNode('card-1', 'Capture an idea', 20, 110, 'sticky-blue'),
+            planningNode('card-2', 'Define next action', 310, 110, 'sticky-yellow'),
+            planningNode('card-3', 'Work in progress', 600, 110, 'sticky-pink'),
+            planningNode('card-4', 'Completed outcome', 890, 110, 'sticky-green'),
+        ],
+        edges: [],
+    },
+    {
+        id: 'retrospective',
+        name: 'Retrospective',
+        category: 'Planning',
+        description: 'Reflect on what worked, what was difficult, and what changes next.',
+        nodes: [
+            planningNode('worked', 'WHAT WORKED', 0, 0, 'lane-green', 300, 72),
+            planningNode('hard', 'WHAT WAS HARD', 340, 0, 'lane-pink', 300, 72),
+            planningNode('next', 'TRY NEXT', 680, 0, 'lane-blue', 300, 72),
+            planningNode('worked-1', 'A useful win', 20, 110, 'sticky-green', 260, 140),
+            planningNode('worked-2', 'Something to keep', 20, 280, 'sticky-yellow', 260, 140),
+            planningNode('hard-1', 'A friction point', 360, 110, 'sticky-pink', 260, 140),
+            planningNode('hard-2', 'A surprise', 360, 280, 'sticky-yellow', 260, 140),
+            planningNode('next-1', 'One concrete experiment', 700, 110, 'sticky-blue', 260, 140),
+            planningNode('next-2', 'Owner + next step', 700, 280, 'sticky-green', 260, 140),
+        ],
+        edges: [],
+    },
+    {
+        id: 'user-journey',
+        name: 'User journey',
+        category: 'Planning',
+        description: 'Map stages, user intent, friction, and opportunities across a journey.',
+        nodes: [
+            planningNode('discover', '1 · Discover\nWhat brings them here?', 0, 120, 'sticky-blue', 230, 150),
+            planningNode('consider', '2 · Consider\nWhat do they need?', 300, 120, 'sticky-yellow', 230, 150),
+            planningNode('act', '3 · Act\nWhat must feel easy?', 600, 120, 'sticky-pink', 230, 150),
+            planningNode('succeed', '4 · Succeed\nWhat is the outcome?', 900, 120, 'sticky-green', 230, 150),
+            planningNode('friction', 'Friction to remove', 300, 360, 'callout', 230, 120),
+            planningNode('opportunity', 'Opportunity to test', 600, 360, 'topic', 230, 120),
+        ],
+        edges: [edge('discover', 'consider'), edge('consider', 'act'), edge('act', 'succeed'), edge('friction', 'act'), edge('act', 'opportunity')],
     },
 ];
 

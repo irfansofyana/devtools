@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createBoard, normalizeBoardName, sortBoardsByUpdatedAt } from '../src/domain/boards.js';
+import { createBoard, createCopyName, filterBoards, normalizeBoardName, sortBoardsByUpdatedAt } from '../src/domain/boards.js';
 
 test('board names are trimmed, bounded, and receive a useful fallback', () => {
     assert.equal(normalizeBoardName('  Checkout architecture  '), 'Checkout architecture');
@@ -26,4 +26,18 @@ test('new boards have deterministic metadata and board lists sort by recent acti
     ]);
     assert.deepEqual(sorted.map(({ id }) => id), ['board-2', 'board-3', 'board-1']);
     assert.equal(sorted[2], board, 'sorting should not mutate board records');
+});
+
+test('board discovery is case-insensitive and copy names remain unique and bounded', () => {
+    const boards = [
+        { id: '1', name: 'Product brainstorm', updatedAt: 300 },
+        { id: '2', name: 'Checkout architecture', updatedAt: 200 },
+        { id: '3', name: 'Product roadmap', updatedAt: 100 },
+    ];
+    assert.deepEqual(filterBoards(boards, ' PRODUCT ').map(({ id }) => id), ['1', '3']);
+    assert.equal(filterBoards(boards, 'missing').length, 0);
+    assert.equal(filterBoards(boards, '').length, 3);
+    assert.equal(createCopyName('Product brainstorm', boards.map(({ name }) => name)), 'Product brainstorm copy');
+    assert.equal(createCopyName('Product brainstorm', [...boards.map(({ name }) => name), 'Product brainstorm copy']), 'Product brainstorm copy 2');
+    assert.ok(createCopyName('x'.repeat(80), []).length <= 80);
 });

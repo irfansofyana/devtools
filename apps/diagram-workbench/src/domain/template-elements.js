@@ -11,6 +11,16 @@ const KIND_STYLE = {
     code: { backgroundColor: '#e6fcf5', strokeColor: '#087f5b' },
     system: { backgroundColor: '#dbe4ff', strokeColor: '#364fc7' },
     service: { backgroundColor: '#edf2ff', strokeColor: '#4263eb' },
+    'sticky-yellow': { backgroundColor: '#fff3bf', strokeColor: '#f08c00' },
+    'sticky-pink': { backgroundColor: '#ffd8f4', strokeColor: '#a61e4d' },
+    'sticky-blue': { backgroundColor: '#e7f5ff', strokeColor: '#1971c2' },
+    'sticky-green': { backgroundColor: '#d3f9d8', strokeColor: '#2b8a3e' },
+    topic: { backgroundColor: '#dbe4ff', strokeColor: '#5b76fe' },
+    callout: { backgroundColor: '#ffc6c6', strokeColor: '#c92a2a' },
+    'lane-blue': { backgroundColor: '#dbe4ff', strokeColor: '#5b76fe' },
+    'lane-yellow': { backgroundColor: '#fff3bf', strokeColor: '#f08c00' },
+    'lane-pink': { backgroundColor: '#ffd8f4', strokeColor: '#a61e4d' },
+    'lane-green': { backgroundColor: '#d3f9d8', strokeColor: '#2b8a3e' },
 };
 
 export function templateToSkeletons(template) {

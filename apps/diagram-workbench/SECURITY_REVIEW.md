@@ -1,6 +1,6 @@
 # Diagram Workbench dependency security review
 
-`npm audit --omit=dev` reports one high and eight moderate transitive advisories in the pinned Excalidraw/Mermaid dependency graph. No newer stable release of either `@excalidraw/excalidraw` or `@excalidraw/mermaid-to-excalidraw` is currently published.
+`npm audit --omit=dev` reports two high and seven moderate transitive advisories in the pinned Excalidraw/Mermaid dependency graph after applying compatible patches for DOMPurify, Mermaid, and the build-time Nano ID dependency. No newer stable release of either `@excalidraw/excalidraw` or `@excalidraw/mermaid-to-excalidraw` is currently published.
 
 ## Findings and reachability
 

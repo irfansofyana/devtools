@@ -65,6 +65,30 @@ test('diagram workbench is local-first, lazy-loads component packs, and avoids r
     assert.match(packs, /deferredCloudPacks/);
 });
 
+test('Miro-lite workspace exposes quick blocks, planning templates, board search, and duplication', () => {
+    const app = read('apps/diagram-workbench/src/App.jsx');
+    const css = read('apps/diagram-workbench/src/styles.css');
+    const templates = read('apps/diagram-workbench/src/domain/templates.js');
+
+    assert.match(app, /quickInsertCatalog/);
+    assert.match(app, /createQuickInsertSkeletons/);
+    assert.match(app, /captureUpdate:\s*CaptureUpdateAction\.IMMEDIATELY/);
+    assert.match(app, /setPanel\('add'\)/);
+    assert.match(app, /Add to canvas/);
+    assert.match(app, /aria-label="Search local boards"/);
+    assert.match(app, /filterBoards\(boards, boardQuery\)/);
+    assert.match(app, /duplicateCurrentBoard/);
+    assert.match(app, /Duplicate current board/);
+    assert.match(app, /fitToViewport: true/);
+    assert.match(app, /setBoardQuery\(''\)/);
+    assert.match(templates, /id: 'brainstorm'/);
+    assert.match(templates, /id: 'kanban-board'/);
+    assert.match(templates, /id: 'retrospective'/);
+    assert.match(css, /\.quick-insert-grid\s*\{/);
+    assert.match(css, /\.board-search\s*\{/);
+    assert.match(css, /--accent:\s*#5b76fe/);
+});
+
 test('community and Personal library imports remain usable and visibly persisted on iOS', () => {
     const app = read('apps/diagram-workbench/src/App.jsx');
     const css = read('apps/diagram-workbench/src/styles.css');

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+    CaptureUpdateAction,
     Excalidraw,
     convertToExcalidrawElements,
     exportToBlob,
@@ -13,11 +14,12 @@ import '@excalidraw/excalidraw/index.css';
 import { strToU8, zipSync } from 'fflate';
 
 import { createArtifactFiles, createWorkspaceBackup, validateWorkspaceBackup } from './domain/artifacts.js';
-import { createBoard, normalizeBoardName, sortBoardsByUpdatedAt } from './domain/boards.js';
+import { createBoard, createCopyName, filterBoards, normalizeBoardName, sortBoardsByUpdatedAt } from './domain/boards.js';
 import { componentPacks, deferredCloudPacks } from './domain/component-packs.js';
 import { createDefaultLibraryMigration } from './domain/default-library.js';
 import { layoutSelectedElements } from './domain/layout.js';
 import { mergeImportedLibraryItems, stabilizeImportedLibraryItems } from './domain/library-import.js';
+import { createQuickInsertSkeletons, quickInsertCatalog } from './domain/quick-insert.js';
 import { templateToSkeletons } from './domain/template-elements.js';
 import { getTemplate, templateCatalog } from './domain/templates.js';
 import { createSerializedDeltaQueue, createWorkspaceOperationCoordinator, refreshCommittedLibraryView } from './domain/workspace-operations.js';
@@ -149,6 +151,7 @@ function App() {
     const [libraryImportError, setLibraryImportError] = useState('');
     const [librarySaveNotice, setLibrarySaveNotice] = useState('');
     const [panel, setPanel] = useState(null);
+    const [boardQuery, setBoardQuery] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(() => !window.matchMedia('(max-width: 920px)').matches);
     const [installedPacks, setInstalledPacks] = useState([]);
     const [packLoading, setPackLoading] = useState(null);
@@ -204,6 +207,21 @@ function App() {
     useEffect(() => {
         currentBoardRef.current = currentBoard;
     }, [currentBoard]);
+
+    useEffect(() => {
+        if (!editor || !initialData?.appState?.scrollToContent) return undefined;
+        const frame = window.requestAnimationFrame(() => {
+            const elements = editor.getSceneElements();
+            if (!elements.length) return;
+            editor.scrollToContent(elements, {
+                fitToViewport: true,
+                viewportZoomFactor: 0.82,
+                maxZoom: 1,
+                animate: false,
+            });
+        });
+        return () => window.cancelAnimationFrame(frame);
+    }, [editor, editorKey, initialData]);
 
     const closePanel = useCallback(() => setPanel(null), []);
     const closeSidebar = useCallback((restoreFocus = true) => {
@@ -460,6 +478,7 @@ function App() {
             settingsAvailable = false;
             console.error('Diagram workspace settings unavailable', error);
         }
+        setBoardQuery('');
         setBoards((items) => sortBoardsByUpdatedAt([...items, board]));
         activateBoard(board, canvasScene, libraryItems, settingsAvailable ? 'Saved locally' : 'Board saved; current-board preference unavailable');
         return board;
@@ -488,6 +507,49 @@ function App() {
             return null;
         }
     }, [createAndActivateBoard, runWorkspaceOperation]);
+
+    const duplicateCurrentBoard = useCallback(async () => {
+        if (!currentBoard || !latestSceneRef.current || operationCoordinatorRef.current.isActive()) return null;
+        const copyName = createCopyName(currentBoard.name, boards.map(({ name }) => name));
+        try {
+            const result = await runWorkspaceOperation('duplicate-board', async () => {
+                const scene = structuredClone(latestSceneRef.current);
+                scene.appState = { ...scene.appState, scrollToContent: true };
+                return createAndActivateBoard(copyName, scene);
+            });
+            return result.accepted ? result.value : null;
+        } catch (error) {
+            console.error('Local diagram duplication failed', error);
+            setSaveState('Could not duplicate this board — export a workspace backup');
+            return null;
+        }
+    }, [boards, createAndActivateBoard, currentBoard, runWorkspaceOperation]);
+
+    const insertQuickBlock = useCallback((blockId) => {
+        if (!editor || operationCoordinatorRef.current.isActive()) return;
+        try {
+            const appState = editor.getAppState();
+            const zoom = Number(appState.zoom?.value ?? appState.zoom ?? 1) || 1;
+            const center = {
+                x: -(Number(appState.scrollX) || 0) + (Number(appState.width) || window.innerWidth) / (2 * zoom),
+                y: -(Number(appState.scrollY) || 0) + (Number(appState.height) || window.innerHeight) / (2 * zoom),
+            };
+            const skeletons = createQuickInsertSkeletons(blockId, center, crypto.randomUUID());
+            const inserted = convertToExcalidrawElements(skeletons, { regenerateIds: false });
+            const selectedElementIds = Object.fromEntries(inserted.map(({ id }) => [id, true]));
+            editor.updateScene({
+                elements: [...editor.getSceneElements(), ...inserted],
+                appState: { selectedElementIds },
+                captureUpdate: CaptureUpdateAction.IMMEDIATELY,
+            });
+            editor.scrollToContent(inserted);
+            setPanel(null);
+            setSaveState(`${quickInsertCatalog.find(({ id }) => id === blockId)?.label ?? 'Block'} added`);
+        } catch (error) {
+            console.error('Quick block insertion failed', error);
+            setSaveState('Could not add that canvas block');
+        }
+    }, [editor]);
 
     const renameCurrentBoard = useCallback(async (event) => {
         const name = normalizeBoardName(event.currentTarget.value);
@@ -927,6 +989,9 @@ function App() {
         setSaveState(granted ? 'Browser granted persistent storage' : 'Browser did not grant persistent storage');
     }, []);
 
+    const filteredBoards = useMemo(() => filterBoards(boards, boardQuery), [boardQuery, boards]);
+    const planningTemplates = useMemo(() => templateCatalog.filter(({ category }) => category === 'Planning'), []);
+    const technicalTemplates = useMemo(() => templateCatalog.filter(({ category }) => category !== 'Planning'), []);
     const boardCountLabel = useMemo(() => `${boards.length} local board${boards.length === 1 ? '' : 's'}`, [boards.length]);
 
     if (!currentBoard || !initialData) {
@@ -943,6 +1008,7 @@ function App() {
                 </div>
                 <div className="bar-actions" aria-label="Diagram actions" inert={workspaceBusy ? '' : undefined}>
                     <span className={`save-state ${saveState.includes('failed') || saveState.includes('unavailable') ? 'is-error' : ''}`} role="status" aria-live="polite">{saveState}</span>
+                    <button className="primary-action" type="button" onClick={() => setPanel('add')} aria-label="Add to canvas">＋ Add</button>
                     <button type="button" onClick={() => setPanel('templates')}>Templates</button>
                     <button type="button" onClick={() => setPanel('mermaid')}>Mermaid</button>
                     <button type="button" onClick={() => setPanel('packs')}>Components</button>
@@ -973,6 +1039,7 @@ function App() {
                         <details>
                             <summary aria-label="More diagram actions">•••</summary>
                             <div className="menu-popover">
+                                <button type="button" onClick={() => setPanel('add')}>Add to canvas</button>
                                 <button type="button" onClick={() => setPanel('templates')}>Templates</button>
                                 <button type="button" onClick={() => setPanel('mermaid')}>Mermaid to canvas</button>
                                 <button type="button" onClick={() => setPanel('packs')}>Component packs</button>
@@ -1016,13 +1083,18 @@ function App() {
                         <div><strong>Local boards</strong><span>{boardCountLabel}</span></div>
                         <button className="icon-button" type="button" onClick={() => createNewBoard()} aria-label="Create new diagram">+</button>
                     </div>
+                    <label className="board-search">
+                        <span aria-hidden="true">⌕</span>
+                        <input type="search" value={boardQuery} onChange={(event) => setBoardQuery(event.target.value)} placeholder="Find a board" aria-label="Search local boards" />
+                    </label>
                     <div className="board-list">
-                        {boards.map((board) => (
+                        {filteredBoards.map((board) => (
                             <button key={board.id} type="button" className={`board-row ${board.id === currentBoard.id ? 'is-active' : ''}`} onClick={() => openBoard(board)} aria-current={board.id === currentBoard.id ? 'page' : undefined}>
                                 <span>{board.name}</span>
                                 <small>{new Date(board.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</small>
                             </button>
                         ))}
+                        {!filteredBoards.length && <p className="board-empty">No boards match “{boardQuery.trim()}”.</p>}
                     </div>
                     <div className="storage-note">
                         <strong>Stored in this browser</strong>
@@ -1030,7 +1102,10 @@ function App() {
                         {storagePersistent === false && <button type="button" className="text-button" onClick={requestPersistentStorage}>Protect local storage</button>}
                         {storagePersistent === true && <span>Persistent storage granted</span>}
                     </div>
-                    <button className="delete-board-button" type="button" onClick={removeCurrentBoard}>Delete current board</button>
+                    <div className="board-sidebar-actions">
+                        <button type="button" onClick={duplicateCurrentBoard} aria-label="Duplicate current board">Duplicate</button>
+                        <button className="delete-board-button" type="button" onClick={removeCurrentBoard}>Delete</button>
+                    </div>
                 </aside>
 
                 <section className={`canvas-region ${workspaceBusy ? 'is-busy' : ''}`} id="diagram-canvas" aria-label="Diagram canvas" inert={workspaceBusy ? '' : undefined}>
@@ -1057,18 +1132,52 @@ function App() {
                 </section>
             </div>
 
-            {panel === 'templates' && (
-                <Modal title="Technical templates" description="Each template opens as a new local board, so your current diagram stays untouched." onClose={closePanel} busy={workspaceBusy}>
-                    <div className="template-grid">
-                        {templateCatalog.map((template) => (
-                            <button className="template-card" type="button" key={template.id} onClick={() => applyTemplate(template.id)}>
-                                <span className="card-meta">{template.category}</span>
-                                <strong>{template.name}</strong>
-                                <p>{template.description}</p>
-                                <small>{template.nodes.length} components</small>
+            {panel === 'add' && (
+                <Modal title="Add to canvas" description="Drop a ready-to-edit block in the center of your current view." onClose={closePanel} busy={workspaceBusy}>
+                    <div className="quick-insert-grid">
+                        {quickInsertCatalog.map((item) => (
+                            <button className="quick-insert-card" type="button" key={item.id} onClick={() => insertQuickBlock(item.id)}>
+                                <span className="quick-insert-preview" data-block={item.id} aria-hidden="true"><i /></span>
+                                <span className="quick-insert-copy">
+                                    <span className="card-meta">{item.category}</span>
+                                    <strong>{item.label}</strong>
+                                    <small>{item.description}</small>
+                                </span>
                             </button>
                         ))}
                     </div>
+                    <p className="modal-footnote">Need raw shapes, arrows, drawing, or images? The canvas toolbar remains available underneath.</p>
+                </Modal>
+            )}
+
+            {panel === 'templates' && (
+                <Modal title="Start from a template" description="Each template opens as a new local board, so your current canvas stays untouched." onClose={closePanel} busy={workspaceBusy}>
+                    <section className="template-section" aria-labelledby="planning-template-title">
+                        <div className="template-section-heading"><div><span className="card-meta">Whiteboard</span><h3 id="planning-template-title">Plan and think</h3></div><small>Brainstorms, journeys, boards, and retrospectives</small></div>
+                        <div className="template-grid">
+                            {planningTemplates.map((template) => (
+                                <button className="template-card is-planning" type="button" key={template.id} onClick={() => applyTemplate(template.id)}>
+                                    <span className="card-meta">{template.category}</span>
+                                    <strong>{template.name}</strong>
+                                    <p>{template.description}</p>
+                                    <small>{template.nodes.length} editable blocks</small>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
+                    <section className="template-section" aria-labelledby="technical-template-title">
+                        <div className="template-section-heading"><div><span className="card-meta">Technical</span><h3 id="technical-template-title">Design systems</h3></div><small>Architecture and engineering starters</small></div>
+                        <div className="template-grid">
+                            {technicalTemplates.map((template) => (
+                                <button className="template-card" type="button" key={template.id} onClick={() => applyTemplate(template.id)}>
+                                    <span className="card-meta">{template.category}</span>
+                                    <strong>{template.name}</strong>
+                                    <p>{template.description}</p>
+                                    <small>{template.nodes.length} components</small>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
                 </Modal>
             )}
 

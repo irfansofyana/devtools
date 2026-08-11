@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { templateToSkeletons } from '../src/domain/template-elements.js';
-import { getTemplate } from '../src/domain/templates.js';
+import { getTemplate, templateCatalog, validateTemplate } from '../src/domain/templates.js';
 
 test('template scenes convert into labeled bound shapes and arrows', () => {
     const template = getTemplate('authentication-flow');
@@ -28,4 +28,20 @@ test('template scenes convert into labeled bound shapes and arrows', () => {
         assert.ok(Math.hypot(globalEnd.x - endCenter.x, globalEnd.y - endCenter.y) <= Math.hypot(end.width / 2, end.height / 2) + 15);
     }
     assert.ok(new Set(arrows.map(({ x, y, points }) => `${x}:${y}:${points.at(-1).join(':')}`)).size > 1);
+});
+
+test('planning catalog includes editable Miro-lite boards with valid pastel elements', () => {
+    const expected = ['brainstorm', 'mind-map', 'kanban-board', 'retrospective', 'user-journey'];
+    assert.deepEqual(expected.filter((id) => !templateCatalog.some((template) => template.id === id)), []);
+    assert.ok(templateCatalog.every(validateTemplate));
+
+    for (const id of expected) {
+        const template = getTemplate(id);
+        assert.equal(template.category, 'Planning');
+        assert.ok(template.nodes.length >= 5, id);
+        const skeletons = templateToSkeletons(template);
+        const shapes = skeletons.filter(({ type }) => ['rectangle', 'ellipse', 'diamond'].includes(type));
+        assert.equal(shapes.length, template.nodes.length);
+        assert.ok(new Set(shapes.map(({ backgroundColor }) => backgroundColor)).size >= 2, id);
+    }
 });
