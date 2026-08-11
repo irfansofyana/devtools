@@ -33,7 +33,6 @@ import {
 const $ = (selector, root = document) => root.querySelector(selector);
 const canvas = $('#sticky-canvas');
 const surface = $('#canvas-surface');
-const emptyState = $('#empty-state');
 const statusElement = $('#storage-status');
 const boardSelect = $('#board-select');
 const cardTemplate = $('#card-template');
@@ -545,7 +544,6 @@ async function deleteCanvasEntity(entity, { confirm = true } = {}) {
     cards = cards.filter((item) => !ids.includes(item.id));
     if (ids.includes(selectedConnectorId)) selectedConnectorId = null;
     renderConnectors();
-    emptyState.hidden = cards.some((item) => item.type !== 'connector');
     filterCards();
     return true;
 }
@@ -558,7 +556,6 @@ async function duplicateCanvasEntity(entity) {
     await queueWrite(() => saveCard(duplicate));
     cards.push(duplicate);
     const element = appendCanvasEntity(duplicate);
-    emptyState.hidden = true;
     filterCards();
     element.focus();
     return true;
@@ -574,6 +571,30 @@ function changeEntityLayer(entity, direction) {
         const element = surface.querySelector(`[data-id="${CSS.escape(item.id)}"]`);
         if (element) element.style.zIndex = String(item.z);
         markCardChanged(item);
+    }
+}
+
+function positionNoteToolbar(element, toolbar) {
+    if (!toolbar || !element.classList.contains('is-selected')) return;
+    toolbar.style.left = '0px';
+    toolbar.style.top = '';
+    toolbar.style.bottom = '';
+    let bounds = toolbar.getBoundingClientRect();
+    const cardBounds = element.getBoundingClientRect();
+    const canvasBounds = canvas.getBoundingClientRect();
+    const quickBounds = $('.quick-create').getBoundingClientRect();
+    const margin = 10;
+    let viewportDelta = 0;
+    if (bounds.left < margin) viewportDelta = margin - bounds.left;
+    else if (bounds.right > window.innerWidth - margin) viewportDelta = window.innerWidth - margin - bounds.right;
+    toolbar.style.left = `${viewportDelta / viewport.zoom}px`;
+    bounds = toolbar.getBoundingClientRect();
+    const minimumTop = Math.max(canvasBounds.top + margin, quickBounds.bottom + 8);
+    const maximumTop = Math.max(minimumTop, window.innerHeight - margin - bounds.height);
+    if (bounds.top < minimumTop || bounds.bottom > window.innerHeight - margin) {
+        const desiredTop = Math.min(maximumTop, Math.max(minimumTop, bounds.top));
+        toolbar.style.top = `${(desiredTop - cardBounds.top) / viewport.zoom}px`;
+        toolbar.style.bottom = 'auto';
     }
 }
 
@@ -640,6 +661,7 @@ function bindCard(card, element) {
             onFocus: () => {
                 if (!element.classList.contains('is-selected')) bringToFront(card, element);
                 element.classList.add('is-selected');
+                window.requestAnimationFrame(() => positionNoteToolbar(element, formatToolbar));
             },
             onBlur: () => window.setTimeout(() => {
                 if (!element.matches(':focus-within')) element.classList.remove('is-selected');
@@ -831,7 +853,6 @@ function renderCards() {
     cards.filter((card) => ['note', 'code'].includes(card.type)).forEach(appendCanvasEntity);
     renderShapes();
     renderConnectors();
-    emptyState.hidden = cards.some((entity) => entity.type !== 'connector');
     filterCards();
 }
 
@@ -909,7 +930,6 @@ async function addCard(type) {
     await queueWrite(() => saveCard(card));
     cards.push(card);
     const element = appendCanvasEntity(card);
-    emptyState.hidden = true;
     filterCards();
     if (type === 'note') noteEditors.get(card.id)?.focus();
     else setCodeEditing(element, true);
@@ -938,7 +958,6 @@ async function addShape(shapeKind) {
     await queueWrite(() => saveCard(shape));
     cards.push(shape);
     const element = appendCanvasEntity(shape);
-    emptyState.hidden = true;
     filterCards();
     element.focus();
     if (shapeKind === 'text') {
@@ -1086,11 +1105,6 @@ $('#add-note').addEventListener('click', () => addCard('note'));
 $('#add-code').addEventListener('click', () => addCard('code'));
 $('#empty-add-note').addEventListener('click', () => $('#add-note').click());
 $('#empty-add-code').addEventListener('click', () => $('#add-code').click());
-$('#empty-open-shapes').addEventListener('click', () => {
-    const menu = $('.insert-menu');
-    menu.open = true;
-    $('#add-rectangle').focus();
-});
 for (const shapeKind of ['rectangle', 'rounded', 'ellipse', 'diamond', 'text']) {
     $(`#add-${shapeKind}`).addEventListener('click', () => {
         $('.insert-menu').open = false;
@@ -1247,6 +1261,11 @@ $('#import-workspace-input').addEventListener('change', async (event) => {
     }
 });
 
+window.addEventListener('resize', () => {
+    document.querySelectorAll('.canvas-card.is-selected[data-type="note"]').forEach((element) => {
+        positionNoteToolbar(element, $('.note-format-toolbar', element));
+    });
+});
 window.addEventListener('beforeunload', (event) => {
     if (!unsavableNoteIds.size) return;
     event.preventDefault();
