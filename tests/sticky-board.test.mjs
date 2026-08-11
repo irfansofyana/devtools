@@ -49,6 +49,55 @@ test('sticky board creates safe named boards and typed cards', () => {
     assert.match(code.content, /console\.log/);
 });
 
+test('phase one supports frames, persistent groups, alignment, and distribution', () => {
+    assert.equal(SCHEMA_VERSION, 4);
+    const frame = stickyDomain.createFrame({
+        id: 'frame-1', boardId: 'board-1', label: '  Sprint plan  ',
+        x: 10, y: 20, width: 80, height: 90, now: 130,
+    });
+    assert.deepEqual(frame, {
+        id: 'frame-1', boardId: 'board-1', type: 'frame', label: 'Sprint plan',
+        x: 10, y: 20, width: 240, height: 180, color: 'slate', z: 1,
+        createdAt: 130, updatedAt: 130,
+    });
+
+    const left = stickyDomain.createShape({ id: 'left', boardId: 'board-1', x: 20, y: 40, width: 100, height: 80 });
+    const middle = stickyDomain.createShape({ id: 'middle', boardId: 'board-1', x: 260, y: 140, width: 100, height: 80 });
+    const right = stickyDomain.createShape({ id: 'right', boardId: 'board-1', x: 620, y: 240, width: 100, height: 80 });
+    const entities = [left, middle, right];
+
+    assert.deepEqual(stickyDomain.groupEntities(entities, ['left', 'middle'], 'group-1').map((item) => item.id), ['left', 'middle']);
+    assert.equal(left.groupId, 'group-1');
+    assert.deepEqual([...stickyDomain.expandSelection(['left'], entities)].sort(), ['left', 'middle']);
+    stickyDomain.ungroupEntities(entities, ['left']);
+    assert.equal(left.groupId, undefined);
+    assert.equal(middle.groupId, undefined);
+
+    stickyDomain.alignEntities(entities, 'top');
+    assert.deepEqual(entities.map((item) => item.y), [40, 40, 40]);
+    stickyDomain.distributeEntities(entities, 'horizontal');
+    assert.deepEqual(entities.map((item) => item.x), [20, 320, 620]);
+
+    const crowded = [
+        stickyDomain.createFrame({ id: 'wide-frame', boardId: 'board-one', x: 0, width: 600 }),
+        stickyDomain.createShape({ id: 'crowded-a', boardId: 'board-one', x: 0, width: 100 }),
+        stickyDomain.createShape({ id: 'crowded-b', boardId: 'board-one', x: 0, width: 100 }),
+    ];
+    stickyDomain.distributeEntities(crowded, 'horizontal');
+    assert.ok(crowded[1].x >= crowded[0].x + crowded[0].width);
+    assert.ok(crowded[2].x >= crowded[1].x + crowded[1].width);
+
+    const frameChild = stickyDomain.createShape({ id: 'frame-child', boardId: 'board-one', x: 100, y: 100, width: 100, height: 80 });
+    assert.deepEqual(
+        stickyDomain.entitiesInSelectionRect([crowded[0], frameChild], { left: 90, top: 90, right: 220, bottom: 200 }).map((item) => item.id),
+        ['frame-child'],
+    );
+    assert.deepEqual(
+        stickyDomain.entitiesInSelectionRect([crowded[0], frameChild], { left: -10, top: -10, right: 610, bottom: 510 }).map((item) => item.id),
+        ['wide-frame', 'frame-child'],
+    );
+});
+
 test('sticky board creates structured diagram shapes with bounded geometry', () => {
     assert.equal(typeof stickyDomain.createShape, 'function');
     const rectangle = stickyDomain.createShape({
@@ -142,7 +191,7 @@ test('legacy note cards migrate without losing Markdown', () => {
     assert.equal(migrateCard({ ...migrated, height: 160 }).height, 170);
 });
 
-test('schema v2 backups migrate to the unified canvas schema without changing cards', () => {
+test('schema v2 and v3 backups migrate to the frame/group schema without changing cards', () => {
     const board = createBoard({ id: 'board-v2', name: 'Existing notes', now: 100 });
     const card = createCard({ id: 'note-v2', type: 'note', boardId: board.id, now: 101 });
     const legacy = {
@@ -155,10 +204,13 @@ test('schema v2 backups migrate to the unified canvas schema without changing ca
     };
 
     const migrated = validateWorkspaceBackup(legacy);
-    assert.equal(SCHEMA_VERSION, 3);
-    assert.equal(migrated.schemaVersion, 3);
+    assert.equal(SCHEMA_VERSION, 4);
+    assert.equal(migrated.schemaVersion, 4);
     assert.deepEqual(migrated.cards, [card]);
     assert.notEqual(migrated, legacy);
+    const migratedV3 = validateWorkspaceBackup({ ...legacy, schemaVersion: 3 });
+    assert.equal(migratedV3.schemaVersion, 4);
+    assert.deepEqual(migratedV3.cards, [card]);
 });
 
 test('rich-text documents provide searchable portable plain text', () => {
@@ -296,6 +348,19 @@ test('workspace backups validate shapes and reject malformed diagram records', (
     );
 });
 
+test('workspace backups validate frames and persistent group identifiers', () => {
+    const board = createBoard({ id: 'frame-board', name: 'Frames', now: 100 });
+    const frame = { ...stickyDomain.createFrame({ id: 'frame-valid', boardId: board.id, now: 101 }), groupId: 'group-valid' };
+    const shape = { ...stickyDomain.createShape({ id: 'shape-grouped', boardId: board.id, now: 102 }), groupId: 'group-valid' };
+    const backup = {
+        type: BACKUP_TYPE, schemaVersion: SCHEMA_VERSION, exportedAt: 200,
+        currentBoardId: board.id, boards: [board], cards: [frame, shape],
+    };
+    assert.deepEqual(validateWorkspaceBackup(backup), backup);
+    assert.throws(() => validateWorkspaceBackup({ ...backup, cards: [{ ...frame, groupId: '../bad' }, shape] }), /Invalid sticky-board backup/);
+    assert.throws(() => validateWorkspaceBackup({ ...backup, cards: [{ ...frame, width: 10 }, shape] }), /Invalid sticky-board backup/);
+});
+
 test('workspace backups accept anchored connectors and reject dangling references', () => {
     const board = createBoard({ id: 'connector-board', name: 'Flow', now: 100 });
     const source = stickyDomain.createShape({ id: 'connector-source', boardId: board.id, shape: 'rectangle', now: 101 });
@@ -346,12 +411,21 @@ test('homepage exposes a standalone sticky board and required local-first contro
     assert.match(page, /class="canvas-dock"[^>]*aria-label="Canvas view controls"/);
     assert.equal((page.match(/id="add-note"/g) ?? []).length, 1);
     assert.equal((page.match(/id="add-code"/g) ?? []).length, 1);
-    assert.match(page, /id="empty-open-shapes"[^>]*>Add shapes/);
+    assert.match(page, /id="empty-open-objects"[^>]*>Add objects/);
+    assert.doesNotMatch(page, /Add shapes/);
     assert.doesNotMatch(page, /A quiet place for loud ideas|Add notes, code, shapes, labels, and arrows/);
-    for (const shape of ['rectangle', 'rounded', 'ellipse', 'diamond', 'text', 'connector']) {
+    for (const shape of ['rectangle', 'rounded', 'ellipse', 'diamond', 'text', 'connector', 'frame']) {
         assert.match(page, new RegExp(`id="add-${shape}"`));
     }
     assert.match(page, /id="shape-template"/);
+    assert.match(page, /id="frame-template"/);
+    assert.match(page, /class="frame-duplicate"/);
+    assert.match(page, /id="selection-toolbar"[^>]*role="toolbar"/);
+    assert.match(page, /class="card-color-palette"/);
+    for (const color of ['yellow', 'pink', 'blue', 'green', 'purple', 'slate']) {
+        assert.match(page, new RegExp(`data-card-color="${color}"`));
+    }
+    assert.doesNotMatch(page, /<select[^>]*class="card-color"/);
     assert.match(page, /class="card-duplicate"/);
     assert.match(page, /class="shape-send-back"/);
     assert.match(page, /class="shape-bring-front"/);
@@ -392,6 +466,8 @@ test('homepage exposes a standalone sticky board and required local-first contro
     assert.match(css, /\.note-editor__content ul:not/);
     assert.match(css, /\.note-editor__content ul:not\(\[data-type="taskList"\]\)\s*\{[^}]*list-style:\s*disc outside;/s);
     assert.match(css, /\.note-editor__content ol\s*\{[^}]*list-style:\s*decimal outside;/s);
+    assert.match(css, /\.canvas-frame\s*\{[^}]*pointer-events:\s*none;/s);
+    assert.match(css, /\.frame-header[^}]*pointer-events:\s*auto;/s);
     assert.match(css, /\[data-theme="dark"\] \.canvas-card\[data-color="yellow"\]/);
     assert.match(css, /scale\(var\(--toolbar-scale,\s*1\)\)/);
     assert.match(css, /\.note-editor__content li\[data-checked\]\s*\{[^}]*display:\s*flex;/s);
@@ -414,13 +490,26 @@ test('sticky board storage uses IndexedDB rather than localStorage for workspace
         assert.match(app, new RegExp(helper));
     }
     assert.match(app, /function renderShapes/);
+    assert.match(app, /function renderFrames/);
+    assert.match(app, /\.frame-duplicate[\s\S]*duplicateCanvasEntity\(frame\)/);
+    assert.match(app, /function updateFrameElement[\s\S]*?style\.zIndex = '0'/);
+    assert.match(app, /const selectedEntityIds = new Set/);
+    assert.match(app, /function groupSelectedEntities/);
+    assert.match(app, /function isEntityInteractiveTarget/);
+    assert.match(app, /function deleteEntityOrSelection/);
+    assert.match(app, /data-card-color[\s\S]*aria-pressed/);
+    assert.match(app, /function alignSelectedEntities/);
+    assert.match(app, /mode:\s*'marquee'/);
     assert.match(app, /function renderConnectors/);
-    assert.match(app, /document\.activeElement\?\.closest\?\.\('\.canvas-card, \.canvas-shape'\)/);
+    assert.match(app, /document\.activeElement\?\.closest\?\.\('\.canvas-card, \.canvas-shape, \.canvas-frame'\)/);
     assert.match(app, /\['Enter', ' '\]\.includes\(event\.key\)/);
     assert.match(app, /function resizeShapeLabel/);
-    assert.match(app, /function duplicateCanvasEntity/);
-    assert.match(app, /function changeEntityLayer/);
+    assert.match(app, /async function duplicateCanvasEntity/);
+    assert.match(app, /const \{ groupId: _groupId, \.\.\.source \} = entity/);
+    assert.match(app, /function changeEntityLayer\(entity, direction\)[\s\S]*entity\.type === 'frame'/);
     assert.match(storage, /export async function deleteCards\(ids\)/);
+    assert.match(storage, /export async function saveCards\(cards\)/);
+    assert.match(app, /saveCards\(pending\.map\(\(item\) => item\.snapshot\)\)/);
     assert.match(app, /wrapper\.querySelectorAll\('input'\)/);
     assert.match(app, /USE_PROFILES:\s*\{\s*html:\s*true\s*\}/);
     assert.match(app, /FORBID_TAGS:\s*\[[^\]]*'video'[^\]]*'audio'/);
@@ -454,6 +543,10 @@ test('sticky board storage uses IndexedDB rather than localStorage for workspace
     assert.match(app, /const offset = \(cards\.length % 8\) \* 28/);
     assert.match(app, /const revision = card\.updatedAtDirty/);
     assert.match(app, /card\.updatedAtDirty === revision/);
+    assert.match(app, /let dirtyRevision = 0/);
+    assert.match(app, /updatedAtDirty = \+\+dirtyRevision/);
+    assert.doesNotMatch(app, /updatedAtDirty\s*=\s*true/);
+    assert.doesNotMatch(app, /updatedAtDirty\s*=\s*\d/);
     assert.match(app, /createNoteEditor\(\{/);
     assert.match(app, /card\.contentFormat = 'tiptap-json'/);
     assert.match(app, /card\.legacyMarkdown = String\(card\.content\)/);

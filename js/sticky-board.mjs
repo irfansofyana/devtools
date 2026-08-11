@@ -1,19 +1,27 @@
 import {
     BACKUP_TYPE,
     SCHEMA_VERSION,
+    FRAME_GEOMETRY,
     SHAPE_GEOMETRY,
+    alignEntities,
     chooseConnectorAnchors,
     collectDeletionIds,
     createBoard,
     createCard,
     createConnector,
+    createFrame,
     createShape,
+    distributeEntities,
+    entitiesInSelectionRect,
+    expandSelection,
+    groupEntities,
     hasVisibleCanvasEntity,
     migrateCard,
     normalizeViewport,
     renormalizeZOrder,
     resolveConnectorGeometry,
     richTextToPlainText,
+    ungroupEntities,
     validateWorkspaceBackup,
 } from './sticky-board-domain.mjs';
 import { createNoteEditor } from '../vendor/sticky-board/tiptap-editor.mjs';
@@ -27,6 +35,7 @@ import {
     replaceWorkspace,
     saveBoard,
     saveCard,
+    saveCards,
     setSetting,
 } from './sticky-board-storage.mjs';
 
@@ -37,8 +46,11 @@ const statusElement = $('#storage-status');
 const boardSelect = $('#board-select');
 const cardTemplate = $('#card-template');
 const shapeTemplate = $('#shape-template');
+const frameTemplate = $('#frame-template');
 const connectorLayer = $('#connector-layer');
 const connectorToolbar = $('#connector-toolbar');
+const selectionToolbar = $('#selection-toolbar');
+const selectionBox = $('#selection-box');
 const searchInput = $('#card-search');
 const SAVE_DELAY = 450;
 const TEXT_COLORS = new Set(['ink', 'red', 'blue', 'green', 'purple', 'orange']);
@@ -50,6 +62,7 @@ let cards = [];
 let currentBoard = null;
 let viewport = { x: 0, y: 0, zoom: 1 };
 let topZ = 1;
+let dirtyRevision = 0;
 let writeQueue = Promise.resolve();
 let saveTimer = null;
 let boardTimer = null;
@@ -59,6 +72,7 @@ let boardBusyDepth = 0;
 let activeTool = 'select';
 let connectorStartId = null;
 let selectedConnectorId = null;
+const selectedEntityIds = new Set();
 
 window.marked.setOptions({ gfm: true, breaks: true });
 
@@ -147,9 +161,7 @@ async function persistDirtyCards() {
         return { card, revision, snapshot: durableCard(card) };
     });
     if (!pending.length) return;
-    await queueWrite(async () => {
-        for (const item of pending) await saveCard(item.snapshot);
-    });
+    await queueWrite(() => saveCards(pending.map((item) => item.snapshot)));
     pending.forEach(({ card, revision }) => {
         if (card.updatedAtDirty === revision) delete card.updatedAtDirty;
     });
@@ -168,7 +180,7 @@ function scheduleCardSave() {
 function scheduleBoardSave() {
     if (!currentBoard) return;
     window.clearTimeout(boardTimer);
-    currentBoard.updatedAtDirty = Number(currentBoard.updatedAtDirty ?? 0) + 1;
+    currentBoard.updatedAtDirty = ++dirtyRevision;
     setStatus('Unsaved changes');
     boardTimer = window.setTimeout(() => {
         boardTimer = null;
@@ -191,7 +203,7 @@ async function flushSaves() {
 }
 
 function markCardChanged(card) {
-    card.updatedAtDirty = Number(card.updatedAtDirty ?? 0) + 1;
+    card.updatedAtDirty = ++dirtyRevision;
     scheduleCardSave();
 }
 
@@ -264,7 +276,7 @@ function cardPlainText(card) {
 }
 
 function entityPlainText(entity) {
-    if (entity.type === 'shape' || entity.type === 'connector') return entity.label;
+    if (['shape', 'connector', 'frame'].includes(entity.type)) return entity.label;
     return `${entity.title}\n${cardPlainText(entity)}\n${entity.language ?? ''}`;
 }
 
@@ -304,10 +316,21 @@ function refreshEditorToolbar(element, editor) {
     blockStyle.value = editor.isActive('heading', { level: 2 }) ? 'heading' : 'paragraph';
 }
 
+function updateCardColorControls(card, element) {
+    const colorName = card.color.charAt(0).toUpperCase() + card.color.slice(1);
+    const label = `Change card color. Current: ${colorName}`;
+    $('.card-color-palette > summary', element).setAttribute('aria-label', label);
+    $('.card-color-current', element).setAttribute('aria-label', label);
+    element.querySelectorAll('[data-card-color]').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.cardColor === card.color));
+    });
+}
+
 function updateCardElement(card, element) {
     element.dataset.id = card.id;
     element.dataset.type = card.type;
     element.dataset.color = card.color;
+    updateCardColorControls(card, element);
     element.style.left = `${card.x}px`;
     element.style.top = `${card.y}px`;
     element.style.width = `${card.width}px`;
@@ -318,7 +341,6 @@ function updateCardElement(card, element) {
     $('.card-title', element).value = card.title;
     $('.card-editor', element).value = card.type === 'code' ? card.content : '';
     $('.card-language', element).value = card.language ?? 'javascript';
-    $('.card-color', element).value = card.color;
     updateCodePreview(card, element);
 }
 
@@ -353,12 +375,48 @@ function updateShapeElement(shape, element) {
     $('.shape-stroke-style', element).value = shape.strokeStyle;
 }
 
+function isEntityInteractiveTarget(target) {
+    return Boolean(target.closest('a, input, textarea, select, button, summary, details, [contenteditable="true"]'));
+}
+
+function selectedEntities() {
+    return cards.filter((entity) => selectedEntityIds.has(entity.id) && entity.type !== 'connector');
+}
+
+function refreshSelectionUI() {
+    surface.querySelectorAll('.canvas-card, .canvas-shape, .canvas-frame').forEach((element) => {
+        element.classList.toggle('is-selected', selectedEntityIds.has(element.dataset.id));
+    });
+    const selected = selectedEntities();
+    canvas.classList.toggle('has-multi-selection', selected.length > 1);
+    selectionToolbar.hidden = selected.length < 2;
+    $('#selection-count').textContent = `${selected.length} selected`;
+    $('#group-selection').disabled = selected.length < 2;
+    $('#ungroup-selection').disabled = !selected.some((entity) => entity.groupId);
+}
+
+function setEntitySelection(id, { additive = false, toggle = false } = {}) {
+    const expanded = expandSelection([id], cards);
+    if (!additive) selectedEntityIds.clear();
+    if (toggle && [...expanded].every((entityId) => selectedEntityIds.has(entityId))) {
+        expanded.forEach((entityId) => selectedEntityIds.delete(entityId));
+    } else {
+        expanded.forEach((entityId) => selectedEntityIds.add(entityId));
+    }
+    refreshSelectionUI();
+}
+
+function clearEntitySelection() {
+    selectedEntityIds.clear();
+    refreshSelectionUI();
+}
+
 function selectConnector(id) {
     selectedConnectorId = id;
     if (id) {
-        const activeObject = document.activeElement?.closest?.('.canvas-card, .canvas-shape');
+        const activeObject = document.activeElement?.closest?.('.canvas-card, .canvas-shape, .canvas-frame');
         activeObject?.blur();
-        surface.querySelectorAll('.canvas-card.is-selected, .canvas-shape.is-selected').forEach((element) => element.classList.remove('is-selected'));
+        clearEntitySelection();
     }
     connectorLayer.querySelectorAll('.canvas-connector').forEach((element) => {
         element.classList.toggle('is-selected', element.dataset.id === id);
@@ -437,8 +495,34 @@ function renderShapes() {
     cards.filter((entity) => entity.type === 'shape').forEach(appendShapeElement);
 }
 
+function updateFrameElement(frame, element) {
+    element.dataset.id = frame.id;
+    element.dataset.type = 'frame';
+    element.dataset.color = frame.color;
+    element.style.left = `${frame.x}px`;
+    element.style.top = `${frame.y}px`;
+    element.style.width = `${frame.width}px`;
+    element.style.height = `${frame.height}px`;
+    element.style.zIndex = '0';
+    element.setAttribute('aria-label', `Frame: ${frame.label}`);
+    $('.frame-label', element).value = frame.label;
+}
+
+function appendFrameElement(frame) {
+    const element = frameTemplate.content.firstElementChild.cloneNode(true);
+    updateFrameElement(frame, element);
+    surface.append(element);
+    bindFrame(frame, element);
+    return element;
+}
+
+function renderFrames() {
+    cards.filter((entity) => entity.type === 'frame').forEach(appendFrameElement);
+}
+
 function appendCanvasEntity(entity) {
     if (entity.type === 'shape') return appendShapeElement(entity);
+    if (entity.type === 'frame') return appendFrameElement(entity);
     const element = cardTemplate.content.firstElementChild.cloneNode(true);
     updateCardElement(entity, element);
     surface.append(element);
@@ -450,9 +534,9 @@ function nextZIndex() {
     if (topZ >= 999_999) {
         topZ = renormalizeZOrder(cards);
         cards.forEach((item) => {
-            item.updatedAtDirty = Number(item.updatedAtDirty ?? 0) + 1;
+            item.updatedAtDirty = ++dirtyRevision;
             const itemElement = surface.querySelector(`[data-id="${CSS.escape(item.id)}"]`);
-            if (itemElement) itemElement.style.zIndex = String(item.z);
+            if (itemElement) itemElement.style.zIndex = item.type === 'frame' ? '0' : String(item.z);
         });
         if (cards.length) scheduleCardSave();
     }
@@ -467,12 +551,14 @@ function bringToFront(card, element) {
 }
 
 function startCardPointer(event, card, element, mode) {
-    if (event.button !== 0) return;
+    if (event.button !== 0 || event.shiftKey) return;
     event.preventDefault();
     event.stopPropagation();
-    bringToFront(card, element);
+    if (!selectedEntityIds.has(card.id)) setEntitySelection(card.id, { additive: event.shiftKey, toggle: event.shiftKey });
+    if (card.type !== 'frame') bringToFront(card, element);
     const start = { x: event.clientX, y: event.clientY, cardX: card.x, cardY: card.y, width: card.width, height: card.height };
-    interaction = { mode, pointerId: event.pointerId, card, element, start };
+    const entities = mode === 'drag-card' ? selectedEntities().map((entity) => ({ entity, x: entity.x, y: entity.y })) : [];
+    interaction = { mode, pointerId: event.pointerId, card, element, start, entities };
     canvas.setPointerCapture(event.pointerId);
 }
 
@@ -544,17 +630,87 @@ async function deleteCanvasEntity(entity, { confirm = true } = {}) {
         connectorLayer.querySelector(`[data-id="${CSS.escape(id)}"]`)?.remove();
     });
     cards = cards.filter((item) => !ids.includes(item.id));
+    ids.forEach((id) => selectedEntityIds.delete(id));
     if (ids.includes(selectedConnectorId)) selectedConnectorId = null;
+    refreshSelectionUI();
     renderConnectors();
     filterCards();
     return true;
 }
 
+async function deleteSelectedEntities() {
+    if (!canUseDurableNotes()) return false;
+    const selected = selectedEntities();
+    if (!selected.length || !window.confirm(`Delete ${selected.length} selected object${selected.length === 1 ? '' : 's'}?`)) return false;
+    const ids = [...new Set(selected.flatMap((entity) => collectDeletionIds(entity.id, cards)))];
+    try {
+        await flushSaves();
+        await queueWrite(() => deleteCards(ids));
+    } catch {
+        return false;
+    }
+    ids.forEach((id) => {
+        noteEditors.get(id)?.destroy();
+        noteEditors.delete(id);
+        unsavableNoteIds.delete(id);
+        surface.querySelector(`[data-id="${CSS.escape(id)}"]`)?.remove();
+        connectorLayer.querySelector(`[data-id="${CSS.escape(id)}"]`)?.remove();
+    });
+    cards = cards.filter((entity) => !ids.includes(entity.id));
+    clearEntitySelection();
+    renderConnectors();
+    filterCards();
+    return true;
+}
+
+function deleteEntityOrSelection(entity) {
+    if (selectedEntityIds.has(entity.id) && selectedEntityIds.size > 1) return deleteSelectedEntities();
+    return deleteCanvasEntity(entity);
+}
+
+function persistSelectionChanges(changed) {
+    changed.forEach((entity) => {
+        const element = surface.querySelector(`[data-id="${CSS.escape(entity.id)}"]`);
+        if (element) {
+            element.style.left = `${entity.x}px`;
+            element.style.top = `${entity.y}px`;
+        }
+        markCardChanged(entity);
+    });
+    renderConnectors();
+    refreshSelectionUI();
+}
+
+function groupSelectedEntities() {
+    const changed = groupEntities(cards, [...selectedEntityIds], uuid());
+    persistSelectionChanges(changed);
+}
+
+function ungroupSelectedEntities() {
+    const changed = ungroupEntities(cards, [...selectedEntityIds]);
+    persistSelectionChanges(changed);
+}
+
+function alignSelectedEntities(alignment) {
+    const selected = selectedEntities();
+    alignEntities(selected, alignment);
+    persistSelectionChanges(selected);
+}
+
+function distributeSelectedEntities(axis) {
+    const selected = selectedEntities();
+    distributeEntities(selected, axis);
+    persistSelectionChanges(selected);
+}
+
 async function duplicateCanvasEntity(entity) {
     if (!canUseDurableNotes()) return false;
+    const { groupId: _groupId, ...source } = entity;
     const duplicate = entity.type === 'shape'
-        ? createShape({ ...entity, id: uuid(), x: entity.x + 32, y: entity.y + 32, z: nextZIndex(), now: Date.now() })
-        : createCard({ ...entity, id: uuid(), x: entity.x + 32, y: entity.y + 32, z: nextZIndex(), now: Date.now() });
+        ? createShape({ ...source, id: uuid(), x: entity.x + 32, y: entity.y + 32, z: nextZIndex(), now: Date.now() })
+        : entity.type === 'frame'
+            ? createFrame({ ...source, id: uuid(), x: entity.x + 32, y: entity.y + 32, z: 1, now: Date.now() })
+            : createCard({ ...source, id: uuid(), x: entity.x + 32, y: entity.y + 32, z: nextZIndex(), now: Date.now() });
     await queueWrite(() => saveCard(duplicate));
     cards.push(duplicate);
     const element = appendCanvasEntity(duplicate);
@@ -564,7 +720,8 @@ async function duplicateCanvasEntity(entity) {
 }
 
 function changeEntityLayer(entity, direction) {
-    const ordered = cards.filter((item) => item.type !== 'connector').sort((a, b) => a.z - b.z || a.createdAt - b.createdAt);
+    if (entity.type === 'frame') return;
+    const ordered = cards.filter((item) => !['connector', 'frame'].includes(item.type)).sort((a, b) => a.z - b.z || a.createdAt - b.createdAt);
     const index = ordered.findIndex((item) => item.id === entity.id);
     const target = ordered[index + direction];
     if (!target) return;
@@ -610,7 +767,13 @@ function bindCard(card, element) {
 
     element.addEventListener('pointerdown', (event) => {
         if (activeTool !== 'connector') {
+            if (event.shiftKey && isEntityInteractiveTarget(event.target)) return;
             selectConnector(null);
+            if (event.shiftKey) {
+                setEntitySelection(card.id, { additive: true, toggle: true });
+                event.preventDefault();
+                event.stopPropagation();
+            } else if (!selectedEntityIds.has(card.id)) setEntitySelection(card.id);
             return;
         }
         event.preventDefault();
@@ -662,13 +825,13 @@ function bindCard(card, element) {
                 markCardChanged(card);
             },
             onFocus: () => {
-                if (!element.classList.contains('is-selected')) bringToFront(card, element);
-                element.classList.add('is-selected');
+                if (!selectedEntityIds.has(card.id)) {
+                    setEntitySelection(card.id);
+                    bringToFront(card, element);
+                }
                 window.requestAnimationFrame(() => positionNoteToolbar(element, formatToolbar));
             },
-            onBlur: () => window.setTimeout(() => {
-                if (!element.matches(':focus-within')) element.classList.remove('is-selected');
-            }),
+            onBlur: () => undefined,
             onStateChange: refreshToolbar,
         });
         noteEditors.set(card.id, richEditor);
@@ -714,10 +877,14 @@ function bindCard(card, element) {
         updateCodePreview(card, element);
         markCardChanged(card);
     });
-    $('.card-color', element).addEventListener('change', (event) => {
-        card.color = event.target.value;
-        element.dataset.color = card.color;
-        markCardChanged(card);
+    element.querySelectorAll('[data-card-color]').forEach((button) => {
+        button.addEventListener('click', () => {
+            card.color = button.dataset.cardColor;
+            element.dataset.color = card.color;
+            updateCardColorControls(card, element);
+            $('.card-color-palette', element).open = false;
+            markCardChanged(card);
+        });
     });
     $('.card-copy', element).addEventListener('click', async () => {
         try {
@@ -747,14 +914,11 @@ function bindCard(card, element) {
         if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
         event.preventDefault();
         const step = event.shiftKey ? 40 : 10;
-        if (event.key === 'ArrowLeft') card.x -= step;
-        if (event.key === 'ArrowRight') card.x += step;
-        if (event.key === 'ArrowUp') card.y -= step;
-        if (event.key === 'ArrowDown') card.y += step;
-        element.style.left = `${card.x}px`;
-        element.style.top = `${card.y}px`;
-        renderConnectors();
-        markCardChanged(card);
+        const dx = event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0;
+        const dy = event.key === 'ArrowUp' ? -step : event.key === 'ArrowDown' ? step : 0;
+        const moving = selectedEntityIds.has(card.id) ? selectedEntities() : [card];
+        moving.forEach((entity) => { entity.x += dx; entity.y += dy; });
+        persistSelectionChanges(moving);
     });
 }
 
@@ -766,7 +930,13 @@ function bindShape(shape, element) {
 
     element.addEventListener('pointerdown', (event) => {
         if (activeTool !== 'connector') {
+            if (event.shiftKey && isEntityInteractiveTarget(event.target)) return;
             selectConnector(null);
+            if (event.shiftKey) {
+                setEntitySelection(shape.id, { additive: true, toggle: true });
+                event.preventDefault();
+                event.stopPropagation();
+            } else if (!selectedEntityIds.has(shape.id)) setEntitySelection(shape.id);
             return;
         }
         event.preventDefault();
@@ -778,10 +948,9 @@ function bindShape(shape, element) {
         startCardPointer(event, shape, element, 'drag-card');
     });
     $('.shape-drag', element).addEventListener('pointerdown', (event) => startCardPointer(event, shape, element, 'drag-card'));
-    element.addEventListener('focusin', () => element.classList.add('is-selected'));
-    element.addEventListener('focusout', () => window.setTimeout(() => {
-        if (!element.matches(':focus-within')) element.classList.remove('is-selected');
-    }));
+    element.addEventListener('focusin', () => {
+        if (!selectedEntityIds.has(shape.id)) setEntitySelection(shape.id);
+    });
     label.addEventListener('input', (event) => {
         shape.label = event.target.value.slice(0, 500);
         element.setAttribute('aria-label', `${shape.shape} shape: ${shape.label || 'Unlabeled'}`);
@@ -831,31 +1000,103 @@ function bindShape(shape, element) {
         if (event.target.closest('textarea, input, select, button')) return;
         if (['Delete', 'Backspace'].includes(event.key)) {
             event.preventDefault();
-            deleteCanvasEntity(shape).catch((error) => console.error('Could not delete shape', error));
+            event.stopPropagation();
+            deleteEntityOrSelection(shape).catch((error) => console.error('Could not delete selection', error));
             return;
         }
         if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
         event.preventDefault();
         const step = event.shiftKey ? 40 : 10;
-        if (event.key === 'ArrowLeft') shape.x -= step;
-        if (event.key === 'ArrowRight') shape.x += step;
-        if (event.key === 'ArrowUp') shape.y -= step;
-        if (event.key === 'ArrowDown') shape.y += step;
-        element.style.left = `${shape.x}px`;
-        element.style.top = `${shape.y}px`;
+        const dx = event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0;
+        const dy = event.key === 'ArrowUp' ? -step : event.key === 'ArrowDown' ? step : 0;
+        const moving = selectedEntityIds.has(shape.id) ? selectedEntities() : [shape];
+        moving.forEach((entity) => { entity.x += dx; entity.y += dy; });
+        persistSelectionChanges(moving);
+    });
+}
+
+function bindFrame(frame, element) {
+    const resizeControl = $('.frame-resize', element);
+    element.addEventListener('pointerdown', (event) => {
+        if (activeTool !== 'connector') {
+            if (event.shiftKey && isEntityInteractiveTarget(event.target)) return;
+            selectConnector(null);
+            if (event.shiftKey) {
+                setEntitySelection(frame.id, { additive: true, toggle: true });
+                event.preventDefault();
+                event.stopPropagation();
+            } else if (!selectedEntityIds.has(frame.id)) setEntitySelection(frame.id);
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        handleConnectorTarget(frame, element).catch((error) => console.error('Could not create connector', error));
+    }, { capture: true });
+    $('.frame-header', element).addEventListener('pointerdown', (event) => {
+        if (event.target.closest('input, button')) return;
+        startCardPointer(event, frame, element, 'drag-card');
+    });
+    resizeControl.addEventListener('pointerdown', (event) => startCardPointer(event, frame, element, 'resize-frame'));
+    resizeControl.addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+        event.preventDefault();
+        const step = event.shiftKey ? 40 : 10;
+        if (event.key === 'ArrowLeft') frame.width = Math.max(FRAME_GEOMETRY.minWidth, frame.width - step);
+        if (event.key === 'ArrowRight') frame.width = Math.min(FRAME_GEOMETRY.maxWidth, frame.width + step);
+        if (event.key === 'ArrowUp') frame.height = Math.max(FRAME_GEOMETRY.minHeight, frame.height - step);
+        if (event.key === 'ArrowDown') frame.height = Math.min(FRAME_GEOMETRY.maxHeight, frame.height + step);
+        element.style.width = `${frame.width}px`;
+        element.style.height = `${frame.height}px`;
         renderConnectors();
-        markCardChanged(shape);
+        markCardChanged(frame);
+    });
+    $('.frame-label', element).addEventListener('input', (event) => {
+        frame.label = event.target.value.trimStart().slice(0, 80) || 'Frame';
+        if (!event.target.value.trim()) event.target.value = frame.label;
+        element.setAttribute('aria-label', `Frame: ${frame.label}`);
+        markCardChanged(frame);
+    });
+    $('.frame-duplicate', element).addEventListener('click', () => {
+        duplicateCanvasEntity(frame).catch((error) => console.error('Could not duplicate frame', error));
+    });
+    $('.frame-delete', element).addEventListener('click', () => {
+        deleteCanvasEntity(frame).catch((error) => console.error('Could not delete frame', error));
+    });
+    element.addEventListener('focusin', () => {
+        if (!selectedEntityIds.has(frame.id)) setEntitySelection(frame.id);
+    });
+    element.addEventListener('keydown', (event) => {
+        if (handleConnectorActivationKey(event, frame, element)) return;
+        if (event.target.closest('input, button')) return;
+        if (['Delete', 'Backspace'].includes(event.key)) {
+            event.preventDefault();
+            event.stopPropagation();
+            deleteEntityOrSelection(frame).catch((error) => console.error('Could not delete selection', error));
+            return;
+        }
+        if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+        event.preventDefault();
+        const step = event.shiftKey ? 40 : 10;
+        const dx = event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0;
+        const dy = event.key === 'ArrowUp' ? -step : event.key === 'ArrowDown' ? step : 0;
+        const moving = selectedEntityIds.has(frame.id) ? selectedEntities() : [frame];
+        moving.forEach((entity) => { entity.x += dx; entity.y += dy; });
+        persistSelectionChanges(moving);
     });
 }
 
 function renderCards() {
     noteEditors.forEach((editor) => editor.destroy());
     noteEditors.clear();
-    surface.replaceChildren(connectorLayer);
+    selectedEntityIds.clear();
+    selectionBox.hidden = true;
+    surface.replaceChildren(selectionBox, connectorLayer);
     topZ = Math.max(1, ...cards.map((card) => card.z));
+    renderFrames();
     cards.filter((card) => ['note', 'code'].includes(card.type)).forEach(appendCanvasEntity);
     renderShapes();
     renderConnectors();
+    refreshSelectionUI();
     filterCards();
 }
 
@@ -970,6 +1211,22 @@ async function addShape(shapeKind) {
     }
 }
 
+async function addFrame() {
+    if (!canUseDurableNotes()) return;
+    const center = canvasCenterWorld();
+    const frame = createFrame({
+        id: uuid(), boardId: currentBoard.id,
+        x: center.x - 320, y: center.y - 210,
+        width: 640, height: 420, z: 1,
+    });
+    await queueWrite(() => saveCard(frame));
+    cards.push(frame);
+    const element = appendCanvasEntity(frame);
+    filterCards();
+    element.focus();
+    $('.frame-label', element)?.select();
+}
+
 function filterCards() {
     const query = searchInput.value.trim().toLowerCase();
     cards.forEach((entity) => {
@@ -1023,11 +1280,24 @@ canvas.addEventListener('pointerdown', (event) => {
     if (event.button !== 0 || event.target !== canvas) return;
     selectConnector(null);
     event.preventDefault();
-    interaction = {
-        mode: 'pan', pointerId: event.pointerId,
-        start: { x: event.clientX, y: event.clientY, viewportX: viewport.x, viewportY: viewport.y },
-    };
-    canvas.classList.add('is-panning');
+    const rect = canvas.getBoundingClientRect();
+    if (event.shiftKey) {
+        const worldX = (event.clientX - rect.left - viewport.x) / viewport.zoom;
+        const worldY = (event.clientY - rect.top - viewport.y) / viewport.zoom;
+        interaction = { mode: 'marquee', pointerId: event.pointerId, start: { x: event.clientX, y: event.clientY, worldX, worldY } };
+        selectionBox.hidden = false;
+        selectionBox.style.left = `${worldX}px`;
+        selectionBox.style.top = `${worldY}px`;
+        selectionBox.style.width = '0px';
+        selectionBox.style.height = '0px';
+    } else {
+        clearEntitySelection();
+        interaction = {
+            mode: 'pan', pointerId: event.pointerId,
+            start: { x: event.clientX, y: event.clientY, viewportX: viewport.x, viewportY: viewport.y },
+        };
+        canvas.classList.add('is-panning');
+    }
     canvas.setPointerCapture(event.pointerId);
 });
 
@@ -1039,14 +1309,22 @@ canvas.addEventListener('pointermove', (event) => {
         viewport.x = interaction.start.viewportX + dx;
         viewport.y = interaction.start.viewportY + dy;
         applyViewport();
+    } else if (interaction.mode === 'marquee') {
+        const worldX = interaction.start.worldX + dx / viewport.zoom;
+        const worldY = interaction.start.worldY + dy / viewport.zoom;
+        selectionBox.style.left = `${Math.min(interaction.start.worldX, worldX)}px`;
+        selectionBox.style.top = `${Math.min(interaction.start.worldY, worldY)}px`;
+        selectionBox.style.width = `${Math.abs(worldX - interaction.start.worldX)}px`;
+        selectionBox.style.height = `${Math.abs(worldY - interaction.start.worldY)}px`;
     } else if (interaction.mode === 'drag-card') {
-        const { card, element, start } = interaction;
-        card.x = start.cardX + dx / viewport.zoom;
-        card.y = start.cardY + dy / viewport.zoom;
-        element.style.left = `${card.x}px`;
-        element.style.top = `${card.y}px`;
+        interaction.entities.forEach(({ entity, x, y }) => {
+            entity.x = x + dx / viewport.zoom;
+            entity.y = y + dy / viewport.zoom;
+            const entityElement = surface.querySelector(`[data-id="${CSS.escape(entity.id)}"]`);
+            if (entityElement) { entityElement.style.left = `${entity.x}px`; entityElement.style.top = `${entity.y}px`; }
+            entity.updatedAtDirty = ++dirtyRevision;
+        });
         renderConnectors();
-        card.updatedAtDirty = true;
         setStatus('Unsaved changes');
     } else if (interaction.mode === 'resize-card') {
         const { card, element, start } = interaction;
@@ -1055,7 +1333,7 @@ canvas.addEventListener('pointermove', (event) => {
         element.style.width = `${card.width}px`;
         element.style.height = `${card.height}px`;
         renderConnectors();
-        card.updatedAtDirty = true;
+        card.updatedAtDirty = ++dirtyRevision;
         setStatus('Unsaved changes');
     } else if (interaction.mode === 'resize-shape') {
         const { card, element, start } = interaction;
@@ -1065,7 +1343,16 @@ canvas.addEventListener('pointermove', (event) => {
         element.style.height = `${card.height}px`;
         resizeShapeLabel(card, element);
         renderConnectors();
-        card.updatedAtDirty = true;
+        card.updatedAtDirty = ++dirtyRevision;
+        setStatus('Unsaved changes');
+    } else if (interaction.mode === 'resize-frame') {
+        const { card, element, start } = interaction;
+        card.width = Math.min(FRAME_GEOMETRY.maxWidth, Math.max(FRAME_GEOMETRY.minWidth, start.width + dx / viewport.zoom));
+        card.height = Math.min(FRAME_GEOMETRY.maxHeight, Math.max(FRAME_GEOMETRY.minHeight, start.height + dy / viewport.zoom));
+        element.style.width = `${card.width}px`;
+        element.style.height = `${card.height}px`;
+        renderConnectors();
+        card.updatedAtDirty = ++dirtyRevision;
         setStatus('Unsaved changes');
     }
 });
@@ -1073,7 +1360,18 @@ canvas.addEventListener('pointermove', (event) => {
 function finishPointer(event) {
     if (!interaction || interaction.pointerId !== event.pointerId) return;
     if (interaction.mode === 'pan') scheduleBoardSave();
-    if (interaction.card) markCardChanged(interaction.card);
+    if (interaction.mode === 'marquee') {
+        const left = Number.parseFloat(selectionBox.style.left);
+        const top = Number.parseFloat(selectionBox.style.top);
+        const right = left + Number.parseFloat(selectionBox.style.width);
+        const bottom = top + Number.parseFloat(selectionBox.style.height);
+        const hits = entitiesInSelectionRect(cards, { left, top, right, bottom }).map((entity) => entity.id);
+        expandSelection(hits, cards).forEach((id) => selectedEntityIds.add(id));
+        selectionBox.hidden = true;
+        refreshSelectionUI();
+    }
+    if (interaction.mode === 'drag-card') interaction.entities.forEach(({ entity }) => markCardChanged(entity));
+    else if (interaction.card) markCardChanged(interaction.card);
     interaction = null;
     canvas.classList.remove('is-panning');
     if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
@@ -1093,12 +1391,23 @@ canvas.addEventListener('wheel', (event) => {
     }
 }, { passive: false });
 
+document.addEventListener('pointerdown', (event) => {
+    if (event.target.closest('.card-color-palette')) return;
+    document.querySelectorAll('.card-color-palette[open]').forEach((palette) => { palette.open = false; });
+});
+
 document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && activeTool === 'connector') {
-        setActiveTool('select');
+    if (event.key === 'Escape') {
+        if (activeTool === 'connector') setActiveTool('select');
+        clearEntitySelection();
         return;
     }
     if (event.target.closest('input, textarea, select, [contenteditable="true"]') || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (['Delete', 'Backspace'].includes(event.key) && selectedEntityIds.size > 1) {
+        event.preventDefault();
+        deleteSelectedEntities().catch((error) => console.error('Could not delete selection', error));
+        return;
+    }
     if (event.key.toLowerCase() === 'n') addCard('note');
     if (event.key.toLowerCase() === 'c') addCard('code');
     if (event.key === '0') fitCards();
@@ -1112,9 +1421,30 @@ for (const shapeKind of ['rectangle', 'rounded', 'ellipse', 'diamond', 'text']) 
         addShape(shapeKind).catch((error) => console.error('Could not add shape', error));
     });
 }
+$('#add-frame').addEventListener('click', () => {
+    $('.insert-menu').open = false;
+    addFrame().catch((error) => console.error('Could not add frame', error));
+});
 $('#add-connector').addEventListener('click', () => {
     $('.insert-menu').open = false;
     setActiveTool(activeTool === 'connector' ? 'select' : 'connector');
+});
+$('#group-selection').addEventListener('click', groupSelectedEntities);
+$('#ungroup-selection').addEventListener('click', ungroupSelectedEntities);
+$('#delete-selection').addEventListener('click', () => {
+    deleteSelectedEntities().catch((error) => console.error('Could not delete selection', error));
+});
+selectionToolbar.querySelectorAll('[data-align]').forEach((button) => {
+    button.addEventListener('click', () => {
+        alignSelectedEntities(button.dataset.align);
+        button.closest('details').open = false;
+    });
+});
+selectionToolbar.querySelectorAll('[data-distribute]').forEach((button) => {
+    button.addEventListener('click', () => {
+        distributeSelectedEntities(button.dataset.distribute);
+        button.closest('details').open = false;
+    });
 });
 for (const [selector, field] of [
     ['#connector-label', 'label'],
@@ -1169,7 +1499,7 @@ $('#rename-board').addEventListener('click', async () => {
         currentBoard = renamed;
         boards = boards.map((board) => board.id === renamed.id ? renamed : board);
         renderBoardOptions();
-        currentBoard.updatedAtDirty = 1;
+        currentBoard.updatedAtDirty = ++dirtyRevision;
         await persistDirtyBoard();
     } finally {
         setBoardControlsDisabled(false);

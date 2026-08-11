@@ -1,5 +1,5 @@
 export const BACKUP_TYPE = 'tools-sticky-workspace';
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const FORBIDDEN_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
@@ -13,12 +13,20 @@ const CONNECTOR_ANCHORS = new Set(['top', 'right', 'bottom', 'left']);
 const CONNECTOR_ARROWS = new Set(['end', 'none']);
 const MAX_CONTENT_LENGTH = 200_000;
 const MAX_SHAPE_LABEL_LENGTH = 500;
+const FRAME_COLORS = new Set(['slate', 'blue', 'green', 'pink', 'purple', 'yellow']);
 
 export const SHAPE_GEOMETRY = Object.freeze({
     minWidth: 80,
     minHeight: 60,
     maxWidth: 1_200,
     maxHeight: 1_000,
+});
+
+export const FRAME_GEOMETRY = Object.freeze({
+    minWidth: 240,
+    minHeight: 180,
+    maxWidth: 4_000,
+    maxHeight: 3_000,
 });
 
 const DEFAULT_NOTE_DOCUMENT = {
@@ -251,6 +259,137 @@ export function createShape({
     };
 }
 
+export function createFrame({
+    id,
+    boardId = '',
+    label = 'Frame',
+    x = 80,
+    y = 80,
+    width = 640,
+    height = 420,
+    color = 'slate',
+    now = Date.now(),
+    z = 1,
+} = {}) {
+    if (!validId(id)) throw new TypeError('A safe frame id is required.');
+    if (boardId && !validId(boardId)) throw new TypeError('A safe board id is required.');
+    const timestamp = finite(now, Date.now());
+    return {
+        id, boardId, type: 'frame', label: normalizeName(label, 'Frame'),
+        x: finite(x), y: finite(y),
+        width: clamp(finite(width, 640), FRAME_GEOMETRY.minWidth, FRAME_GEOMETRY.maxWidth),
+        height: clamp(finite(height, 420), FRAME_GEOMETRY.minHeight, FRAME_GEOMETRY.maxHeight),
+        color: FRAME_COLORS.has(color) ? color : 'slate',
+        z: clamp(Math.round(finite(z, 1)), 1, 1_000_000),
+        createdAt: timestamp, updatedAt: timestamp,
+    };
+}
+
+function spatialEntities(entities) {
+    return entities.filter((entity) => entity?.type !== 'connector'
+        && Number.isFinite(entity?.x) && Number.isFinite(entity?.y)
+        && Number.isFinite(entity?.width) && Number.isFinite(entity?.height));
+}
+
+export function entitiesInSelectionRect(entities, rect) {
+    const left = Math.min(finite(rect?.left), finite(rect?.right));
+    const right = Math.max(finite(rect?.left), finite(rect?.right));
+    const top = Math.min(finite(rect?.top), finite(rect?.bottom));
+    const bottom = Math.max(finite(rect?.top), finite(rect?.bottom));
+    return spatialEntities(entities).filter((entity) => {
+        const entityRight = entity.x + entity.width;
+        const entityBottom = entity.y + entity.height;
+        if (entity.type === 'frame') {
+            return left <= entity.x && top <= entity.y && right >= entityRight && bottom >= entityBottom;
+        }
+        return entityRight >= left && entity.x <= right && entityBottom >= top && entity.y <= bottom;
+    });
+}
+
+export function expandSelection(entityIds, entities) {
+    const selected = new Set(entityIds);
+    const groupIds = new Set(spatialEntities(entities)
+        .filter((entity) => selected.has(entity.id) && entity.groupId)
+        .map((entity) => entity.groupId));
+    spatialEntities(entities).forEach((entity) => {
+        if (entity.groupId && groupIds.has(entity.groupId)) selected.add(entity.id);
+    });
+    return selected;
+}
+
+export function groupEntities(entities, entityIds, groupId) {
+    if (!validId(groupId)) throw new TypeError('A safe group id is required.');
+    const selected = new Set(entityIds);
+    const changed = spatialEntities(entities).filter((entity) => selected.has(entity.id));
+    if (changed.length < 2) throw new TypeError('A group needs at least two objects.');
+    changed.forEach((entity) => { entity.groupId = groupId; });
+    return changed;
+}
+
+export function ungroupEntities(entities, entityIds) {
+    const selected = expandSelection(entityIds, entities);
+    const changed = spatialEntities(entities).filter((entity) => selected.has(entity.id) && entity.groupId);
+    changed.forEach((entity) => { delete entity.groupId; });
+    return changed;
+}
+
+function selectionUnits(entities) {
+    const units = new Map();
+    spatialEntities(entities).forEach((entity) => {
+        const key = entity.groupId ? `group:${entity.groupId}` : `entity:${entity.id}`;
+        const unit = units.get(key) ?? { entities: [], left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity };
+        unit.entities.push(entity);
+        unit.left = Math.min(unit.left, entity.x);
+        unit.top = Math.min(unit.top, entity.y);
+        unit.right = Math.max(unit.right, entity.x + entity.width);
+        unit.bottom = Math.max(unit.bottom, entity.y + entity.height);
+        units.set(key, unit);
+    });
+    return [...units.values()];
+}
+
+function moveUnit(unit, dx, dy) {
+    unit.entities.forEach((entity) => { entity.x += dx; entity.y += dy; });
+}
+
+export function alignEntities(entities, alignment) {
+    const units = selectionUnits(entities);
+    if (units.length < 2) return spatialEntities(entities);
+    const left = Math.min(...units.map((unit) => unit.left));
+    const top = Math.min(...units.map((unit) => unit.top));
+    const right = Math.max(...units.map((unit) => unit.right));
+    const bottom = Math.max(...units.map((unit) => unit.bottom));
+    units.forEach((unit) => {
+        if (alignment === 'left') moveUnit(unit, left - unit.left, 0);
+        else if (alignment === 'center') moveUnit(unit, (left + right - unit.left - unit.right) / 2, 0);
+        else if (alignment === 'right') moveUnit(unit, right - unit.right, 0);
+        else if (alignment === 'top') moveUnit(unit, 0, top - unit.top);
+        else if (alignment === 'middle') moveUnit(unit, 0, (top + bottom - unit.top - unit.bottom) / 2);
+        else if (alignment === 'bottom') moveUnit(unit, 0, bottom - unit.bottom);
+        else throw new TypeError('Unsupported alignment.');
+    });
+    return spatialEntities(entities);
+}
+
+export function distributeEntities(entities, axis) {
+    const horizontal = axis === 'horizontal';
+    if (!horizontal && axis !== 'vertical') throw new TypeError('Unsupported distribution axis.');
+    const units = selectionUnits(entities).sort((left, right) => horizontal ? left.left - right.left : left.top - right.top);
+    if (units.length < 3) return spatialEntities(entities);
+    const start = horizontal ? units[0].left : units[0].top;
+    const end = horizontal ? units.at(-1).right : units.at(-1).bottom;
+    const occupied = units.reduce((total, unit) => total + (horizontal ? unit.right - unit.left : unit.bottom - unit.top), 0);
+    const gap = Math.max(0, (end - start - occupied) / (units.length - 1));
+    let cursor = start;
+    units.forEach((unit) => {
+        const width = unit.right - unit.left;
+        const height = unit.bottom - unit.top;
+        moveUnit(unit, horizontal ? cursor - unit.left : 0, horizontal ? 0 : cursor - unit.top);
+        cursor += (horizontal ? width : height) + gap;
+    });
+    return spatialEntities(entities);
+}
+
 export function createConnector({
     id,
     boardId = '',
@@ -441,7 +580,7 @@ function validRichTextDocument(document) {
 }
 
 function validCard(card, boardIds) {
-    const allowed = new Set(['id', 'boardId', 'type', 'x', 'y', 'width', 'height', 'title', 'content', 'contentFormat', 'legacyMarkdown', 'language', 'color', 'z', 'createdAt', 'updatedAt']);
+    const allowed = new Set(['id', 'boardId', 'type', 'x', 'y', 'width', 'height', 'title', 'content', 'contentFormat', 'legacyMarkdown', 'language', 'color', 'groupId', 'z', 'createdAt', 'updatedAt']);
     const validContent = card?.type === 'code'
         ? card.contentFormat === 'plain-text' && typeof card.content === 'string' && card.content.length <= MAX_CONTENT_LENGTH
         : (
@@ -471,6 +610,7 @@ function validCard(card, boardIds) {
         && card.title.length <= 80
         && validContent
         && CARD_COLORS.has(card.color)
+        && (card.groupId === undefined || validId(card.groupId))
         && Number.isInteger(card.z)
         && card.z >= 1
         && card.z <= 1_000_000
@@ -483,7 +623,7 @@ function validCard(card, boardIds) {
 }
 
 function validShape(shape, boardIds) {
-    const allowed = new Set(['id', 'boardId', 'type', 'shape', 'x', 'y', 'width', 'height', 'label', 'fill', 'stroke', 'strokeStyle', 'z', 'createdAt', 'updatedAt']);
+    const allowed = new Set(['id', 'boardId', 'type', 'shape', 'x', 'y', 'width', 'height', 'label', 'fill', 'stroke', 'strokeStyle', 'groupId', 'z', 'createdAt', 'updatedAt']);
     return isPlainRecord(shape)
         && Object.keys(shape).every((key) => allowed.has(key))
         && validId(shape.id)
@@ -504,6 +644,7 @@ function validShape(shape, boardIds) {
         && SHAPE_FILLS.has(shape.fill)
         && STROKE_COLORS.has(shape.stroke)
         && STROKE_STYLES.has(shape.strokeStyle)
+        && (shape.groupId === undefined || validId(shape.groupId))
         && (shape.shape !== 'text' || shape.fill === 'transparent' && shape.stroke === 'transparent')
         && Number.isInteger(shape.z)
         && shape.z >= 1
@@ -511,6 +652,35 @@ function validShape(shape, boardIds) {
         && Number.isFinite(shape.createdAt)
         && Number.isFinite(shape.updatedAt)
         && shape.updatedAt >= shape.createdAt;
+}
+
+function validFrame(frame, boardIds) {
+    const allowed = new Set(['id', 'boardId', 'type', 'label', 'x', 'y', 'width', 'height', 'color', 'groupId', 'z', 'createdAt', 'updatedAt']);
+    return isPlainRecord(frame)
+        && Object.keys(frame).every((key) => allowed.has(key))
+        && validId(frame.id)
+        && validId(frame.boardId)
+        && boardIds.has(frame.boardId)
+        && frame.type === 'frame'
+        && typeof frame.label === 'string'
+        && frame.label.length > 0
+        && frame.label.length <= 80
+        && Number.isFinite(frame.x)
+        && Number.isFinite(frame.y)
+        && Number.isFinite(frame.width)
+        && frame.width >= FRAME_GEOMETRY.minWidth
+        && frame.width <= FRAME_GEOMETRY.maxWidth
+        && Number.isFinite(frame.height)
+        && frame.height >= FRAME_GEOMETRY.minHeight
+        && frame.height <= FRAME_GEOMETRY.maxHeight
+        && FRAME_COLORS.has(frame.color)
+        && (frame.groupId === undefined || validId(frame.groupId))
+        && Number.isInteger(frame.z)
+        && frame.z >= 1
+        && frame.z <= 1_000_000
+        && Number.isFinite(frame.createdAt)
+        && Number.isFinite(frame.updatedAt)
+        && frame.updatedAt >= frame.createdAt;
 }
 
 function validConnector(connector, boardIds, entityById) {
@@ -551,12 +721,13 @@ function validConnector(connector, boardIds, entityById) {
 
 function validEntity(entity, boardIds, entityById) {
     if (entity?.type === 'shape') return validShape(entity, boardIds);
+    if (entity?.type === 'frame') return validFrame(entity, boardIds);
     if (entity?.type === 'connector') return validConnector(entity, boardIds, entityById);
     return validCard(entity, boardIds);
 }
 
 export function validateWorkspaceBackup(value) {
-    const candidate = [1, 2].includes(value?.schemaVersion)
+    const candidate = [1, 2, 3].includes(value?.schemaVersion)
         ? { ...value, schemaVersion: SCHEMA_VERSION, cards: value.cards?.map(migrateCard) }
         : value;
     const boards = candidate?.boards;

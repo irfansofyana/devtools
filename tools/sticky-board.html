@@ -63,6 +63,7 @@
     <main id="main-content">
         <section id="sticky-canvas" class="sticky-canvas" tabindex="0" aria-label="Infinite visual workspace">
             <div id="canvas-surface" class="canvas-surface" aria-live="off">
+                <div id="selection-box" class="selection-box" hidden></div>
                 <svg id="connector-layer" class="connector-layer" aria-label="Canvas connectors" overflow="visible">
                     <defs>
                         <marker id="connector-arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse" viewBox="0 0 12 12">
@@ -70,6 +71,23 @@
                         </marker>
                     </defs>
                 </svg>
+            </div>
+            <div id="selection-toolbar" class="selection-toolbar" role="toolbar" aria-label="Selected object actions" hidden>
+                <span id="selection-count">0 selected</span>
+                <button type="button" id="group-selection">Group</button>
+                <button type="button" id="ungroup-selection">Ungroup</button>
+                <details class="selection-menu">
+                    <summary>Align</summary>
+                    <div>
+                        <button type="button" data-align="left">Left</button><button type="button" data-align="center">Center</button><button type="button" data-align="right">Right</button>
+                        <button type="button" data-align="top">Top</button><button type="button" data-align="middle">Middle</button><button type="button" data-align="bottom">Bottom</button>
+                    </div>
+                </details>
+                <details class="selection-menu">
+                    <summary>Distribute</summary>
+                    <div><button type="button" data-distribute="horizontal">Horizontally</button><button type="button" data-distribute="vertical">Vertically</button></div>
+                </details>
+                <button type="button" id="delete-selection" class="danger-text">Delete</button>
             </div>
             <div id="connector-toolbar" class="connector-toolbar" role="toolbar" aria-label="Connector formatting" hidden>
                 <input id="connector-label" maxlength="120" placeholder="Connector label" aria-label="Connector label">
@@ -97,13 +115,14 @@
                 <button type="button" id="add-note" class="empty-primary">Add note</button>
                 <button type="button" id="add-code">Add code</button>
                 <details class="insert-menu quick-insert-menu">
-                    <summary id="empty-open-shapes">Add shapes <span aria-hidden="true">⌄</span></summary>
+                    <summary id="empty-open-objects">Add objects <span aria-hidden="true">⌄</span></summary>
                     <div class="insert-panel" role="group" aria-label="Diagram objects">
                         <button type="button" id="add-rectangle"><span aria-hidden="true">□</span> Rectangle</button>
                         <button type="button" id="add-rounded"><span aria-hidden="true">▢</span> Rounded</button>
                         <button type="button" id="add-ellipse"><span aria-hidden="true">○</span> Ellipse</button>
                         <button type="button" id="add-diamond"><span aria-hidden="true">◇</span> Diamond</button>
                         <button type="button" id="add-text"><span aria-hidden="true">T</span> Text label</button>
+                        <button type="button" id="add-frame"><span aria-hidden="true">▣</span> Frame</button>
                         <button type="button" id="add-connector"><span aria-hidden="true">→</span> Connector</button>
                     </div>
                 </details>
@@ -121,14 +140,17 @@
                 <span class="card-grip" aria-hidden="true">⠿</span>
                 <span class="card-kind"></span>
                 <input class="card-title" maxlength="80" aria-label="Card title">
-                <select class="card-color" aria-label="Card color" title="Card color">
-                    <option value="yellow">● Yellow</option>
-                    <option value="blue">● Blue</option>
-                    <option value="green">● Green</option>
-                    <option value="pink">● Pink</option>
-                    <option value="purple">● Purple</option>
-                    <option value="slate">● Slate</option>
-                </select>
+                <details class="card-color-palette">
+                    <summary class="card-color-current card-action" aria-label="Change card color" title="Change card color"><span></span></summary>
+                    <div role="group" aria-label="Card colors">
+                        <button type="button" data-card-color="yellow" aria-label="Yellow" title="Yellow"></button>
+                        <button type="button" data-card-color="pink" aria-label="Pink" title="Pink"></button>
+                        <button type="button" data-card-color="blue" aria-label="Blue" title="Blue"></button>
+                        <button type="button" data-card-color="green" aria-label="Green" title="Green"></button>
+                        <button type="button" data-card-color="purple" aria-label="Purple" title="Purple"></button>
+                        <button type="button" data-card-color="slate" aria-label="Slate" title="Slate"></button>
+                    </div>
+                </details>
                 <button type="button" class="card-copy card-action" aria-label="Copy card content" title="Copy content">⧉</button>
                 <details class="card-object-menu">
                     <summary class="card-action" aria-label="Object actions" title="Object actions">•••</summary>
@@ -228,6 +250,18 @@
             </div>
             <button type="button" class="shape-resize" aria-label="Resize shape with arrow keys" title="Resize shape; use arrow keys for precise sizing"></button>
         </article>
+    </template>
+
+    <template id="frame-template">
+        <section class="canvas-frame" tabindex="0">
+            <header class="frame-header">
+                <span class="frame-grip" aria-hidden="true">⠿</span>
+                <input class="frame-label" maxlength="80" aria-label="Frame name">
+                <button type="button" class="frame-duplicate" aria-label="Duplicate frame" title="Duplicate frame">⧉</button>
+                <button type="button" class="frame-delete" aria-label="Delete frame" title="Delete frame">×</button>
+            </header>
+            <button type="button" class="frame-resize" aria-label="Resize frame with arrow keys" title="Resize frame"></button>
+        </section>
     </template>
 
     <script src="../vendor/sticky-board/marked.min.js"></script>
