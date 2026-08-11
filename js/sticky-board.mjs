@@ -720,6 +720,7 @@ $('#rename-board').addEventListener('click', async () => {
     }
 });
 $('#delete-board').addEventListener('click', async () => {
+    if (!canUseDurableNotes()) return;
     if (boards.length === 1) {
         window.alert('Keep at least one board. Create another board before deleting this one.');
         return;
@@ -775,6 +776,7 @@ $('#import-workspace-input').addEventListener('change', async (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    if (!canUseDurableNotes()) return;
     if (file.size > 25 * 1024 * 1024) {
         setStatus('Backup is too large');
         return;

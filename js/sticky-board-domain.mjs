@@ -282,7 +282,8 @@ function validRichTextDocument(document) {
         if (node.marks !== undefined && (node.type !== 'text' || !Array.isArray(node.marks) || !node.marks.every(validMark))) return false;
         if (leafTypes.has(node.type) && node.content !== undefined) return false;
         if (node.content !== undefined && (!Array.isArray(node.content) || !node.content.every((child) => allowedChildren[node.type]?.has(child?.type) && validNode(child)))) return false;
-        if (!leafTypes.has(node.type) && node.content === undefined && !['paragraph', 'heading'].includes(node.type)) return false;
+        if (!leafTypes.has(node.type) && node.content === undefined && !['paragraph', 'heading', 'codeBlock'].includes(node.type)) return false;
+        if (node.type === 'doc' && !node.content?.length) return false;
         if (['bulletList', 'orderedList', 'taskList', 'listItem', 'taskItem', 'blockquote'].includes(node.type) && !node.content?.length) return false;
         if (['listItem', 'taskItem'].includes(node.type) && node.content?.[0]?.type !== 'paragraph') return false;
         if (node.attrs !== undefined && !isPlainRecord(node.attrs)) return false;

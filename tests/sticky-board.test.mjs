@@ -133,6 +133,12 @@ test('workspace backups accept complete valid workspaces and reject unsafe conte
         content: [{ type: 'orderedList', attrs: { start: 1, type: null }, content: [{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'First' }] }] }] }],
     };
     assert.doesNotThrow(() => validateWorkspaceBackup({ ...backup, cards: [{ ...card, content: orderedDocument }] }));
+    const emptyCodeBlock = { type: 'doc', content: [{ type: 'codeBlock', attrs: { language: null } }] };
+    assert.doesNotThrow(() => validateWorkspaceBackup({ ...backup, cards: [{ ...card, content: emptyCodeBlock }] }));
+    assert.throws(
+        () => validateWorkspaceBackup({ ...backup, cards: [{ ...card, content: { type: 'doc', content: [] } }] }),
+        /Invalid sticky-board backup/,
+    );
     assert.throws(
         () => validateWorkspaceBackup({ ...backup, boards: [{ ...board, id: '__proto__' }] }),
         /Invalid sticky-board backup/,
@@ -242,6 +248,8 @@ test('sticky board storage uses IndexedDB rather than localStorage for workspace
     assert.match(app, /unsavableNoteIds\.add\(card\.id\)/);
     assert.match(app, /if \(unsavableNoteIds\.size\)[\s\S]*?shorten it before leaving/);
     assert.match(app, /beforeunload[\s\S]*?event\.preventDefault\(\)/);
+    assert.match(app, /\$\('#delete-board'\)\.addEventListener\('click', async \(\) => \{\s*if \(!canUseDurableNotes\(\)\) return;/);
+    assert.match(app, /\$\('#import-workspace-input'\)\.addEventListener\('change', async \(event\) => \{[^]*?if \(!file\) return;\s*if \(!canUseDurableNotes\(\)\) return;/);
     assert.match(app, /cards\.some\(\(card, index\) => card !== storedCards\[index\]\)/);
     assert.match(app, /Math\.max\(240, start\.width/);
     assert.match(app, /Math\.max\(170, start\.height/);
