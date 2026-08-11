@@ -6,6 +6,9 @@ html, body { height: 100%; overflow: hidden; }
     --canvas-dot: rgba(64, 57, 48, .16);
     --chrome-ink: #2f2a24;
     margin: 0;
+    height: 100vh;
+    height: -webkit-fill-available;
+    height: 100dvh;
     display: grid;
     grid-template-rows: 68px 1fr;
     background: var(--canvas-bg);
@@ -168,14 +171,18 @@ html, body { height: 100%; overflow: hidden; }
 [data-theme="dark"] .canvas-dock .dock-primary:hover { background: #fff; }
 .dock-primary kbd { padding: 2px 5px; border: 1px solid rgba(255,255,255,.25); border-radius: 4px; background: rgba(255,255,255,.1); color: inherit; font: 600 9px var(--font-mono); }
 .dock-button { width: 38px; padding: 0; }
+.dock-button.dock-labeled { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: auto; padding: 0 11px; }
+.insert-menu-chevron { margin-left: 1px; color: color-mix(in srgb, var(--chrome-ink) 52%, transparent); font-size: 11px; }
 .zoom-value { width: 48px; padding: 0; color: color-mix(in srgb, var(--chrome-ink) 65%, transparent) !important; font: 600 11px var(--font-mono) !important; }
 .dock-rule { width: 1px; height: 24px; margin: 0 3px; background: color-mix(in srgb, var(--chrome-ink) 12%, transparent); }
 .canvas-hint { position: absolute; z-index: 10; left: 18px; bottom: 17px; color: color-mix(in srgb, var(--chrome-ink) 52%, transparent); font: 600 10px var(--font-mono); pointer-events: none; }
-.empty-state { position: absolute; inset: 45% auto auto 50%; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 8px; max-width: 360px; color: color-mix(in srgb, var(--chrome-ink) 58%, transparent); text-align: center; pointer-events: none; }
+.empty-state { position: absolute; inset: 45% auto auto 50%; transform: translate(-50%, -50%); max-width: 420px; pointer-events: none; }
 .empty-state[hidden] { display: none; }
-.empty-mark { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 4px; border: 1px solid color-mix(in srgb, var(--chrome-ink) 12%, transparent); border-radius: 50%; background: var(--chrome-bg); color: #c58b25; box-shadow: 0 8px 20px rgba(36,31,25,.08); }
-.empty-state strong { color: var(--chrome-ink); font-size: 19px; letter-spacing: -.025em; }
-.empty-state span:last-child { font-size: 13px; line-height: 1.45; }
+.empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; pointer-events: auto; }
+.empty-actions button { min-height: 38px; padding: 0 13px; border: 1px solid color-mix(in srgb, var(--chrome-ink) 15%, transparent); border-radius: 9px; background: var(--chrome-bg); color: var(--chrome-ink); cursor: pointer; font: 700 12px var(--font-primary); box-shadow: 0 5px 14px rgba(36,31,25,.08); }
+.empty-actions button:hover, .empty-actions button:focus-visible { border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: color-mix(in srgb, var(--accent) 8%, var(--chrome-bg)); outline: none; }
+.empty-actions .empty-primary { border-color: #2f2a24; background: #2f2a24; color: #fffdf8; }
+[data-theme="dark"] .empty-actions .empty-primary { border-color: #f1eee7; background: #f1eee7; color: #25221e; }
 
 .canvas-card {
     --card-background: #fff0a8;
@@ -444,7 +451,7 @@ html, body { height: 100%; overflow: hidden; }
     .search-control { width: min(180px, 25vw); }
     .workspace-menu { margin-left: 0; }
     .canvas-hint { display: none; }
-    .canvas-dock { bottom: 12px; }
+    .canvas-dock { bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
     .note-format-toolbar { left: 0; max-width: min(620px, calc(100vw - 20px)); transform: translateY(4px); }
     .canvas-card.is-selected[data-type="note"] .note-format-toolbar, .canvas-card[data-type="note"]:focus-within .note-format-toolbar { transform: translateY(0); }
 }
@@ -470,6 +477,11 @@ html, body { height: 100%; overflow: hidden; }
     .search-control:focus-within input { opacity: 1; pointer-events: auto; }
     .canvas-dock .dock-primary kbd { display: none; }
     .canvas-dock { max-width: calc(100vw - 18px); }
+    .canvas-dock .dock-rule, #zoom-out, #zoom-reset, #zoom-in { display: none; }
+    .dock-button.dock-labeled { padding-inline: 10px; }
+    .empty-state { top: 42%; width: calc(100vw - 32px); max-width: 390px; }
+    .empty-actions { gap: 6px; }
+    .empty-actions button { min-height: 40px; padding-inline: 11px; }
     .connector-toolbar { width: calc(100vw - 20px); box-sizing: border-box; flex-wrap: wrap; justify-content: center; }
     .connector-toolbar input { flex: 1 1 100%; width: auto; }
     .connector-toolbar select { flex: 1 1 76px; min-width: 70px; }

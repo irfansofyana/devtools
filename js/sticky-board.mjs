@@ -558,7 +558,7 @@ async function duplicateCanvasEntity(entity) {
     await queueWrite(() => saveCard(duplicate));
     cards.push(duplicate);
     const element = appendCanvasEntity(duplicate);
-    emptyState.hidden = false;
+    emptyState.hidden = true;
     filterCards();
     element.focus();
     return true;
@@ -909,7 +909,7 @@ async function addCard(type) {
     await queueWrite(() => saveCard(card));
     cards.push(card);
     const element = appendCanvasEntity(card);
-    emptyState.hidden = false;
+    emptyState.hidden = true;
     filterCards();
     if (type === 'note') noteEditors.get(card.id)?.focus();
     else setCodeEditing(element, true);
@@ -938,7 +938,7 @@ async function addShape(shapeKind) {
     await queueWrite(() => saveCard(shape));
     cards.push(shape);
     const element = appendCanvasEntity(shape);
-    emptyState.hidden = false;
+    emptyState.hidden = true;
     filterCards();
     element.focus();
     if (shapeKind === 'text') {
@@ -1084,6 +1084,13 @@ document.addEventListener('keydown', (event) => {
 
 $('#add-note').addEventListener('click', () => addCard('note'));
 $('#add-code').addEventListener('click', () => addCard('code'));
+$('#empty-add-note').addEventListener('click', () => $('#add-note').click());
+$('#empty-add-code').addEventListener('click', () => $('#add-code').click());
+$('#empty-open-shapes').addEventListener('click', () => {
+    const menu = $('.insert-menu');
+    menu.open = true;
+    $('#add-rectangle').focus();
+});
 for (const shapeKind of ['rectangle', 'rounded', 'ellipse', 'diamond', 'text']) {
     $(`#add-${shapeKind}`).addEventListener('click', () => {
         $('.insert-menu').open = false;

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="A local-first visual workspace for rich notes, code cards, shapes, labels, and anchored connectors.">
     <meta name="theme-color" content="#f4f1ea">
     <link rel="canonical" href="https://tools.irfansp.dev/tools/sticky-board.html">
@@ -88,9 +88,9 @@
 
             <nav class="canvas-dock" aria-label="Canvas tools">
                 <button type="button" id="add-note" class="dock-primary"><span aria-hidden="true">＋</span><span>Note</span><kbd>N</kbd></button>
-                <button type="button" id="add-code" class="dock-button" title="Add code card"><span aria-hidden="true">&lt;/&gt;</span><span class="sr-only">Add code card</span></button>
+                <button type="button" id="add-code" class="dock-button dock-labeled" title="Add code card"><span aria-hidden="true">&lt;/&gt;</span><span>Code</span></button>
                 <details class="insert-menu">
-                    <summary class="dock-button" aria-label="Add shapes and connectors" title="Add shapes and connectors">◇</summary>
+                    <summary class="dock-button dock-labeled" aria-label="Add shapes and connectors" title="Add shapes and connectors"><span aria-hidden="true">◇</span><span class="insert-menu-label">Shapes</span><span aria-hidden="true" class="insert-menu-chevron">⌄</span></summary>
                     <div class="insert-panel" role="group" aria-label="Diagram objects">
                         <button type="button" id="add-rectangle"><span aria-hidden="true">□</span> Rectangle</button>
                         <button type="button" id="add-rounded"><span aria-hidden="true">▢</span> Rounded</button>
@@ -109,9 +109,11 @@
 
             <div class="canvas-hint" id="canvas-hint">Drag the canvas to move · Choose Connector, then select two objects</div>
             <div id="empty-state" class="empty-state" hidden>
-                <span class="empty-mark" aria-hidden="true">✦</span>
-                <strong>A quiet place for loud ideas.</strong>
-                <span>Add notes, code, shapes, labels, and arrows on one canvas.</span>
+                <div class="empty-actions" aria-label="Create your first object">
+                    <button type="button" id="empty-add-note" class="empty-primary">Add note</button>
+                    <button type="button" id="empty-add-code">Add code card</button>
+                    <button type="button" id="empty-open-shapes">Add shape</button>
+                </div>
             </div>
         </section>
     </main>

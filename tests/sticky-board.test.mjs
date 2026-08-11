@@ -338,9 +338,15 @@ test('homepage exposes a standalone sticky board and required local-first contro
     assert.ok(existsSync(new URL('tools/sticky-board.html', root)));
 
     const page = read('tools/sticky-board.html');
+    assert.match(page, /name="viewport" content="width=device-width, initial-scale=1\.0, viewport-fit=cover"/);
     assert.match(page, /id="sticky-canvas"/);
-    assert.match(page, /id="add-note"/);
-    assert.match(page, /id="add-code"/);
+    assert.match(page, /id="add-note"[^>]*>[\s\S]*?<span>Note<\/span>/);
+    assert.match(page, /id="add-code"[^>]*>[\s\S]*?<span>Code<\/span>/);
+    assert.match(page, /class="insert-menu-label">Shapes<\/span>/);
+    assert.match(page, /id="empty-add-note"[^>]*>[^<]*Add note/);
+    assert.match(page, /id="empty-add-code"[^>]*>[^<]*Add code card/);
+    assert.match(page, /id="empty-open-shapes"[^>]*>[^<]*Add shape/);
+    assert.doesNotMatch(page, /A quiet place for loud ideas|Add notes, code, shapes, labels, and arrows/);
     for (const shape of ['rectangle', 'rounded', 'ellipse', 'diamond', 'text', 'connector']) {
         assert.match(page, new RegExp(`id="add-${shape}"`));
     }
@@ -373,6 +379,8 @@ test('homepage exposes a standalone sticky board and required local-first contro
     assert.match(css, /\.card-title\s*\{[^}]*width:\s*0;/s);
     assert.match(css, /--card-ink:/);
     assert.match(css, /\.canvas-dock\s*\{/);
+    assert.match(css, /height:\s*100dvh/);
+    assert.match(css, /env\(safe-area-inset-bottom/);
     assert.match(css, /\.note-editor__content\s*\{/);
     assert.match(css, /\.note-editor__content li\[data-checked\]\s*\{[^}]*display:\s*flex;/s);
     assert.match(css, /\.canvas-card\.is-selected\[data-type="note"\] \.note-format-toolbar/);
@@ -417,6 +425,11 @@ test('sticky board storage uses IndexedDB rather than localStorage for workspace
     assert.match(duplicateFunction, /if \(!canUseDurableNotes\(\)\) return false;/);
     assert.doesNotMatch(deleteFunction, /renderCards\(\)/);
     assert.doesNotMatch(duplicateFunction, /renderCards\(\)/);
+    const addCardFunction = app.slice(app.indexOf('async function addCard'), app.indexOf('async function addShape'));
+    const addShapeFunction = app.slice(app.indexOf('async function addShape'), app.indexOf('function updateConnectorToolbar'));
+    assert.match(addCardFunction, /emptyState\.hidden = true/);
+    assert.match(addShapeFunction, /emptyState\.hidden = true/);
+    assert.match(duplicateFunction, /emptyState\.hidden = true/);
     assert.match(duplicateFunction, /appendCanvasEntity\(duplicate\)/);
     assert.match(app, /function handleConnectorActivationKey[\s\S]*?handleConnectorTarget\(entity, element\)/);
     assert.match(app, /setAttribute\('aria-label', `\$\{shape\.shape\} shape:/);
