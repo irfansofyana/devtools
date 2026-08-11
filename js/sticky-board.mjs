@@ -201,6 +201,8 @@ function applyViewport({ persist = false } = {}) {
     $('#zoom-reset').textContent = `${Math.round(viewport.zoom * 100)}%`;
     canvas.style.backgroundPosition = `${viewport.x}px ${viewport.y}px`;
     canvas.style.backgroundSize = `${24 * viewport.zoom}px ${24 * viewport.zoom}px`;
+    const selectedNote = surface.querySelector('.canvas-card.is-selected[data-type="note"]');
+    if (selectedNote) requestAnimationFrame(() => positionNoteToolbar(selectedNote, $('.note-format-toolbar', selectedNote)));
     if (persist) scheduleBoardSave();
 }
 
@@ -579,6 +581,7 @@ function positionNoteToolbar(element, toolbar) {
     toolbar.style.left = '0px';
     toolbar.style.top = '';
     toolbar.style.bottom = '';
+    toolbar.style.setProperty('--toolbar-scale', String(1 / viewport.zoom));
     let bounds = toolbar.getBoundingClientRect();
     const cardBounds = element.getBoundingClientRect();
     const canvasBounds = canvas.getBoundingClientRect();

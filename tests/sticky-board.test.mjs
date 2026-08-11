@@ -367,6 +367,7 @@ test('homepage exposes a standalone sticky board and required local-first contro
         assert.match(page, new RegExp(`data-editor-action="${action}"`));
     }
     assert.match(page, /class="text-size"/);
+    assert.match(page, /class="text-color"[\s\S]*?<option value="">Default<\/option>[\s\S]*?<option value="#2f2a24">Black<\/option>/);
     assert.match(page, /value="1\.35rem"/);
     assert.doesNotMatch(page, /pinch/i);
     assert.match(page, /tiptap-editor\.mjs/);
@@ -387,7 +388,12 @@ test('homepage exposes a standalone sticky board and required local-first contro
     assert.match(css, /html\s*\{[^}]*overflow:\s*hidden;/s);
     assert.match(css, /height:\s*100dvh/);
     assert.match(css, /env\(safe-area-inset-bottom/);
-    assert.match(css, /\.note-editor__content\s*\{/);
+    assert.match(css, /\.note-editor__content\s+p\s*\{[^}]*color:\s*inherit;/s);
+    assert.match(css, /\.note-editor__content ul:not/);
+    assert.match(css, /\.note-editor__content ul:not\(\[data-type="taskList"\]\)\s*\{[^}]*list-style:\s*disc outside;/s);
+    assert.match(css, /\.note-editor__content ol\s*\{[^}]*list-style:\s*decimal outside;/s);
+    assert.match(css, /\[data-theme="dark"\] \.canvas-card\[data-color="yellow"\]/);
+    assert.match(css, /scale\(var\(--toolbar-scale,\s*1\)\)/);
     assert.match(css, /\.note-editor__content li\[data-checked\]\s*\{[^}]*display:\s*flex;/s);
     assert.match(css, /\.canvas-card\.is-selected\[data-type="note"\] \.note-format-toolbar/);
     assert.match(css, /@media \(max-width: 620px\)[\s\S]*?\.search-control:focus-within input/);
@@ -431,7 +437,7 @@ test('sticky board storage uses IndexedDB rather than localStorage for workspace
     assert.match(duplicateFunction, /if \(!canUseDurableNotes\(\)\) return false;/);
     assert.doesNotMatch(deleteFunction, /renderCards\(\)/);
     assert.doesNotMatch(duplicateFunction, /renderCards\(\)/);
-    assert.match(app, /function positionNoteToolbar[\s\S]*?window\.innerWidth - margin/);
+    assert.match(app, /function positionNoteToolbar[\s\S]*?--toolbar-scale[\s\S]*?window\.innerWidth - margin/);
     assert.match(app, /requestAnimationFrame\(\(\) => positionNoteToolbar/);
     assert.doesNotMatch(app, /emptyState|#empty-state/);
     assert.match(duplicateFunction, /appendCanvasEntity\(duplicate\)/);
