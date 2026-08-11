@@ -73,11 +73,16 @@ async function put(storeName, value) {
 export const saveBoard = (board) => put('boards', board);
 export const saveCard = (card) => put('cards', card);
 
-export async function deleteCard(id) {
+export async function deleteCards(ids) {
     const database = await openDatabase();
     const transaction = database.transaction('cards', 'readwrite');
-    transaction.objectStore('cards').delete(id);
+    const store = transaction.objectStore('cards');
+    ids.forEach((id) => store.delete(id));
     await transactionDone(transaction);
+}
+
+export async function deleteCard(id) {
+    return deleteCards([id]);
 }
 
 export async function deleteBoard(id) {

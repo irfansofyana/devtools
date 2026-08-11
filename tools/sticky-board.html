@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="A local-first infinite canvas for rich notes, checklists, and code snippets.">
+    <meta name="description" content="A local-first visual workspace for rich notes, code cards, shapes, labels, and anchored connectors.">
     <meta name="theme-color" content="#f4f1ea">
     <link rel="canonical" href="https://tools.irfansp.dev/tools/sticky-board.html">
     <title>Sticky Board | tools.</title>
@@ -61,24 +61,57 @@
     </header>
 
     <main id="main-content">
-        <section id="sticky-canvas" class="sticky-canvas" tabindex="0" aria-label="Infinite sticky-note canvas">
-            <div id="canvas-surface" class="canvas-surface" aria-live="off"></div>
+        <section id="sticky-canvas" class="sticky-canvas" tabindex="0" aria-label="Infinite visual workspace">
+            <div id="canvas-surface" class="canvas-surface" aria-live="off">
+                <svg id="connector-layer" class="connector-layer" aria-label="Canvas connectors" overflow="visible">
+                    <defs>
+                        <marker id="connector-arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse" viewBox="0 0 12 12">
+                            <path d="M 0 0 L 12 6 L 0 12 z" fill="context-stroke"></path>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+            <div id="connector-toolbar" class="connector-toolbar" role="toolbar" aria-label="Connector formatting" hidden>
+                <input id="connector-label" maxlength="120" placeholder="Connector label" aria-label="Connector label">
+                <select id="connector-stroke" aria-label="Connector color">
+                    <option value="ink">Ink</option><option value="red">Red</option><option value="blue">Blue</option>
+                    <option value="green">Green</option><option value="purple">Purple</option><option value="orange">Orange</option>
+                </select>
+                <select id="connector-style" aria-label="Connector style">
+                    <option value="solid">Solid</option><option value="dashed">Dashed</option>
+                </select>
+                <select id="connector-arrow-style" aria-label="Connector arrow">
+                    <option value="end">Arrow</option><option value="none">Line</option>
+                </select>
+                <button type="button" id="delete-connector" aria-label="Delete selected connector">Delete</button>
+            </div>
 
             <nav class="canvas-dock" aria-label="Canvas tools">
                 <button type="button" id="add-note" class="dock-primary"><span aria-hidden="true">＋</span><span>Note</span><kbd>N</kbd></button>
                 <button type="button" id="add-code" class="dock-button" title="Add code card"><span aria-hidden="true">&lt;/&gt;</span><span class="sr-only">Add code card</span></button>
+                <details class="insert-menu">
+                    <summary class="dock-button" aria-label="Add shapes and connectors" title="Add shapes and connectors">◇</summary>
+                    <div class="insert-panel" role="group" aria-label="Diagram objects">
+                        <button type="button" id="add-rectangle"><span aria-hidden="true">□</span> Rectangle</button>
+                        <button type="button" id="add-rounded"><span aria-hidden="true">▢</span> Rounded</button>
+                        <button type="button" id="add-ellipse"><span aria-hidden="true">○</span> Ellipse</button>
+                        <button type="button" id="add-diamond"><span aria-hidden="true">◇</span> Diamond</button>
+                        <button type="button" id="add-text"><span aria-hidden="true">T</span> Text label</button>
+                        <button type="button" id="add-connector"><span aria-hidden="true">→</span> Connector</button>
+                    </div>
+                </details>
                 <span class="dock-rule" aria-hidden="true"></span>
                 <button type="button" id="zoom-out" class="dock-button" aria-label="Zoom out">−</button>
                 <button type="button" id="zoom-reset" class="zoom-value" aria-label="Reset zoom">100%</button>
                 <button type="button" id="zoom-in" class="dock-button" aria-label="Zoom in">＋</button>
-                <button type="button" id="fit-cards" class="dock-button" aria-label="Fit all cards" title="Fit all cards">↙↗</button>
+                <button type="button" id="fit-cards" class="dock-button" aria-label="Fit all objects" title="Fit all objects">↙↗</button>
             </nav>
 
-            <div class="canvas-hint" id="canvas-hint">Drag the canvas to move · Ctrl/⌘ + wheel to zoom</div>
+            <div class="canvas-hint" id="canvas-hint">Drag the canvas to move · Choose Connector, then select two objects</div>
             <div id="empty-state" class="empty-state" hidden>
                 <span class="empty-mark" aria-hidden="true">✦</span>
                 <strong>A quiet place for loud ideas.</strong>
-                <span>Add a note, make a checklist, or pin a code snippet.</span>
+                <span>Add notes, code, shapes, labels, and arrows on one canvas.</span>
             </div>
         </section>
     </main>
@@ -99,7 +132,15 @@
                     <option value="purple">● Purple</option>
                     <option value="slate">● Slate</option>
                 </select>
-                <button type="button" class="card-copy card-action" aria-label="Copy card content" title="Copy">⧉</button>
+                <button type="button" class="card-copy card-action" aria-label="Copy card content" title="Copy content">⧉</button>
+                <details class="card-object-menu">
+                    <summary class="card-action" aria-label="Object actions" title="Object actions">•••</summary>
+                    <div>
+                        <button type="button" class="card-duplicate">Duplicate</button>
+                        <button type="button" class="card-send-back">Send backward</button>
+                        <button type="button" class="card-bring-front">Bring forward</button>
+                    </div>
+                </details>
                 <button type="button" class="card-delete card-action" aria-label="Delete card" title="Delete">×</button>
             </header>
 
@@ -160,6 +201,34 @@
                 <textarea class="card-editor" maxlength="200000" spellcheck="true" aria-label="Code content"></textarea>
             </div>
             <button type="button" class="card-resize" aria-label="Resize card with arrow keys" title="Resize card; use arrow keys for precise sizing"></button>
+        </article>
+    </template>
+
+    <template id="shape-template">
+        <article class="canvas-shape" tabindex="0">
+            <div class="shape-toolbar" role="toolbar" aria-label="Shape formatting">
+                <button type="button" class="shape-drag" aria-label="Move shape" title="Drag to move">⠿</button>
+                <select class="shape-fill" aria-label="Shape fill">
+                    <option value="yellow">Yellow</option><option value="blue">Blue</option><option value="green">Green</option>
+                    <option value="pink">Pink</option><option value="purple">Purple</option><option value="slate">Slate</option>
+                    <option value="transparent">Transparent</option>
+                </select>
+                <select class="shape-stroke" aria-label="Shape stroke">
+                    <option value="ink">Ink</option><option value="red">Red</option><option value="blue">Blue</option>
+                    <option value="green">Green</option><option value="purple">Purple</option><option value="orange">Orange</option>
+                </select>
+                <select class="shape-stroke-style" aria-label="Stroke style">
+                    <option value="solid">Solid</option><option value="dashed">Dashed</option>
+                </select>
+                <button type="button" class="shape-send-back" aria-label="Send shape backward" title="Send backward">↓</button>
+                <button type="button" class="shape-bring-front" aria-label="Bring shape forward" title="Bring forward">↑</button>
+                <button type="button" class="shape-duplicate" aria-label="Duplicate shape" title="Duplicate">⧉</button>
+                <button type="button" class="shape-delete" aria-label="Delete shape" title="Delete">×</button>
+            </div>
+            <div class="shape-frame">
+                <textarea class="shape-label" maxlength="500" aria-label="Shape label" spellcheck="true"></textarea>
+            </div>
+            <button type="button" class="shape-resize" aria-label="Resize shape with arrow keys" title="Resize shape; use arrow keys for precise sizing"></button>
         </article>
     </template>
 

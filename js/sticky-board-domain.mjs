@@ -1,11 +1,25 @@
 export const BACKUP_TYPE = 'tools-sticky-workspace';
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const FORBIDDEN_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 const CARD_TYPES = new Set(['note', 'code']);
 const CARD_COLORS = new Set(['yellow', 'blue', 'green', 'pink', 'purple', 'slate']);
+const SHAPE_KINDS = new Set(['rectangle', 'rounded', 'ellipse', 'diamond', 'text']);
+const SHAPE_FILLS = new Set(['yellow', 'blue', 'green', 'pink', 'purple', 'slate', 'transparent']);
+const STROKE_COLORS = new Set(['ink', 'red', 'blue', 'green', 'purple', 'orange', 'transparent']);
+const STROKE_STYLES = new Set(['solid', 'dashed']);
+const CONNECTOR_ANCHORS = new Set(['top', 'right', 'bottom', 'left']);
+const CONNECTOR_ARROWS = new Set(['end', 'none']);
 const MAX_CONTENT_LENGTH = 200_000;
+const MAX_SHAPE_LABEL_LENGTH = 500;
+
+export const SHAPE_GEOMETRY = Object.freeze({
+    minWidth: 80,
+    minHeight: 60,
+    maxWidth: 1_200,
+    maxHeight: 1_000,
+});
 
 const DEFAULT_NOTE_DOCUMENT = {
     type: 'doc',
@@ -195,6 +209,130 @@ export function createCard({
     return card;
 }
 
+export function createShape({
+    id,
+    boardId = '',
+    shape = 'rectangle',
+    x = 80,
+    y = 80,
+    width,
+    height,
+    label,
+    fill,
+    stroke,
+    strokeStyle = 'solid',
+    now = Date.now(),
+    z = 1,
+} = {}) {
+    if (!validId(id)) throw new TypeError('A safe shape id is required.');
+    if (boardId && !validId(boardId)) throw new TypeError('A safe board id is required.');
+    if (!SHAPE_KINDS.has(shape)) throw new TypeError('A supported shape kind is required.');
+    const timestamp = finite(now, Date.now());
+    const isText = shape === 'text';
+    const defaultSize = isText ? { width: 240, height: 80 } : { width: shape === 'diamond' ? 180 : 220, height: shape === 'diamond' ? 140 : 120 };
+    const defaultLabel = isText ? 'Text' : 'Shape';
+    const normalizedLabel = label === undefined ? defaultLabel : String(label).trim().slice(0, MAX_SHAPE_LABEL_LENGTH);
+    return {
+        id,
+        boardId,
+        type: 'shape',
+        shape,
+        x: finite(x),
+        y: finite(y),
+        width: clamp(finite(width, defaultSize.width), SHAPE_GEOMETRY.minWidth, SHAPE_GEOMETRY.maxWidth),
+        height: clamp(finite(height, defaultSize.height), SHAPE_GEOMETRY.minHeight, SHAPE_GEOMETRY.maxHeight),
+        label: normalizedLabel,
+        fill: isText ? 'transparent' : (SHAPE_FILLS.has(fill) ? fill : 'blue'),
+        stroke: isText ? 'transparent' : (STROKE_COLORS.has(stroke) ? stroke : 'ink'),
+        strokeStyle: STROKE_STYLES.has(strokeStyle) ? strokeStyle : 'solid',
+        z: clamp(Math.round(finite(z, 1)), 1, 1_000_000),
+        createdAt: timestamp,
+        updatedAt: timestamp,
+    };
+}
+
+export function createConnector({
+    id,
+    boardId = '',
+    from,
+    to,
+    label = '',
+    stroke = 'ink',
+    strokeStyle = 'solid',
+    arrow = 'end',
+    now = Date.now(),
+    z = 1,
+} = {}) {
+    if (!validId(id)) throw new TypeError('A safe connector id is required.');
+    if (boardId && !validId(boardId)) throw new TypeError('A safe board id is required.');
+    if (!isPlainRecord(from) || !validId(from.entityId) || !CONNECTOR_ANCHORS.has(from.anchor)) throw new TypeError('A valid connector start is required.');
+    if (!isPlainRecord(to) || !validId(to.entityId) || !CONNECTOR_ANCHORS.has(to.anchor)) throw new TypeError('A valid connector end is required.');
+    if (from.entityId === to.entityId) throw new TypeError('A connector needs two different entities.');
+    const timestamp = finite(now, Date.now());
+    return {
+        id,
+        boardId,
+        type: 'connector',
+        from: { entityId: from.entityId, anchor: from.anchor },
+        to: { entityId: to.entityId, anchor: to.anchor },
+        label: String(label).trim().slice(0, 120),
+        stroke: STROKE_COLORS.has(stroke) && stroke !== 'transparent' ? stroke : 'ink',
+        strokeStyle: STROKE_STYLES.has(strokeStyle) ? strokeStyle : 'solid',
+        arrow: CONNECTOR_ARROWS.has(arrow) ? arrow : 'end',
+        z: clamp(Math.round(finite(z, 1)), 1, 1_000_000),
+        createdAt: timestamp,
+        updatedAt: timestamp,
+    };
+}
+
+export function chooseConnectorAnchors(fromEntity, toEntity) {
+    const fromCenter = { x: fromEntity.x + fromEntity.width / 2, y: fromEntity.y + fromEntity.height / 2 };
+    const toCenter = { x: toEntity.x + toEntity.width / 2, y: toEntity.y + toEntity.height / 2 };
+    const dx = toCenter.x - fromCenter.x;
+    const dy = toCenter.y - fromCenter.y;
+    if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? { from: 'right', to: 'left' } : { from: 'left', to: 'right' };
+    return dy >= 0 ? { from: 'bottom', to: 'top' } : { from: 'top', to: 'bottom' };
+}
+
+function anchorPoint(entity, anchor) {
+    if (anchor === 'top') return { x: entity.x + entity.width / 2, y: entity.y };
+    if (anchor === 'right') return { x: entity.x + entity.width, y: entity.y + entity.height / 2 };
+    if (anchor === 'bottom') return { x: entity.x + entity.width / 2, y: entity.y + entity.height };
+    return { x: entity.x, y: entity.y + entity.height / 2 };
+}
+
+export function resolveConnectorGeometry(connector, entities) {
+    const lookup = entities instanceof Map ? entities : new Map(entities.map((entity) => [entity.id, entity]));
+    const fromEntity = lookup.get(connector.from.entityId);
+    const toEntity = lookup.get(connector.to.entityId);
+    if (!fromEntity || !toEntity || fromEntity.type === 'connector' || toEntity.type === 'connector') return null;
+    const start = anchorPoint(fromEntity, connector.from.anchor);
+    const end = anchorPoint(toEntity, connector.to.anchor);
+    return { x1: start.x, y1: start.y, x2: end.x, y2: end.y };
+}
+
+export function hasVisibleCanvasEntity(entities, rawViewport, size) {
+    const currentViewport = normalizeViewport(rawViewport);
+    const width = Math.max(0, finite(size?.width));
+    const height = Math.max(0, finite(size?.height));
+    return entities.some((entity) => {
+        if (entity?.type === 'connector' || !Number.isFinite(entity?.x) || !Number.isFinite(entity?.y) || !Number.isFinite(entity?.width) || !Number.isFinite(entity?.height)) return false;
+        const left = currentViewport.x + entity.x * currentViewport.zoom;
+        const top = currentViewport.y + entity.y * currentViewport.zoom;
+        const right = left + entity.width * currentViewport.zoom;
+        const bottom = top + entity.height * currentViewport.zoom;
+        return right >= 0 && bottom >= 0 && left <= width && top <= height;
+    });
+}
+
+export function collectDeletionIds(entityId, entities) {
+    const entity = entities.find((item) => item.id === entityId);
+    if (!entity || entity.type === 'connector') return entity ? [entityId] : [];
+    return [entityId, ...entities
+        .filter((item) => item.type === 'connector' && (item.from.entityId === entityId || item.to.entityId === entityId))
+        .map((item) => item.id)];
+}
+
 export function richTextToPlainText(document) {
     const blockTypes = new Set(['doc', 'bulletList', 'orderedList', 'taskList', 'taskItem', 'blockquote']);
     const readNode = (node) => {
@@ -209,7 +347,7 @@ export function richTextToPlainText(document) {
 }
 
 export function migrateCard(card) {
-    if (!isPlainRecord(card)) return card;
+    if (!isPlainRecord(card) || !CARD_TYPES.has(card.type)) return card;
     const updates = {};
     if (Number.isFinite(card.width) && card.width < 240) updates.width = 240;
     if (Number.isFinite(card.height) && card.height < 170) updates.height = 170;
@@ -344,14 +482,88 @@ function validCard(card, boardIds) {
         && (card.type !== 'note' || card.language === undefined);
 }
 
+function validShape(shape, boardIds) {
+    const allowed = new Set(['id', 'boardId', 'type', 'shape', 'x', 'y', 'width', 'height', 'label', 'fill', 'stroke', 'strokeStyle', 'z', 'createdAt', 'updatedAt']);
+    return isPlainRecord(shape)
+        && Object.keys(shape).every((key) => allowed.has(key))
+        && validId(shape.id)
+        && validId(shape.boardId)
+        && boardIds.has(shape.boardId)
+        && shape.type === 'shape'
+        && SHAPE_KINDS.has(shape.shape)
+        && Number.isFinite(shape.x)
+        && Number.isFinite(shape.y)
+        && Number.isFinite(shape.width)
+        && shape.width >= SHAPE_GEOMETRY.minWidth
+        && shape.width <= SHAPE_GEOMETRY.maxWidth
+        && Number.isFinite(shape.height)
+        && shape.height >= SHAPE_GEOMETRY.minHeight
+        && shape.height <= SHAPE_GEOMETRY.maxHeight
+        && typeof shape.label === 'string'
+        && shape.label.length <= MAX_SHAPE_LABEL_LENGTH
+        && SHAPE_FILLS.has(shape.fill)
+        && STROKE_COLORS.has(shape.stroke)
+        && STROKE_STYLES.has(shape.strokeStyle)
+        && (shape.shape !== 'text' || shape.fill === 'transparent' && shape.stroke === 'transparent')
+        && Number.isInteger(shape.z)
+        && shape.z >= 1
+        && shape.z <= 1_000_000
+        && Number.isFinite(shape.createdAt)
+        && Number.isFinite(shape.updatedAt)
+        && shape.updatedAt >= shape.createdAt;
+}
+
+function validConnector(connector, boardIds, entityById) {
+    const allowed = new Set(['id', 'boardId', 'type', 'from', 'to', 'label', 'stroke', 'strokeStyle', 'arrow', 'z', 'createdAt', 'updatedAt']);
+    const validEndpoint = (endpoint) => isPlainRecord(endpoint)
+        && Object.keys(endpoint).length === 2
+        && validId(endpoint.entityId)
+        && CONNECTOR_ANCHORS.has(endpoint.anchor);
+    if (!isPlainRecord(connector)
+        || !Object.keys(connector).every((key) => allowed.has(key))
+        || !validId(connector.id)
+        || !validId(connector.boardId)
+        || !boardIds.has(connector.boardId)
+        || connector.type !== 'connector'
+        || !validEndpoint(connector.from)
+        || !validEndpoint(connector.to)
+        || connector.from.entityId === connector.to.entityId
+        || typeof connector.label !== 'string'
+        || connector.label.length > 120
+        || !STROKE_COLORS.has(connector.stroke)
+        || connector.stroke === 'transparent'
+        || !STROKE_STYLES.has(connector.strokeStyle)
+        || !CONNECTOR_ARROWS.has(connector.arrow)
+        || !Number.isInteger(connector.z)
+        || connector.z < 1
+        || connector.z > 1_000_000
+        || !Number.isFinite(connector.createdAt)
+        || !Number.isFinite(connector.updatedAt)
+        || connector.updatedAt < connector.createdAt) return false;
+    const fromEntity = entityById.get(connector.from.entityId);
+    const toEntity = entityById.get(connector.to.entityId);
+    return Boolean(fromEntity && toEntity
+        && fromEntity.type !== 'connector'
+        && toEntity.type !== 'connector'
+        && fromEntity.boardId === connector.boardId
+        && toEntity.boardId === connector.boardId);
+}
+
+function validEntity(entity, boardIds, entityById) {
+    if (entity?.type === 'shape') return validShape(entity, boardIds);
+    if (entity?.type === 'connector') return validConnector(entity, boardIds, entityById);
+    return validCard(entity, boardIds);
+}
+
 export function validateWorkspaceBackup(value) {
-    const candidate = value?.schemaVersion === 1
+    const candidate = [1, 2].includes(value?.schemaVersion)
         ? { ...value, schemaVersion: SCHEMA_VERSION, cards: value.cards?.map(migrateCard) }
         : value;
     const boards = candidate?.boards;
     const cards = candidate?.cards;
     const boardIds = new Set(Array.isArray(boards) ? boards.map((board) => board?.id) : []);
     const cardIds = new Set(Array.isArray(cards) ? cards.map((card) => card?.id) : []);
+    const entityById = new Map(Array.isArray(cards) ? cards.map((entity) => [entity?.id, entity]) : []);
     const valid = isPlainRecord(candidate)
         && safeTree(candidate)
         && Object.keys(candidate).every((key) => ['type', 'schemaVersion', 'exportedAt', 'currentBoardId', 'boards', 'cards'].includes(key))
@@ -368,7 +580,7 @@ export function validateWorkspaceBackup(value) {
         && Array.isArray(cards)
         && cards.length <= 5_000
         && cardIds.size === cards.length
-        && cards.every((card) => validCard(card, boardIds));
+        && cards.every((entity) => validEntity(entity, boardIds, entityById));
 
     if (!valid) throw new TypeError('Invalid sticky-board backup.');
     return candidate;

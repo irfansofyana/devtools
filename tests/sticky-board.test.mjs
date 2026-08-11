@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
+import * as stickyDomain from '../js/sticky-board-domain.mjs';
 import {
     BACKUP_TYPE,
     SCHEMA_VERSION,
@@ -48,6 +49,85 @@ test('sticky board creates safe named boards and typed cards', () => {
     assert.match(code.content, /console\.log/);
 });
 
+test('sticky board creates structured diagram shapes with bounded geometry', () => {
+    assert.equal(typeof stickyDomain.createShape, 'function');
+    const rectangle = stickyDomain.createShape({
+        id: 'shape-1', boardId: 'board-1', shape: 'rectangle',
+        x: 20, y: 40, width: 30, height: 20, label: '  System  ', now: 110,
+    });
+    assert.deepEqual(rectangle, {
+        id: 'shape-1', boardId: 'board-1', type: 'shape', shape: 'rectangle',
+        x: 20, y: 40, width: 80, height: 60, label: 'System',
+        fill: 'blue', stroke: 'ink', strokeStyle: 'solid', z: 1,
+        createdAt: 110, updatedAt: 110,
+    });
+
+    const text = stickyDomain.createShape({ id: 'text-1', shape: 'text', now: 111 });
+    assert.equal(text.width, 240);
+    assert.equal(text.height, 80);
+    assert.equal(text.label, 'Text');
+    assert.equal(text.fill, 'transparent');
+    assert.equal(text.stroke, 'transparent');
+    assert.equal(stickyDomain.createShape({ id: 'blank-shape', label: '' }).label, '');
+    assert.throws(() => stickyDomain.createShape({ id: 'shape-bad', shape: 'triangle' }), /shape kind/i);
+    assert.equal(migrateCard(rectangle), rectangle);
+});
+
+test('anchored connectors resolve exact horizontal and vertical endpoints', () => {
+    assert.equal(typeof stickyDomain.createConnector, 'function');
+    assert.equal(typeof stickyDomain.resolveConnectorGeometry, 'function');
+    const source = stickyDomain.createShape({
+        id: 'source', boardId: 'board-1', shape: 'rectangle', x: 100, y: 100, width: 200, height: 100,
+    });
+    const target = stickyDomain.createShape({
+        id: 'target', boardId: 'board-1', shape: 'ellipse', x: 500, y: 100, width: 200, height: 100,
+    });
+    const horizontal = stickyDomain.createConnector({
+        id: 'line-horizontal', boardId: 'board-1',
+        from: { entityId: source.id, anchor: 'right' },
+        to: { entityId: target.id, anchor: 'left' },
+        label: 'depends on', now: 120,
+    });
+    assert.deepEqual(stickyDomain.resolveConnectorGeometry(horizontal, [source, target]), {
+        x1: 300, y1: 150, x2: 500, y2: 150,
+    });
+
+    const below = stickyDomain.createShape({
+        id: 'below', boardId: 'board-1', shape: 'rounded', x: 100, y: 400, width: 200, height: 100,
+    });
+    const vertical = stickyDomain.createConnector({
+        id: 'line-vertical', boardId: 'board-1',
+        from: { entityId: source.id, anchor: 'bottom' },
+        to: { entityId: below.id, anchor: 'top' },
+    });
+    assert.deepEqual(stickyDomain.resolveConnectorGeometry(vertical, [source, below]), {
+        x1: 200, y1: 200, x2: 200, y2: 400,
+    });
+    assert.deepEqual(stickyDomain.chooseConnectorAnchors(source, target), { from: 'right', to: 'left' });
+    assert.deepEqual(stickyDomain.chooseConnectorAnchors(source, below), { from: 'bottom', to: 'top' });
+});
+
+test('deleting an object also identifies its attached connectors', () => {
+    assert.equal(typeof stickyDomain.collectDeletionIds, 'function');
+    const entities = [
+        { id: 'shape-1', type: 'shape' },
+        { id: 'shape-2', type: 'shape' },
+        { id: 'shape-3', type: 'shape' },
+        { id: 'line-1', type: 'connector', from: { entityId: 'shape-1' }, to: { entityId: 'shape-2' } },
+        { id: 'line-2', type: 'connector', from: { entityId: 'shape-2' }, to: { entityId: 'shape-3' } },
+    ];
+    assert.deepEqual(stickyDomain.collectDeletionIds('shape-1', entities), ['shape-1', 'line-1']);
+    assert.deepEqual(stickyDomain.collectDeletionIds('line-2', entities), ['line-2']);
+});
+
+test('viewport visibility detects boards that need a mobile fit', () => {
+    assert.equal(typeof stickyDomain.hasVisibleCanvasEntity, 'function');
+    const entities = [stickyDomain.createShape({ id: 'offscreen', x: 530, y: 306, width: 220, height: 120 })];
+    assert.equal(stickyDomain.hasVisibleCanvasEntity(entities, { x: 0, y: 0, zoom: 1 }, { width: 390, height: 700 }), false);
+    assert.equal(stickyDomain.hasVisibleCanvasEntity(entities, { x: 0, y: 0, zoom: 1 }, { width: 1280, height: 700 }), true);
+    assert.equal(stickyDomain.hasVisibleCanvasEntity(entities, { x: -500, y: -280, zoom: 1 }, { width: 390, height: 700 }), true);
+});
+
 test('legacy note cards migrate without losing Markdown', () => {
     const migrated = migrateCard({
         id: 'legacy-note', boardId: 'board-1', type: 'note', x: 1, y: 2,
@@ -60,6 +140,25 @@ test('legacy note cards migrate without losing Markdown', () => {
     assert.equal(migrated.width, 300);
     assert.equal(migrateCard({ ...migrated, width: 220 }).width, 240);
     assert.equal(migrateCard({ ...migrated, height: 160 }).height, 170);
+});
+
+test('schema v2 backups migrate to the unified canvas schema without changing cards', () => {
+    const board = createBoard({ id: 'board-v2', name: 'Existing notes', now: 100 });
+    const card = createCard({ id: 'note-v2', type: 'note', boardId: board.id, now: 101 });
+    const legacy = {
+        type: BACKUP_TYPE,
+        schemaVersion: 2,
+        exportedAt: 200,
+        currentBoardId: board.id,
+        boards: [board],
+        cards: [card],
+    };
+
+    const migrated = validateWorkspaceBackup(legacy);
+    assert.equal(SCHEMA_VERSION, 3);
+    assert.equal(migrated.schemaVersion, 3);
+    assert.deepEqual(migrated.cards, [card]);
+    assert.notEqual(migrated, legacy);
 });
 
 test('rich-text documents provide searchable portable plain text', () => {
@@ -173,6 +272,66 @@ test('workspace backups accept complete valid workspaces and reject unsafe conte
     );
 });
 
+test('workspace backups validate shapes and reject malformed diagram records', () => {
+    const board = createBoard({ id: 'shape-board', name: 'Diagram', now: 100 });
+    const shape = stickyDomain.createShape({ id: 'shape-valid', boardId: board.id, shape: 'ellipse', now: 101 });
+    const backup = {
+        type: BACKUP_TYPE,
+        schemaVersion: SCHEMA_VERSION,
+        exportedAt: 200,
+        currentBoardId: board.id,
+        boards: [board],
+        cards: [shape],
+    };
+
+    assert.deepEqual(validateWorkspaceBackup(backup), backup);
+    assert.doesNotThrow(() => validateWorkspaceBackup({ ...backup, cards: [{ ...shape, label: '' }] }));
+    assert.throws(
+        () => validateWorkspaceBackup({ ...backup, cards: [{ ...shape, shape: 'triangle' }] }),
+        /Invalid sticky-board backup/,
+    );
+    assert.throws(
+        () => validateWorkspaceBackup({ ...backup, cards: [{ ...shape, label: 'x'.repeat(501) }] }),
+        /Invalid sticky-board backup/,
+    );
+});
+
+test('workspace backups accept anchored connectors and reject dangling references', () => {
+    const board = createBoard({ id: 'connector-board', name: 'Flow', now: 100 });
+    const source = stickyDomain.createShape({ id: 'connector-source', boardId: board.id, shape: 'rectangle', now: 101 });
+    const target = createCard({ id: 'connector-target', boardId: board.id, type: 'note', now: 102 });
+    const connector = stickyDomain.createConnector({
+        id: 'connector-valid', boardId: board.id,
+        from: { entityId: source.id, anchor: 'right' },
+        to: { entityId: target.id, anchor: 'left' },
+        now: 103,
+    });
+    const backup = {
+        type: BACKUP_TYPE,
+        schemaVersion: SCHEMA_VERSION,
+        exportedAt: 200,
+        currentBoardId: board.id,
+        boards: [board],
+        cards: [source, target, connector],
+    };
+
+    assert.deepEqual(validateWorkspaceBackup(backup), backup);
+    assert.throws(
+        () => validateWorkspaceBackup({
+            ...backup,
+            cards: [source, target, { ...connector, to: { entityId: 'missing', anchor: 'left' } }],
+        }),
+        /Invalid sticky-board backup/,
+    );
+    assert.throws(
+        () => validateWorkspaceBackup({
+            ...backup,
+            cards: [source, target, { ...connector, from: { entityId: connector.id, anchor: 'right' } }],
+        }),
+        /Invalid sticky-board backup/,
+    );
+});
+
 test('homepage exposes a standalone sticky board and required local-first controls', () => {
     const index = read('index.html');
     assert.match(index, /href="tools\/sticky-board\.html"/);
@@ -182,6 +341,15 @@ test('homepage exposes a standalone sticky board and required local-first contro
     assert.match(page, /id="sticky-canvas"/);
     assert.match(page, /id="add-note"/);
     assert.match(page, /id="add-code"/);
+    for (const shape of ['rectangle', 'rounded', 'ellipse', 'diamond', 'text', 'connector']) {
+        assert.match(page, new RegExp(`id="add-${shape}"`));
+    }
+    assert.match(page, /id="shape-template"/);
+    assert.match(page, /class="card-duplicate"/);
+    assert.match(page, /class="shape-send-back"/);
+    assert.match(page, /class="shape-bring-front"/);
+    assert.match(page, /class="shape-drag"/);
+    assert.match(page, /id="connector-layer"/);
     assert.match(page, /id="board-select"/);
     assert.match(page, /id="export-workspace"/);
     assert.match(page, /id="import-workspace-input"/);
@@ -222,6 +390,17 @@ test('sticky board storage uses IndexedDB rather than localStorage for workspace
     assert.match(storage, /objectStoreNames\.contains\('cards'\)/);
     assert.doesNotMatch(`${storage}\n${app}`, /localStorage\.(?:setItem|getItem).*?(?:board|card|workspace)/i);
     assert.match(app, /navigator\.storage\.persist/);
+    for (const helper of ['createShape', 'createConnector', 'resolveConnectorGeometry', 'collectDeletionIds']) {
+        assert.match(app, new RegExp(helper));
+    }
+    assert.match(app, /function renderShapes/);
+    assert.match(app, /function renderConnectors/);
+    assert.match(app, /document\.activeElement\?\.closest\?\.\('\.canvas-card, \.canvas-shape'\)/);
+    assert.match(app, /\['Enter', ' '\]\.includes\(event\.key\)/);
+    assert.match(app, /function resizeShapeLabel/);
+    assert.match(app, /function duplicateCanvasEntity/);
+    assert.match(app, /function changeEntityLayer/);
+    assert.match(storage, /export async function deleteCards\(ids\)/);
     assert.match(app, /wrapper\.querySelectorAll\('input'\)/);
     assert.match(app, /USE_PROFILES:\s*\{\s*html:\s*true\s*\}/);
     assert.match(app, /FORBID_TAGS:\s*\[[^\]]*'video'[^\]]*'audio'/);
@@ -232,7 +411,17 @@ test('sticky board storage uses IndexedDB rather than localStorage for workspace
     assert.match(app, /board\.updatedAtDirty === revision/);
     assert.match(app, /await writeQueue;\s*\}/);
     assert.match(app, /async function addCard[\s\S]*?await queueWrite\(\(\) => saveCard\(card\)\)[\s\S]*?cards\.push\(card\)/);
-    assert.match(app, /card-delete[\s\S]*?await flushSaves\(\)[\s\S]*?await queueWrite\(\(\) => deleteCard\(card\.id\)\)[\s\S]*?cards = cards\.filter/);
+    const deleteFunction = app.slice(app.indexOf('async function deleteCanvasEntity'), app.indexOf('async function duplicateCanvasEntity'));
+    const duplicateFunction = app.slice(app.indexOf('async function duplicateCanvasEntity'), app.indexOf('function changeEntityLayer'));
+    assert.match(deleteFunction, /if \(!canUseDurableNotes\(\)\) return false;/);
+    assert.match(duplicateFunction, /if \(!canUseDurableNotes\(\)\) return false;/);
+    assert.doesNotMatch(deleteFunction, /renderCards\(\)/);
+    assert.doesNotMatch(duplicateFunction, /renderCards\(\)/);
+    assert.match(duplicateFunction, /appendCanvasEntity\(duplicate\)/);
+    assert.match(app, /function handleConnectorActivationKey[\s\S]*?handleConnectorTarget\(entity, element\)/);
+    assert.match(app, /setAttribute\('aria-label', `\$\{shape\.shape\} shape:/);
+    assert.match(app, /setAttribute\('aria-label', `\$\{card\.type === 'code'/);
+    assert.match(app, /async function deleteCanvasEntity[\s\S]*?collectDeletionIds\(entity\.id, cards\)[\s\S]*?await flushSaves\(\)[\s\S]*?await queueWrite\(\(\) => deleteCards\(ids\)\)[\s\S]*?cards = cards\.filter/);
     assert.match(app, /function setBoardControlsDisabled/);
     assert.match(app, /\$\('\.sticky-header'\)\.inert = busy/);
     assert.match(app, /canvas\.inert = busy/);
