@@ -340,11 +340,12 @@ test('homepage exposes a standalone sticky board and required local-first contro
     const page = read('tools/sticky-board.html');
     assert.match(page, /name="viewport" content="width=device-width, initial-scale=1\.0, viewport-fit=cover"/);
     assert.match(page, /id="sticky-canvas"/);
-    assert.match(page, /id="add-note"[^>]*>[\s\S]*?<span>Note<\/span>/);
-    assert.match(page, /id="add-code"[^>]*>[\s\S]*?<span>Code<\/span>/);
+    assert.match(page, /id="add-note"[^>]*>[^<]*Add note/);
+    assert.match(page, /id="add-code"[^>]*>[^<]*Add code/);
     assert.match(page, /class="quick-create"[^>]*aria-label="Add objects"/);
-    assert.match(page, /id="empty-add-note"[^>]*>[^<]*Add note/);
-    assert.match(page, /id="empty-add-code"[^>]*>[^<]*Add code/);
+    assert.match(page, /class="canvas-dock"[^>]*aria-label="Canvas view controls"/);
+    assert.equal((page.match(/id="add-note"/g) ?? []).length, 1);
+    assert.equal((page.match(/id="add-code"/g) ?? []).length, 1);
     assert.match(page, /id="empty-open-shapes"[^>]*>Add shapes/);
     assert.doesNotMatch(page, /A quiet place for loud ideas|Add notes, code, shapes, labels, and arrows/);
     for (const shape of ['rectangle', 'rounded', 'ellipse', 'diamond', 'text', 'connector']) {
@@ -381,6 +382,9 @@ test('homepage exposes a standalone sticky board and required local-first contro
     assert.match(css, /\.card-title\s*\{[^}]*width:\s*0;/s);
     assert.match(css, /--card-ink:/);
     assert.match(css, /\.canvas-dock\s*\{/);
+    assert.match(css, /\.sticky-app\s*\{[\s\S]*?position:\s*fixed;[\s\S]*?overflow:\s*hidden;/);
+    assert.match(css, /\.sticky-app\s*\{[\s\S]*?min-height:\s*0;/);
+    assert.match(css, /html\s*\{[^}]*overflow:\s*hidden;/s);
     assert.match(css, /height:\s*100dvh/);
     assert.match(css, /env\(safe-area-inset-bottom/);
     assert.match(css, /\.note-editor__content\s*\{/);

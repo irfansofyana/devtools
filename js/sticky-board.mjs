@@ -1103,8 +1103,6 @@ document.addEventListener('keydown', (event) => {
 
 $('#add-note').addEventListener('click', () => addCard('note'));
 $('#add-code').addEventListener('click', () => addCard('code'));
-$('#empty-add-note').addEventListener('click', () => $('#add-note').click());
-$('#empty-add-code').addEventListener('click', () => $('#add-code').click());
 for (const shapeKind of ['rectangle', 'rounded', 'ellipse', 'diamond', 'text']) {
     $(`#add-${shapeKind}`).addEventListener('click', () => {
         $('.insert-menu').open = false;

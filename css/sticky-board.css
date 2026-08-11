@@ -1,11 +1,17 @@
-html, body { height: 100%; overflow: hidden; }
+html { height: 100%; overflow: hidden; overscroll-behavior: none; }
+html, body { height: 100%; }
 
 .sticky-app {
     --chrome-bg: #fbfaf7;
     --canvas-bg: #f2efe8;
     --canvas-dot: rgba(64, 57, 48, .16);
     --chrome-ink: #2f2a24;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    min-height: 0;
     margin: 0;
+    overflow: hidden;
     height: 100vh;
     height: -webkit-fill-available;
     height: 100dvh;
