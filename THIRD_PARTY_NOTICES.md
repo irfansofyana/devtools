@@ -1,6 +1,6 @@
 # Third-party notices
 
-The PDF workbench vendors pinned browser assets so document bytes do not need to be sent to a CDN or application server. Upstream license files are retained beside each package.
+The document workbenches vendor pinned browser assets so document bytes do not need to be sent to a CDN or application server. Upstream license files are retained beside each package.
 
 ## PDF Inspector WASM 0.1.3
 
@@ -12,6 +12,17 @@ The PDF workbench vendors pinned browser assets so document bytes do not need to
 - SHA-256 (`pdf_inspector_wasm_bg.wasm`): `8208c6c288b7a4e6656400bf6963b1278a279d6dee6a25f21d79ea3604c16db8`
 
 The published JavaScript entry was renamed from `.js` to `.mjs`; its contents are otherwise unchanged.
+
+## AnyDoc WASM 0.2.4
+
+- Project: <https://github.com/firecrawl/anydoc>
+- Package: `@firecrawl/anydoc-wasm@0.2.4`
+- License: MIT
+- Local path: `vendor/anydoc/0.2.4/`
+- SHA-256 (`anydoc_wasm.mjs`): `4860ad4c02c523593a5dae7698e186e8d7cf75a0e0bf3c2c294373de58eaee74`
+- SHA-256 (`anydoc_wasm_bg.wasm`): `9f37cd53b17bf4028ac5ae6a2ac4cf625e9c53be511797168780bab495de1a9e`
+
+The published JavaScript entry was copied to an `.mjs` filename without content changes. This wrapper performs local conversion only. AnyDoc's optional hosted OCR path is deliberately not included, so scanned PDFs are reported without uploading them.
 
 ## pdf-lib 1.17.1
 

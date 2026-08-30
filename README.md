@@ -2,7 +2,7 @@
 
 A focused collection of browser utilities for the small digital jobs that should not need an account, an install, or a heavyweight app.
 
-**Live:** [tools.irfansp.dev](https://tools.irfansp.dev) · **Tools:** 53 · **Stack:** vanilla HTML, CSS, and JavaScript
+**Live:** [tools.irfansp.dev](https://tools.irfansp.dev) · **Tools:** 54 · **Stack:** vanilla HTML, CSS, and JavaScript
 
 [![tools. homepage](assets/images/screenshot.png)](https://tools.irfansp.dev)
 
@@ -11,7 +11,7 @@ A focused collection of browser utilities for the small digital jobs that should
 - **Writing and text** — case conversion, sorting, escaping, diffing, and a Vim editor
 - **Encoding and conversion** — Base64, URLs, HTML entities, ASCII, hex, CSV, JSON, YAML, XML, and SQL
 - **Security and privacy** — hashes, HMAC, UUID/ULID, passwords, and encrypted secret sharing
-- **PDF** — structured Markdown extraction, merge, page organization, images, encryption, metadata, and watermarks
+- **PDF and documents** — AnyDoc conversion, structured Markdown extraction, merge, page organization, images, encryption, metadata, and watermarks
 - **Visual and documents** — infinite Markdown/code boards, QR codes, Mermaid, OCR, colors, and ASCII art
 - **Developer and network** — API mocks, regex, timestamps, cron, IP lookup, TLS checks, and subnet calculations
 
@@ -48,7 +48,7 @@ node --test tests/*.test.mjs
 ```text
 .
 ├── index.html              # Searchable tool catalog
-├── tools/                  # 53 standalone tool pages
+├── tools/                  # 54 standalone tool pages
 ├── css/
 │   ├── styles.css          # Tokens, reset, and typography
 │   ├── theme.css           # Light and dark palettes
@@ -104,9 +104,9 @@ python3 -m http.server 8765 --bind 127.0.0.1
 
 Open `http://127.0.0.1:8765/tools/diagram-workbench/`. The build output is not committed; the GitHub Pages workflow builds it before Jekyll packages the site.
 
-## Vendored PDF engines
+## Vendored document engines
 
-PDF processing is lazy-loaded only on PDF tool pages. The pinned browser engines, licenses, and integrity hashes are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). PDF files are processed locally; the password tools require the correct password and do not bypass encryption.
+Document processing is lazy-loaded only on the relevant tool pages. The pinned browser engines, licenses, and integrity hashes are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). AnyDoc and PDF files are processed locally; the password tools require the correct password and do not bypass encryption. The AnyDoc browser wrapper reports scanned PDF pages that require OCR and does not enable AnyDoc's hosted upload fallback.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution workflow.
 

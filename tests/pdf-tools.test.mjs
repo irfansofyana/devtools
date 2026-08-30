@@ -141,6 +141,7 @@ test('phase one through three expose focused PDF tools in the catalog', async ()
     const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
     const expected = [
         'pdf-inspector.html',
+        'anydoc.html',
         'pdf-merge.html',
         'pdf-extract-pages.html',
         'pdf-organize.html',
@@ -170,6 +171,22 @@ test('PDF Inspector uses a vendored WASM engine in a disposable worker', async (
     assert.match(controller, /terminate\(\)/);
 });
 
+test('AnyDoc uses its pinned local WASM engine in a disposable worker', async () => {
+    const { access, readFile } = await import('node:fs/promises');
+    const page = await readFile(new URL('../tools/anydoc.html', import.meta.url), 'utf8');
+    const worker = await readFile(new URL('../js/anydoc.worker.mjs', import.meta.url), 'utf8');
+    const controller = await readFile(new URL('../js/anydoc.mjs', import.meta.url), 'utf8');
+    await access(new URL('../vendor/anydoc/0.2.4/anydoc_wasm_bg.wasm', import.meta.url));
+    assert.match(page, /Files stay in this browser/);
+    assert.match(page, /Word, PowerPoint, Excel, OpenDocument, RTF, EPUB, CSV, and PDF/i);
+    assert.match(worker, /toMarkdownBytes/);
+    assert.match(worker, /anydoc_wasm\.mjs/);
+    assert.doesNotMatch(worker, /fetch\(|firecrawl\.dev\/parse|api\.firecrawl/);
+    assert.match(controller, /new Worker/);
+    assert.match(controller, /terminate\(\)/);
+    assert.match(controller, /needsOcr/);
+});
+
 test('PDF password tools use a local QPDF worker and never persist passwords', async () => {
     const { access, readFile } = await import('node:fs/promises');
     const security = await readFile(new URL('../js/pdf-security.mjs', import.meta.url), 'utf8');
@@ -197,6 +214,8 @@ test('vendored PDF engine assets match the reviewed integrity hashes', async () 
     const expected = new Map([
         ['../vendor/pdf-lib/1.17.1/pdf-lib.mjs', '72c052d97b4d5d9fa6cdbdcb7ad709f03d4ddb1122390cb3afeba4d88651d969'],
         ['../vendor/pdf-inspector/0.1.3/pdf_inspector_wasm_bg.wasm', '8208c6c288b7a4e6656400bf6963b1278a279d6dee6a25f21d79ea3604c16db8'],
+        ['../vendor/anydoc/0.2.4/anydoc_wasm.mjs', '4860ad4c02c523593a5dae7698e186e8d7cf75a0e0bf3c2c294373de58eaee74'],
+        ['../vendor/anydoc/0.2.4/anydoc_wasm_bg.wasm', '9f37cd53b17bf4028ac5ae6a2ac4cf625e9c53be511797168780bab495de1a9e'],
         ['../vendor/qpdf-run/0.2.1/vendor/qpdf/lib/qpdf.wasm', '86cba3db67ce3add2dd4b3533dd0614dade0b4e98b14a229bfda90306c053dd3'],
     ]);
     for (const [path, digest] of expected) {

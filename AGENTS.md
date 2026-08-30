@@ -4,7 +4,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## Project Overview
 
-tools. is a collection of 53 browser-based utilities deployed via GitHub Pages. It serves everyday digital work as well as technical workflows, with tools for text, documents, data conversion, design, security, APIs, and network analysis. The site uses vanilla HTML, CSS, and JavaScript.
+tools. is a collection of 54 browser-based utilities deployed via GitHub Pages. It serves everyday digital work as well as technical workflows, with tools for text, documents, data conversion, design, security, APIs, and network analysis. The site uses vanilla HTML, CSS, and JavaScript.
 
 ## Development Commands
 
@@ -22,7 +22,7 @@ git push origin main
 
 ### File Structure
 - `index.html` - Main homepage with tool navigation
-- `tools/` - Individual tool HTML pages (53 tools)
+- `tools/` - Individual tool HTML pages (54 tools)
 - `css/` - Stylesheets with CSS custom properties and theme system
 - `js/` - JavaScript modules for shared functionality
 - `assets/` - Static assets (icons, images)
